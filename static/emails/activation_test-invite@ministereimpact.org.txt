@@ -1,0 +1,9 @@
+Sujet: Activez votre compte ImpactStream
+
+Bonjour,
+
+Merci pour votre inscription à ImpactStream. Veuillez valider votre adresse e-mail et accéder au catalogue en cliquant sur le lien ci-dessous :
+
+http://localhost/verify-email?token=lNEFU900gBxKG9fIv5TS4Q
+
+L'équipe ImpactStream

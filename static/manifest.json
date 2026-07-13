@@ -1,0 +1,22 @@
+{
+  "name": "ImpactStream",
+  "short_name": "ImpactStream",
+  "description": "Plateforme officielle de streaming et médias du Ministère Apostolique Impact",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090907",
+  "theme_color": "#e8820c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/images/logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/static/images/logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

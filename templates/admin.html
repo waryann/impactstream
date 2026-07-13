@@ -1,0 +1,2886 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImpactStream — Administration</title>
+    <link rel="icon" type="image/png" href="/static/images/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════
+           BASE
+           ═══════════════════════════════════════════ */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Outfit', system-ui, sans-serif;
+            background: #090907;
+            color: #ede8df;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+        button, input, select, textarea { font-family: inherit; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0e0e0a; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #e8820c, #4caf50); border-radius: 3px; }
+
+        /* ═══════════════════════════════════════════
+           LAYOUT
+           ═══════════════════════════════════════════ */
+        .admin-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(9, 9, 7, 0.9);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(232, 130, 12, 0.08);
+            padding: 0 2.5rem;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .header-left img {
+            height: 38px;
+            border-radius: 6px;
+        }
+        .header-brand {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        .header-brand span { color: #e8820c; }
+        .header-badge {
+            padding: 0.2rem 0.7rem;
+            background: rgba(232, 130, 12, 0.12);
+            border: 1px solid rgba(232, 130, 12, 0.2);
+            border-radius: 100px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #f5a623;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .header-link {
+            font-size: 0.85rem;
+            color: rgba(237, 232, 223, 0.4);
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .header-link:hover { color: #e8820c; }
+
+        .btn-logout {
+            padding: 0.5rem 1.2rem;
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            border-radius: 10px;
+            color: #ff6b6b;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-logout:hover {
+            background: rgba(220, 53, 69, 0.2);
+            border-color: rgba(220, 53, 69, 0.4);
+        }
+
+        .admin-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem 2.5rem 4rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           FLASH MESSAGES
+           ═══════════════════════════════════════════ */
+        .flash-msg {
+            border-radius: 12px;
+            padding: 0.85rem 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            animation: slideDown 0.4s ease both;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .flash-success {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+            color: #81c784;
+        }
+        .flash-error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            color: #ff6b6b;
+        }
+
+        /* ═══════════════════════════════════════════
+           STATS CARDS
+           ═══════════════════════════════════════════ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+        .stat-card {
+            background: linear-gradient(165deg, rgba(27, 26, 20, 0.5), rgba(14, 14, 10, 0.7));
+            border: 1px solid rgba(62, 59, 46, 0.12);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.35s ease;
+        }
+        .stat-card:hover {
+            border-color: rgba(232, 130, 12, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .stat-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 0.3rem;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: rgba(237, 232, 223, 0.4);
+            font-weight: 500;
+        }
+
+        /* ═══════════════════════════════════════════
+           ACTION BAR
+           ═══════════════════════════════════════════ */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.75rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .action-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+        .action-title::before {
+            content: '';
+            width: 4px; height: 1.4rem;
+            background: linear-gradient(180deg, #e8820c, #4caf50);
+            border-radius: 2px;
+        }
+
+        .btn-add {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #e8820c, #d4770a);
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.35s ease;
+            box-shadow: 0 4px 20px rgba(232, 130, 12, 0.3);
+        }
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(232, 130, 12, 0.45);
+        }
+
+        /* ═══════════════════════════════════════════
+           MEDIA TABLE
+           ═══════════════════════════════════════════ */
+        .media-table-wrap {
+            background: linear-gradient(165deg, rgba(27, 26, 20, 0.4), rgba(14, 14, 10, 0.6));
+            border: 1px solid rgba(62, 59, 46, 0.1);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .media-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .media-table thead {
+            background: rgba(232, 130, 12, 0.05);
+        }
+        .media-table th {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: rgba(237, 232, 223, 0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid rgba(62, 59, 46, 0.12);
+        }
+        .media-table td {
+            padding: 1rem 1.25rem;
+            font-size: 0.88rem;
+            border-bottom: 1px solid rgba(62, 59, 46, 0.06);
+            vertical-align: middle;
+        }
+        .media-table tr {
+            transition: background 0.2s ease;
+        }
+        .media-table tbody tr:hover {
+            background: rgba(232, 130, 12, 0.03);
+        }
+        .media-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-title {
+            font-weight: 600;
+            color: #ede8df;
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .table-tag {
+            display: inline-block;
+            padding: 0.18rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .table-tag-cat {
+            background: rgba(232, 130, 12, 0.1);
+            color: #f5a623;
+            border: 1px solid rgba(232, 130, 12, 0.15);
+        }
+        .table-tag-com {
+            background: rgba(76, 175, 80, 0.08);
+            color: #81c784;
+            border: 1px solid rgba(76, 175, 80, 0.12);
+        }
+        .table-tag-lang {
+            background: rgba(237, 232, 223, 0.05);
+            color: rgba(237, 232, 223, 0.45);
+            border: 1px solid rgba(237, 232, 223, 0.07);
+        }
+
+        .table-file {
+            font-size: 0.75rem;
+            color: rgba(237, 232, 223, 0.35);
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .table-file-ok { color: #81c784; }
+        .table-file-missing { color: #ff6b6b; }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .btn-edit, .btn-delete {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-edit {
+            background: rgba(232, 130, 12, 0.1);
+            color: #f5a623;
+            border: 1px solid rgba(232, 130, 12, 0.15);
+        }
+        .btn-edit:hover {
+            background: rgba(232, 130, 12, 0.25);
+            transform: scale(1.1);
+        }
+        .btn-delete {
+            background: rgba(220, 53, 69, 0.08);
+            color: #ff6b6b;
+            border: 1px solid rgba(220, 53, 69, 0.12);
+        }
+        .btn-delete:hover {
+            background: rgba(220, 53, 69, 0.2);
+            transform: scale(1.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: rgba(237, 232, 223, 0.3);
+        }
+        .empty-state p { font-size: 1rem; margin-top: 0.5rem; }
+
+        /* ═══════════════════════════════════════════
+           MODAL
+           ═══════════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0);
+            backdrop-filter: blur(0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+        }
+
+        .modal-box {
+            width: 92%;
+            max-width: 620px;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: linear-gradient(180deg, #141410, #0e0e0a);
+            border: 1px solid rgba(232, 130, 12, 0.12);
+            border-radius: 22px;
+            padding: 2.5rem;
+            transform: scale(0.9) translateY(20px);
+            opacity: 0;
+            transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-overlay.active .modal-box {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+            color: #fff;
+        }
+        .modal-subtitle {
+            font-size: 0.85rem;
+            color: rgba(237, 232, 223, 0.4);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.35rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: rgba(237, 232, 223, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.5rem;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: rgba(27, 26, 20, 0.7);
+            border: 1px solid rgba(62, 59, 46, 0.3);
+            border-radius: 12px;
+            color: #ede8df;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: rgba(232, 130, 12, 0.4);
+            box-shadow: 0 0 0 3px rgba(232, 130, 12, 0.08);
+        }
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23e8820c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            cursor: pointer;
+        }
+        .form-select option {
+            background: #1b1a14;
+            color: #ede8df;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* File upload */
+        .file-upload {
+            position: relative;
+            border: 2px dashed rgba(62, 59, 46, 0.25);
+            border-radius: 14px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .file-upload:hover, .file-upload.dragover {
+            border-color: rgba(232, 130, 12, 0.4);
+            background: rgba(232, 130, 12, 0.03);
+        }
+        .file-upload input[type="file"] {
+            position: absolute; inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .file-upload-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .file-upload-text {
+            font-size: 0.82rem;
+            color: rgba(237, 232, 223, 0.4);
+        }
+        .file-upload-text strong {
+            color: #e8820c;
+        }
+        .file-upload-hint {
+            font-size: 0.7rem;
+            color: rgba(237, 232, 223, 0.25);
+            margin-top: 0.35rem;
+        }
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.78rem;
+            color: #81c784;
+            font-weight: 600;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+        .btn-submit {
+            flex: 1;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, #e8820c, #d4770a);
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(232, 130, 12, 0.25);
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(232, 130, 12, 0.4);
+        }
+        .btn-cancel {
+            padding: 0.85rem 1.5rem;
+            background: rgba(237, 232, 223, 0.06);
+            color: rgba(237, 232, 223, 0.6);
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: 1px solid rgba(62, 59, 46, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-cancel:hover {
+            background: rgba(237, 232, 223, 0.1);
+        }
+
+        /* Delete confirmation */
+        .delete-confirm {
+            text-align: center;
+        }
+        .delete-confirm .delete-icon {
+            width: 70px; height: 70px;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            font-size: 2rem;
+        }
+        .delete-confirm h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .delete-confirm p {
+            font-size: 0.88rem;
+            color: rgba(237, 232, 223, 0.5);
+            margin-bottom: 1.5rem;
+        }
+        .delete-confirm .btn-danger {
+            padding: 0.8rem 2rem;
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #ff6b6b;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .delete-confirm .btn-danger:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .admin-header { padding: 0 1.25rem; }
+            .admin-container { padding: 1.5rem 1.25rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .media-table-wrap { overflow-x: auto; }
+            .media-table { min-width: 700px; }
+            .form-row { grid-template-columns: 1fr; }
+            .modal-box { padding: 1.75rem; }
+            .header-badge { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ─── Header ─── -->
+    <header class="admin-header">
+        <div class="header-left">
+            <img src="/static/images/logo.png" alt="Logo">
+            <span class="header-brand">Impact<span>Stream</span></span>
+            <span class="header-badge">Admin</span>
+        </div>
+        <div class="header-right">
+            <a href="/" class="header-link" id="link-site">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                Voir le site
+            </a>
+            <a href="/admin/logout" class="btn-logout" id="btn-logout">Déconnexion</a>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <!-- ─── 1. Category Selection View (ALWAYS SHOWN FIRST) ─── -->
+        <div id="view-categories" class="fade-in">
+            <div style="text-align: center; margin: 3rem 0 2rem;">
+                <h1 style="font-size: 2.2rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem; background: linear-gradient(135deg, #fff 0%, #ede8df 50%, #f5a623 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Espace Administration</h1>
+                <p style="font-size: 0.95rem; color: rgba(237, 232, 223, 0.4);">Sélectionnez l'espace que vous souhaitez ravitailler ou gérer</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2.5rem; max-width: 1050px; margin: 3rem auto 5rem; padding: 0 1rem;">
+                <!-- Card Enseignement (Triggers Commissions selection) -->
+                <div onclick="showCommissions('Enseignement')" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(232, 130, 12, 0.4)'; this.style.boxShadow='0 25px 60px rgba(232,130,12,0.2), 0 0 40px rgba(232,130,12,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">📖</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Enseignements</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {{ stats.enseignements }} média{{ 's' if stats.enseignements > 1 else '' }}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Gérer les enseignements par commission (Intercession, Couples, HED, Johana, Joseph, PDS, Culte, Nayoth, FGI, Enfants).</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer les Enseignements &rarr;</span>
+                </div>
+
+                <!-- Card Musique (Now triggers selection of subdivisions instead of going directly to detail) -->
+                <div onclick="showCommissions('Musique')" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(76, 175, 80, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(76, 175, 80, 0.4)'; this.style.boxShadow='0 25px 60px rgba(76,175,80,0.2), 0 0 40px rgba(76,175,80,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(76, 175, 80, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">🎵</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Musique</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #81c784; background: rgba(76, 175, 80, 0.1); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {{ stats.musiques }} chant{{ 's' if stats.musiques > 1 else '' }}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Téléverser et organiser les chants par rubriques (Adoration MP3, Adoration MP4, etc.).</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #81c784; text-transform: uppercase; letter-spacing: 0.05em;">Gérer la Musique &rarr;</span>
+                </div>
+
+                <!-- Card Podcast (Direct to list) -->
+                <div onclick="showCategoryDetail('Podcast')" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(232, 130, 12, 0.4)'; this.style.boxShadow='0 25px 60px rgba(232,130,12,0.2), 0 0 40px rgba(232,130,12,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">🎙️</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Podcasts</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {{ stats.podcasts }} émission{{ 's' if stats.podcasts > 1 else '' }}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Gérer les émissions, podcasts audio et interventions parlées.</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer l'espace &rarr;</span>
+                </div>
+
+                </div>
+
+                <!-- Card Communiqués (Direct to communiqués management section) -->
+                <div onclick="showCommuniquesSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(232, 130, 12, 0.4)'; this.style.boxShadow='0 25px 60px rgba(232,130,12,0.2), 0 0 40px rgba(232,130,12,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">📢</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Communiqués</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {{ communiques | length }} communiqué{{ 's' if communiques | length > 1 else '' }}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Publier et traduire les annonces de l'église faites le dimanche.</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer les annonces &rarr;</span>
+                </div>
+
+                <!-- Card Séries (Direct to series management section) -->
+                <div onclick="showSeriesSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(232, 130, 12, 0.4)'; this.style.boxShadow='0 25px 60px rgba(232,130,12,0.2), 0 0 40px rgba(232,130,12,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">📚</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Séries / Sujets</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {{ series | length }} série{{ 's' if series | length > 1 else '' }}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Créer et organiser les enseignements par séries thématiques (chapitres/saisons).</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer les séries &rarr;</span>
+                </div>
+
+                <!-- Card Comptes (Direct to User management section) -->
+                <div onclick="showComptesSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(76, 175, 80, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(76, 175, 80, 0.4)'; this.style.boxShadow='0 25px 60px rgba(76,175,80,0.2), 0 0 40px rgba(76,175,80,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(76, 175, 80, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">👥</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Membres / Accès</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #81c784; background: rgba(76, 175, 80, 0.1); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {{ users | length }} compte{{ 's' if users | length > 1 else '' }}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Gérer les adresses e-mail et mots de passe autorisés à regarder le contenu.</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #81c784; text-transform: uppercase; letter-spacing: 0.05em;">Gérer les Comptes &rarr;</span>
+                </div>
+
+                <!-- Card Radio (Direct to Radio configuration section) -->
+                <div onclick="showRadioSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(232, 130, 12, 0.4)'; this.style.boxShadow='0 25px 60px rgba(232,130,12,0.2), 0 0 40px rgba(232,130,12,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">📻</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Radio Live</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {% if radio_config.enabled == '1' %}En ligne{% else %}Hors ligne{% endif %}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Activer la radio en direct, configurer l'URL de diffusion Icecast/Shoutcast.</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer le direct &rarr;</span>
+                </div>
+
+                <!-- Card Lives (Direct to Live Stream configuration section) -->
+                <div onclick="showLivesSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(239, 83, 80, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(239, 83, 80, 0.4)'; this.style.boxShadow='0 25px 60px rgba(239,83,80,0.2), 0 0 40px rgba(239,83,80,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(239, 83, 80, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(239, 83, 80, 0.1); border: 1px solid rgba(239, 83, 80, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">🎥</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Directs Vidéo</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #ef5350; background: rgba(239, 83, 80, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {% set active_lives_count = lives | selectattr('is_active', 'equalto', 1) | list | length %}
+                        {{ active_lives_count }} actif{{ 's' if active_lives_count > 1 else '' }}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Diffuser des cultes en direct simultanés (YouTube, Facebook, etc.).</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #ef5350; text-transform: uppercase; letter-spacing: 0.05em;">Gérer les directs &rarr;</span>
+                </div>
+
+                <!-- Card Quizzes (Direct to Quiz configuration section) -->
+                <div onclick="showQuizzesSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(232, 130, 12, 0.4)'; this.style.boxShadow='0 25px 60px rgba(232,130,12,0.2), 0 0 40px rgba(232,130,12,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">🎮</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Quiz Enfants</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;" id="admin-quiz-count-badge">
+                        0 quiz
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Créer et modifier des questionnaires et quiz bibliques pour l'espace enfants.</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer les quiz &rarr;</span>
+                </div>
+
+                <!-- Card Prise de Présence -->
+                <div onclick="showAttendanceSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(76, 175, 80, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(76, 175, 80, 0.4)'; this.style.boxShadow='0 25px 60px rgba(76,175,80,0.2), 0 0 40px rgba(76,175,80,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(76, 175, 80, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">📋</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Prise de Présence</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #4caf50; background: rgba(76, 175, 80, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {% if attendance_config.enabled == '1' %}
+                            <span style="color: #4caf50;">● Activé</span> — {{ attendance_count }} présent{{ 's' if attendance_count > 1 else '' }}
+                        {% else %}
+                            <span style="color: rgba(237,232,223,0.4);">○ Désactivé</span>
+                        {% endif %}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Suivre les présences aux cultes, détecter les retards et exporter en PDF.</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #4caf50; text-transform: uppercase; letter-spacing: 0.05em;">Gérer les présences &rarr;</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Attendance Section (Prise de Présence) ─── -->
+        <div class="admin-detail-view fade-in" id="attendance-section" style="display: none;">
+            <div class="detail-header" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="goBack()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">📋 Prise de Présence</h2>
+                </div>
+            </div>
+
+            <!-- Configuration -->
+            <div style="background: linear-gradient(165deg, rgba(27, 26, 20, 0.5), rgba(14, 14, 10, 0.7)); border: 1px solid rgba(76, 175, 80, 0.15); border-radius: 20px; padding: 2rem; margin-bottom: 2rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    ⚙️ Configuration
+                </h3>
+                <form action="/admin/attendance/config" method="POST" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.5rem;">
+                    <!-- Toggle ON/OFF -->
+                    <div style="flex: 0 0 auto;">
+                        <label style="font-size: 0.82rem; color: rgba(237,232,223,0.5); font-weight: 600; display: block; margin-bottom: 0.5rem;">Système de présence</label>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <label style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
+                                <input type="checkbox" name="attendance_enabled" value="1" {% if attendance_config.enabled == '1' %}checked{% endif %} style="opacity: 0; width: 0; height: 0;" onchange="this.nextElementSibling.style.background = this.checked ? '#4caf50' : 'rgba(62,59,46,0.4)';">
+                                <span style="position: absolute; inset: 0; background: {% if attendance_config.enabled == '1' %}#4caf50{% else %}rgba(62,59,46,0.4){% endif %}; border-radius: 28px; transition: background 0.3s;">
+                                    <span style="position: absolute; top: 3px; left: {% if attendance_config.enabled == '1' %}25px{% else %}3px{% endif %}; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: left 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></span>
+                                </span>
+                            </label>
+                            <span style="font-size: 0.88rem; font-weight: 600; color: {% if attendance_config.enabled == '1' %}#4caf50{% else %}rgba(237,232,223,0.4){% endif %};">
+                                {% if attendance_config.enabled == '1' %}Activé{% else %}Désactivé{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Heure cible -->
+                    <div style="flex: 0 0 auto;">
+                        <label for="attendance_target_hour" style="font-size: 0.82rem; color: rgba(237,232,223,0.5); font-weight: 600; display: block; margin-bottom: 0.5rem;">Heure limite (retard après)</label>
+                        <input type="time" name="attendance_target_hour" id="attendance_target_hour" value="{{ attendance_config.target_hour }}" style="background: rgba(237,232,223,0.06); border: 1px solid rgba(62,59,46,0.3); border-radius: 10px; padding: 0.6rem 1rem; color: #ede8df; font-size: 0.9rem; font-weight: 600; font-family: inherit;">
+                    </div>
+
+                    <!-- Bouton sauvegarder -->
+                    <div style="flex: 0 0 auto;">
+                        <button type="submit" style="padding: 0.65rem 1.5rem; background: #4caf50; color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.3s; font-family: inherit;" onmouseover="this.style.background='#66bb6a';" onmouseout="this.style.background='#4caf50';">
+                            💾 Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Filtre par date + Actions -->
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <label style="font-size: 0.85rem; font-weight: 600; color: rgba(237,232,223,0.5);">📅 Date :</label>
+                    <input type="date" id="attendance-date-filter" value="{{ attendance_records[0].date_key if attendance_records else '' }}" onchange="loadAttendanceByDate(this.value)" style="background: rgba(237,232,223,0.06); border: 1px solid rgba(62,59,46,0.3); border-radius: 10px; padding: 0.55rem 1rem; color: #ede8df; font-size: 0.88rem; font-weight: 600; font-family: inherit;">
+                    <span id="attendance-count-badge" style="font-size: 0.82rem; font-weight: 700; color: #4caf50; background: rgba(76,175,80,0.12); padding: 0.3rem 0.8rem; border-radius: 100px;">
+                        {{ attendance_count }} présent{{ 's' if attendance_count > 1 else '' }}
+                    </span>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <a id="attendance-pdf-link" href="/admin/attendance/export-pdf" style="padding: 0.55rem 1.2rem; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); border-radius: 10px; color: #f5a623; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;" onmouseover="this.style.background='rgba(232,130,12,0.2)';" onmouseout="this.style.background='rgba(232,130,12,0.1)';">
+                        📄 Exporter PDF
+                    </a>
+                    <form action="/admin/attendance/clear" method="POST" onsubmit="return confirm('Effacer toutes les présences de cette date ?');" style="display: inline;">
+                        <input type="hidden" name="date" id="attendance-clear-date" value="">
+                        <button type="submit" style="padding: 0.55rem 1.2rem; background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.2); border-radius: 10px; color: #ff6b6b; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.3s; font-family: inherit;" onmouseover="this.style.background='rgba(220,53,69,0.2)';" onmouseout="this.style.background='rgba(220,53,69,0.1)';">
+                            🗑️ Effacer
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tableau des présences -->
+            <div style="background: linear-gradient(165deg, rgba(27, 26, 20, 0.5), rgba(14, 14, 10, 0.7)); border: 1px solid rgba(62, 59, 46, 0.12); border-radius: 20px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(62,59,46,0.2);">
+                            <th style="padding: 1rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.08em;">#</th>
+                            <th style="padding: 1rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.08em;">Nom</th>
+                            <th style="padding: 1rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.08em;">Email</th>
+                            <th style="padding: 1rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.08em;">Heure d'arrivée</th>
+                            <th style="padding: 1rem 1.25rem; text-align: center; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.08em;">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-table-body">
+                        {% if attendance_records %}
+                            {% for rec in attendance_records %}
+                            <tr style="border-bottom: 1px solid rgba(62,59,46,0.08); transition: background 0.2s;" onmouseover="this.style.background='rgba(237,232,223,0.03)';" onmouseout="this.style.background='transparent';">
+                                <td style="padding: 0.85rem 1.25rem; font-size: 0.88rem; color: rgba(237,232,223,0.4); font-weight: 600;">{{ loop.index }}</td>
+                                <td style="padding: 0.85rem 1.25rem; font-size: 0.92rem; font-weight: 700; color: #fff;">{{ rec.display_name }}</td>
+                                <td style="padding: 0.85rem 1.25rem; font-size: 0.85rem; color: rgba(237,232,223,0.5);">{{ rec.user_email }}</td>
+                                <td style="padding: 0.85rem 1.25rem; font-size: 0.88rem; font-weight: 600; color: #ede8df;">
+                                    {{ rec.login_at.split(' ')[1] if ' ' in rec.login_at else rec.login_at }}
+                                </td>
+                                <td style="padding: 0.85rem 1.25rem; text-align: center;">
+                                    {% if rec.is_late %}
+                                        <span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.85rem; background: rgba(220, 53, 69, 0.12); border: 1px solid rgba(220, 53, 69, 0.25); border-radius: 100px; font-size: 0.78rem; font-weight: 700; color: #ff6b6b;">
+                                            🔴 En retard
+                                        </span>
+                                    {% else %}
+                                        <span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.85rem; background: rgba(76, 175, 80, 0.12); border: 1px solid rgba(76, 175, 80, 0.25); border-radius: 100px; font-size: 0.78rem; font-weight: 700; color: #81c784;">
+                                            ✅ À l'heure
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" style="padding: 3rem 1.25rem; text-align: center; color: rgba(237,232,223,0.3); font-size: 0.92rem;">
+                                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📋</div>
+                                    Aucune présence enregistrée pour cette date.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Résumé statistique -->
+            {% if attendance_records %}
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.5rem;">
+                <div style="background: linear-gradient(165deg, rgba(27,26,20,0.5), rgba(14,14,10,0.7)); border: 1px solid rgba(62,59,46,0.12); border-radius: 16px; padding: 1.25rem; text-align: center;">
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #fff;">{{ attendance_count }}</div>
+                    <div style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: 600;">Total présents</div>
+                </div>
+                <div style="background: linear-gradient(165deg, rgba(27,26,20,0.5), rgba(14,14,10,0.7)); border: 1px solid rgba(76,175,80,0.15); border-radius: 16px; padding: 1.25rem; text-align: center;">
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #4caf50;">{{ attendance_records | selectattr('is_late', 'equalto', 0) | list | length }}</div>
+                    <div style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: 600;">À l'heure</div>
+                </div>
+                <div style="background: linear-gradient(165deg, rgba(27,26,20,0.5), rgba(14,14,10,0.7)); border: 1px solid rgba(220,53,69,0.15); border-radius: 16px; padding: 1.25rem; text-align: center;">
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #ff6b6b;">{{ attendance_records | selectattr('is_late', 'equalto', 1) | list | length }}</div>
+                    <div style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: 600;">En retard</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ─── 1.4.5. Quizzes Section ─── -->
+        <div class="admin-detail-view fade-in" id="quizzes-section" style="display: none;">
+            <div class="detail-header" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="goBack()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">Gestion des Quiz Bibliques</h2>
+                </div>
+                <button class="btn-action" onclick="openAddQuizModal()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; font-size: 0.88rem; font-weight: 800; border-radius: 12px; background: #e8820c; color: #fff; border: none; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='#ff941a';" onmouseout="this.style.background='#e8820c';">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Nouveau Quiz
+                </button>
+            </div>
+
+            <!-- Quizzes Table Container -->
+            <div class="table-container" style="background: rgba(27, 26, 20, 0.4); border: 1px solid rgba(232, 130, 12, 0.1); border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(232, 130, 12, 0.2); background: rgba(232, 130, 12, 0.04);">
+                            <th style="padding: 1.25rem; font-size: 0.85rem; text-transform: uppercase; font-weight: 800; color: #e8820c;">Titre</th>
+                            <th style="padding: 1.25rem; font-size: 0.85rem; text-transform: uppercase; font-weight: 800; color: #e8820c;">Description</th>
+                            <th style="padding: 1.25rem; font-size: 0.85rem; text-transform: uppercase; font-weight: 800; color: #e8820c; text-align: center;">Questions</th>
+                            <th style="padding: 1.25rem; font-size: 0.85rem; text-transform: uppercase; font-weight: 800; color: #e8820c; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quizzes-table-body">
+                        <!-- Dynamic rows loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ─── 1.5. Comptes Section ─── -->
+        <div class="admin-detail-view fade-in" id="comptes-section" style="display: none;">
+            <div class="detail-header" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="goBack()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">Gestion des Comptes Saints</h2>
+                </div>
+                <button class="btn-add" onclick="openAddUserModal()" style="background: linear-gradient(135deg, #4caf50, #45a049); box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Ajouter un compte</span>
+                </button>
+            </div>
+
+            <!-- Users Table -->
+            <div class="media-table-wrap">
+                <table class="media-table">
+                    <thead>
+                        <tr>
+                            <th>Adresse E-mail (@ministereimpact.org)</th>
+                            <th style="text-align: center; width: 140px;">Accès Nayoth</th>
+                            <th style="text-align: center; width: 140px;">Accès Intercession</th>
+                            <th>Date d'autorisation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr style="border-bottom: 1px solid rgba(237,232,223,0.05);">
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <span style="font-size: 1.25rem;">👤</span>
+                                    <div class="table-title" style="font-weight: 600; color: #fff; font-size: 0.95rem;">
+                                        {{ u.email }}
+                                        {% if u.is_verified %}
+                                            <span style="font-size: 0.72rem; font-weight: bold; background: rgba(76, 175, 80, 0.15); color: #81c784; padding: 0.15rem 0.45rem; border-radius: 100px; margin-left: 0.5rem; display: inline-block;">Actif</span>
+                                        {% else %}
+                                            <span style="font-size: 0.72rem; font-weight: bold; background: rgba(232, 130, 12, 0.15); color: #e8820c; padding: 0.15rem 0.45rem; border-radius: 100px; margin-left: 0.5rem; display: inline-block;">Attente E-mail</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="text-align: center;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" {% if u.acces_nayoth %}checked{% endif %}
+                                           {% if u.email == 'yann.noukaze@ministereimpact.org' %}disabled{% endif %}
+                                           onclick="toggleUserAccess({{ u.id }}, 'nayoth', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td style="text-align: center;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" {% if u.acces_intercession %}checked{% endif %}
+                                           {% if u.email == 'yann.noukaze@ministereimpact.org' %}disabled{% endif %}
+                                           onclick="toggleUserAccess({{ u.id }}, 'intercession', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td style="font-size:0.85rem; color:rgba(237,232,223,0.45);">
+                                {{ u.date_creation[:16] if u.date_creation else '—' }}
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <form action="/admin/comptes/supprimer/{{ u.id }}" method="POST" style="display: inline;" onsubmit="return confirm('Voulez-vous vraiment révoquer l\'accès pour {{ u.email }} ?');">
+                                        <button type="submit" class="btn-delete" title="Supprimer" style="color: #ef5350; background: rgba(239, 83, 80, 0.08);">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: rgba(237,232,223,0.3); padding: 3rem 1rem;">
+                                Aucun compte autorisé configuré.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ─── Section Invitations ─── -->
+            <div style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-top: 1px solid rgba(237,232,223,0.1); padding-top: 3rem;">
+                <div>
+                    <h3 style="font-size: 1.5rem; font-weight: 800; color: #fff;">Générer des Liens d'Inscription</h3>
+                    <p style="font-size: 0.85rem; color: rgba(237, 232, 223, 0.4); margin-top: 0.25rem;">Les nouveaux comptes ne peuvent être créés que via ces liens d'invitation uniques.</p>
+                </div>
+            </div>
+
+            <!-- Invitation Form -->
+            <div style="background: rgba(27, 26, 20, 0.4); border: 1px solid rgba(237,232,223,0.06); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
+                <form action="/admin/invitation/generer" method="POST" style="display: flex; gap: 1rem; align-items: flex-end;" onsubmit="return validateInviteEmail();">
+                    <div style="flex: 1;">
+                        <label class="form-label" style="font-size: 0.75rem; color: rgba(237,232,223,0.5);">Adresse e-mail de l'invité (@ministereimpact.org)</label>
+                        <input type="email" name="email" id="form-invite-email" class="form-input" placeholder="prenom.nom@ministereimpact.org" required style="background: rgba(14,14,10,0.6); border: 1px solid rgba(237,232,223,0.1); border-radius: 10px; padding: 0.75rem 1rem; color: #fff; width: 100%;">
+                    </div>
+                    <button type="submit" class="btn-add" style="height: 42px; margin-bottom: 0px; background: linear-gradient(135deg, #e8820c, #d4770a);">
+                        Créer le lien
+                    </button>
+                </form>
+            </div>
+
+            <!-- Invitations Table -->
+            <div class="media-table-wrap">
+                <table class="media-table">
+                    <thead>
+                        <tr>
+                            <th>Destinataire</th>
+                            <th>Lien d'inscription unique</th>
+                            <th style="width: 120px; text-align: center;">Statut</th>
+                            <th style="width: 100px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invite in invitations %}
+                        <tr style="border-bottom: 1px solid rgba(237,232,223,0.05);">
+                            <td>
+                                <div style="font-weight: 600; color: #fff; font-size: 0.95rem;">{{ invite.email }}</div>
+                                <div style="font-size: 0.75rem; color: rgba(237,232,223,0.45); margin-top: 0.1rem;">Généré le {{ invite.date_creation[:16] }}</div>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid rgba(237,232,223,0.05);">
+                                    <input type="text" readonly id="invite-link-{{ invite.id }}" value="{{ request.host_url.rstrip('/') }}/login?view=register&token={{ invite.token }}" style="background: transparent; border: none; color: #ede8df; font-family: monospace; font-size: 0.82rem; flex: 1; outline: none;">
+                                    <button class="btn-edit" onclick="copyInviteLink('invite-link-{{ invite.id }}', this)" style="background: rgba(237, 232, 223, 0.08); padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.75rem; border: none; cursor: pointer; color: #fff; transition: all 0.2s;">
+                                        Copier
+                                    </button>
+                                </div>
+                            </td>
+                            <td style="text-align: center;">
+                                {% if invite.used %}
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.3); background: rgba(237,232,223,0.04); padding: 0.2rem 0.6rem; border-radius: 100px;">Consommé</span>
+                                {% else %}
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: #81c784; background: rgba(76, 175, 80, 0.15); padding: 0.2rem 0.6rem; border-radius: 100px;">Disponible</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                <form action="/admin/invitation/supprimer/{{ invite.id }}" method="POST" style="display: inline;" onsubmit="return confirm('Supprimer ce lien d\'invitation ?');">
+                                    <button type="submit" class="btn-delete" title="Supprimer" style="color: #ef5350; background: rgba(239, 83, 80, 0.08);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: rgba(237,232,223,0.3); padding: 3rem 1rem;">
+                                Aucun lien d'invitation actif. Saisissez une adresse ci-dessus pour en générer un.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ─── 1.6. Communiqués Section ─── -->
+        <div class="admin-detail-view fade-in" id="communiques-section" style="display: none;">
+            <div class="detail-header" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="goBack()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">Gestion des Communiqués Dominicales</h2>
+                </div>
+                <button class="btn-add" onclick="openAddCommuniqueModal()" style="background: linear-gradient(135deg, #e8820c, #d4770a); box-shadow: 0 4px 15px rgba(232, 130, 12, 0.2);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Créer un communiqué</span>
+                </button>
+            </div>
+
+            <!-- Communiques Table -->
+            <div class="media-table-wrap">
+                <table class="media-table">
+                    <thead>
+                        <tr>
+                            <th>Titre du Communiqué</th>
+                            <th>Date de publication</th>
+                            <th style="text-align: center; width: 280px;">Traductions disponibles</th>
+                            <th style="width: 140px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in communiques %}
+                        <tr style="border-bottom: 1px solid rgba(237,232,223,0.05);">
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <span style="font-size: 1.25rem;">📢</span>
+                                    <div>
+                                        <div class="table-title" style="font-weight: 600; color: #fff; font-size: 0.95rem;">{{ c.titre }}</div>
+                                        <div style="font-size: 0.78rem; color: rgba(237,232,223,0.4); margin-top: 0.15rem; max-width: 450px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            {{ c.contenu_fr }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-size:0.85rem; color:rgba(237,232,223,0.45);">
+                                {{ c.date_creation[:16] if c.date_creation else '—' }}
+                            </td>
+                            <td style="text-align: center;">
+                                <div style="display: inline-flex; gap: 0.35rem;">
+                                    <span style="font-size: 0.72rem; font-weight: bold; background: rgba(76, 175, 80, 0.15); color: #81c784; padding: 0.15rem 0.45rem; border-radius: 100px;">FR</span>
+                                    {% if c.contenu_en %}
+                                        <span style="font-size: 0.72rem; font-weight: bold; background: rgba(232, 130, 12, 0.15); color: #e8820c; padding: 0.15rem 0.45rem; border-radius: 100px;">EN</span>
+                                    {% endif %}
+                                    {% if c.contenu_es %}
+                                        <span style="font-size: 0.72rem; font-weight: bold; background: rgba(232, 130, 12, 0.15); color: #e8820c; padding: 0.15rem 0.45rem; border-radius: 100px;">ES</span>
+                                    {% endif %}
+                                    {% if c.contenu_nl %}
+                                        <span style="font-size: 0.72rem; font-weight: bold; background: rgba(232, 130, 12, 0.15); color: #e8820c; padding: 0.15rem 0.45rem; border-radius: 100px;">NL</span>
+                                    {% endif %}
+                                    {% if c.contenu_ln %}
+                                        <span style="font-size: 0.72rem; font-weight: bold; background: rgba(232, 130, 12, 0.15); color: #e8820c; padding: 0.15rem 0.45rem; border-radius: 100px;">LN</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td style="text-align: center;">
+                                <div class="table-actions" style="justify-content: center; gap: 0.5rem;">
+                                    <button class="btn-edit" onclick="openEditCommuniqueModal({{ c | tojson | forceescape }})" title="Modifier" style="color: #e8820c; background: rgba(232, 130, 12, 0.08); padding: 0.4rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <form action="/admin/communiques/supprimer/{{ c.id }}" method="POST" style="display: inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce communiqué ?');">
+                                        <button type="submit" class="btn-delete" title="Supprimer" style="color: #ef5350; background: rgba(239, 83, 80, 0.08); padding: 0.4rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: rgba(237,232,223,0.3); padding: 3rem 1rem;">
+                                Aucun communiqué publié. Cliquez sur "Créer un communiqué" pour publier vos premières annonces.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ─── 1.7. Séries Section ─── -->
+        <div class="admin-detail-view fade-in" id="series-section" style="display: none;">
+            <div class="detail-header" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="showCategories()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">Gestion des Séries Thématiques</h2>
+                </div>
+                <button class="btn-add" onclick="openAddSeriesModal()" style="background: linear-gradient(135deg, #e8820c, #d4770a); box-shadow: 0 4px 15px rgba(232, 130, 12, 0.2);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Créer une série</span>
+                </button>
+            </div>
+
+            <!-- Series Table -->
+            <div class="media-table-wrap">
+                <table class="media-table">
+                    <thead>
+                        <tr>
+                            <th>Titre de la Série</th>
+                            <th>Catégorie</th>
+                            <th>Commission / Rubrique</th>
+                            <th style="width: 140px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in series %}
+                        <tr style="border-bottom: 1px solid rgba(237,232,223,0.05);">
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    {% if s.url_miniature %}
+                                        <img src="{{ s.url_miniature }}" style="width: 50px; height: 35px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);" alt="">
+                                    {% else %}
+                                        <div style="width: 50px; height: 35px; border-radius: 6px; background: rgba(232,130,12,0.1); border: 1px solid rgba(232,130,12,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">📚</div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="table-title" style="font-weight: 600; color: #fff; font-size: 0.95rem;">{{ s.titre }}</div>
+                                        <div style="font-size: 0.78rem; color: rgba(237,232,223,0.4); margin-top: 0.15rem; max-width: 450px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            {{ s.description or 'Aucune description' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-size:0.85rem; color:rgba(237,232,223,0.45);">
+                                {{ s.categorie }}
+                            </td>
+                            <td style="font-size:0.85rem; color:rgba(237,232,223,0.45);">
+                                {{ s.commission or 'Général' }}
+                            </td>
+                            <td style="text-align: center;">
+                                <div class="table-actions" style="justify-content: center; gap: 0.5rem;">
+                                    <button class="btn-edit" onclick="openEditSeriesModal({{ s | tojson | forceescape }})" title="Modifier" style="color: #e8820c; background: rgba(232, 130, 12, 0.08); padding: 0.4rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <form action="/admin/series/supprimer/{{ s.id }}" method="POST" style="display: inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer cette série ? (Les médias associés ne seront pas supprimés, ils seront simplement détachés de la série)');">
+                                        <button type="submit" class="btn-delete" title="Supprimer" style="color: #ef5350; background: rgba(239, 83, 80, 0.08); padding: 0.4rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: rgba(237,232,223,0.3); padding: 3rem 1rem;">
+                                Aucune série créée. Cliquez sur "Créer une série" pour organiser vos premiers enseignements thématiques.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ─── 1.8. Radio Section ─── -->
+        <div class="admin-detail-view fade-in" id="radio-section" style="display: none; max-width: 650px; margin: 0 auto;">
+            <div class="detail-header" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="showCategories()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">Configuration Radio Live</h2>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(165deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); border-radius: 24px; padding: 2.5rem; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                <form action="/admin/radio/config" method="POST">
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                            <span>Activer la diffusion radio publique</span>
+                            <div style="position: relative;">
+                                <input type="checkbox" name="radio_enabled" value="1" {% if radio_config.enabled == '1' %}checked{% endif %} style="display: none;" id="toggle-radio-input" onchange="
+                                    const label = document.getElementById('toggle-radio-label');
+                                    const knob = document.getElementById('toggle-radio-knob');
+                                    const bg = this.nextElementSibling;
+                                    if(this.checked) {
+                                        label.textContent = 'Actif (En ligne)';
+                                        label.style.color = '#81c784';
+                                        knob.style.left = '26px';
+                                        bg.style.background = '#4caf50';
+                                    } else {
+                                        label.textContent = 'Inactif (Hors ligne)';
+                                        label.style.color = 'rgba(237,232,223,0.4)';
+                                        knob.style.left = '2px';
+                                        bg.style.background = 'rgba(255,255,255,0.15)';
+                                    }
+                                ">
+                                <div style="width: 50px; height: 26px; background: {% if radio_config.enabled == '1' %}#4caf50{% else %}rgba(255,255,255,0.15){% endif %}; border-radius: 100px; position: relative; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.08);">
+                                    <div style="width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: {% if radio_config.enabled == '1' %}26px{% else %}2px{% endif %}; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);" id="toggle-radio-knob"></div>
+                                </div>
+                            </div>
+                        </label>
+                        <span id="toggle-radio-label" style="font-size: 0.8rem; font-weight: 700; color: {% if radio_config.enabled == '1' %}#81c784{% else %}rgba(237,232,223,0.4){% endif %}; margin-top: 0.5rem; display: inline-block;">
+                            {% if radio_config.enabled == '1' %}Actif (En ligne){% else %}Inactif (Hors ligne){% endif %}
+                        </span>
+                        <span style="font-size: 0.76rem; color: rgba(237,232,223,0.35); display: block; margin-top: 0.25rem;">Permet d'afficher ou masquer l'onglet \"Radio\" pour les saints sur le portail public.</span>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label class="form-label" for="form-radio-url">URL du flux audio en direct *</label>
+                        <input type="url" class="form-input" name="radio_stream_url" id="form-radio-url" value="{{ radio_config.stream_url }}" placeholder="ex: https://mon-serveur-icecast/stream.mp3" required style="font-family: monospace; font-size: 0.9rem;">
+                        <span style="font-size: 0.76rem; color: rgba(237,232,223,0.35); display: block; margin-top: 0.25rem;">Entrez le lien direct HTTP/HTTPS vers votre flux radio (format MP3, AAC ou OGG).</span>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 2rem;">
+                        <button type="button" class="btn-cancel" onclick="showCategories()">Annuler</button>
+                        <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #e8820c, #d4770a); box-shadow: 0 4px 15px rgba(232, 130, 12, 0.2);">Sauvegarder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ─── 1.9. Lives Section ─── -->
+        <div class="admin-detail-view fade-in" id="lives-section" style="display: none;">
+            <div class="detail-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="showCategories()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">Gestion des Directs Vidéo</h2>
+                </div>
+                <button class="btn-submit" onclick="openAddLiveModal()" style="background: linear-gradient(135deg, #ef5350, #d32f2f); box-shadow: 0 4px 15px rgba(239, 83, 80, 0.2);">
+                    + Ajouter un direct
+                </button>
+            </div>
+
+            <div class="table-container" style="background: rgba(27, 26, 20, 0.5); border: 1px solid rgba(237, 232, 223, 0.08); border-radius: 20px; overflow-x: auto; margin-top: 1.5rem;">
+                <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(237, 232, 223, 0.08); text-align: left;">
+                            <th style="padding: 1.25rem 1.5rem; font-size: 0.8rem; font-weight: 800; color: rgba(237, 232, 223, 0.45); text-transform: uppercase;">Direct / Titre</th>
+                            <th style="padding: 1.25rem 1.5rem; font-size: 0.8rem; font-weight: 800; color: rgba(237, 232, 223, 0.45); text-transform: uppercase;">URL du Flux</th>
+                            <th style="padding: 1.25rem 1.5rem; font-size: 0.8rem; font-weight: 800; color: rgba(237, 232, 223, 0.45); text-transform: uppercase;">Statut</th>
+                            <th style="padding: 1.25rem 1.5rem; font-size: 0.8rem; font-weight: 800; color: rgba(237, 232, 223, 0.45); text-transform: uppercase; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in lives %}
+                        <tr style="border-bottom: 1px solid rgba(237, 232, 223, 0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)';" onmouseout="this.style.background='none';">
+                            <td style="padding: 1.25rem 1.5rem; font-size: 0.95rem; font-weight: 700; color: #fff;">
+                                {{ l.titre }}
+                                {% if l.description %}
+                                <div style="font-size: 0.78rem; font-weight: 500; color: rgba(237, 232, 223, 0.4); margin-top: 0.2rem;">{{ l.description }}</div>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 1.25rem 1.5rem; font-family: monospace; font-size: 0.8rem; color: rgba(237, 232, 223, 0.6); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {{ l.url_direct }}
+                            </td>
+                            <td style="padding: 1.25rem 1.5rem;">
+                                {% if l.is_active == 1 %}
+                                <span style="font-size: 0.72rem; font-weight: 800; color: #81c784; background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.2); padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.04em;">Actif (Live)</span>
+                                {% else %}
+                                <span style="font-size: 0.72rem; font-weight: 800; color: rgba(237,232,223,0.4); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.04em;">Hors Ligne</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 1.25rem 1.5rem; text-align: right;">
+                                <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
+                                    <button class="btn-edit" onclick='openEditLiveModal({{ l | tojson }})' title="Modifier" style="color: #ede8df; background: rgba(237, 232, 223, 0.06); padding: 0.4rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <form action="/admin/lives/supprimer/{{ l.id }}" method="POST" style="display: inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce direct vidéo ?');">
+                                        <button type="submit" class="btn-delete" title="Supprimer" style="color: #ef5350; background: rgba(239, 83, 80, 0.08); padding: 0.4rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: rgba(237,232,223,0.3); padding: 3rem 1rem;">
+                                Aucun direct vidéo créé. Cliquez sur "Ajouter un direct" pour diffuser votre culte ou réunion.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ─── 2. Commissions Selection View ─── -->
+        <div id="view-commissions" style="display: none;" class="fade-in">
+            <div style="text-align: center; margin: 3rem 0 2rem;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 0.5rem;">
+                    <button class="btn-cancel" onclick="showCategories()" style="padding: 0.4rem 0.9rem; font-size: 0.8rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h1 id="commissions-title" style="font-size: 2.2rem; font-weight: 900; color: #fff; background: linear-gradient(135deg, #fff 0%, #ede8df 50%, #f5a623 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Enseignement des Commissions</h1>
+                </div>
+                <p id="commissions-desc" style="font-size: 0.95rem; color: rgba(237, 232, 223, 0.4);">Sélectionnez la commission spécifique à gérer</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; max-width: 1050px; margin: 3rem auto 5rem; padding: 0 1rem;" id="commissions-grid">
+                <!-- Cards generated dynamically by JS -->
+            </div>
+        </div>
+
+        <!-- ─── 3. Category Detail View (HIDDEN BY DEFAULT) ─── -->
+        <div id="view-detail" style="display: none;" class="fade-in">
+            <!-- Action Bar -->
+            <div class="action-bar">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="goBack()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" id="detail-category-title">Gestion des Enseignements</h2>
+                </div>
+                <button class="btn-add" onclick="openAddModal()" id="btn-add-media">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span id="btn-add-text">Ajouter un enseignement</span>
+                </button>
+            </div>
+
+            <!-- Media Table -->
+            <div class="media-table-wrap">
+                <table class="media-table" id="media-table">
+                    <thead>
+                        <tr>
+                            <th>Titre</th>
+                            <th id="th-commission">Commission / Rubrique</th>
+                            <th>Langue</th>
+                            <th>Fichier</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in medias %}
+                        <tr id="row-{{ m.id }}" data-category="{{ m.categorie }}" data-commission="{{ m.commission }}" data-title="{{ m.titre | e }}">
+                            <td>
+                                <div class="table-title">{{ m.titre }}</div>
+                            </td>
+                            <td class="td-commission-cell">
+                                {% if m.commission %}
+                                    <span class="table-tag table-tag-com">{{ m.commission }}</span>
+                                {% else %}
+                                    <span style="color: rgba(237,232,223,0.25);">—</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="table-tag table-tag-lang">{{ m.langue or '—' }}</span></td>
+                            <td>
+                                {% if m.url_video %}
+                                    <div class="table-file table-file-ok" title="{{ m.url_video }}">
+                                        {% if m.url_video.endswith('.mp3') %}🎵{% else %}🎬{% endif %}
+                                        {{ m.url_video.split('/')[-1] }}
+                                    </div>
+                                {% else %}
+                                    <div class="table-file table-file-missing">— Aucun fichier</div>
+                                {% endif %}
+                            </td>
+                            <td style="font-size:0.78rem; color:rgba(237,232,223,0.35);">
+                                {{ m.date_ajout[:10] if m.date_ajout else '—' }}
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn-edit" onclick="openEditModal({{ m.id }})" title="Modifier" id="btn-edit-{{ m.id }}">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <button class="btn-delete" onclick="openDeleteModal({{ m.id }})" title="Supprimer" id="btn-del-{{ m.id }}">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="empty-state" id="table-empty-state" style="display: none;">
+                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">📭</div>
+                    <p>Aucun média dans cette catégorie pour le moment. Commencez par en ajouter un !</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════
+         MODAL: Ajouter / Modifier
+         ═══════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-form" onclick="if(event.target===this)closeModal('modal-form')">
+        <div class="modal-box">
+            <h2 class="modal-title" id="modal-form-title">Ajouter un média</h2>
+            <p class="modal-subtitle" id="modal-form-subtitle">Remplissez les informations et uploadez votre fichier.</p>
+
+            <form id="media-form" method="POST" enctype="multipart/form-data">
+                <!-- Hidden inputs for category and commission since we chose them already -->
+                <input type="hidden" name="categorie" id="form-categorie">
+                <input type="hidden" name="commission" id="form-commission">
+
+                <div class="form-group">
+                    <label class="form-label" for="form-titre">Titre *</label>
+                    <input type="text" class="form-input" name="titre" id="form-titre" placeholder="Ex: La Puissance de la Prière" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-description">Description</label>
+                    <textarea class="form-textarea" name="description" id="form-description" placeholder="Une brève description du contenu..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-paroles-keywords">Paroles ou Mots-clés de recherche (Refrains, paroles complètes, thèmes...)</label>
+                    <textarea class="form-textarea" name="paroles_keywords" id="form-paroles-keywords" placeholder="Ex: Collez ici les paroles de la chanson ou les mots-clés importants de l'enseignement pour aider les saints à les retrouver en tapant un mot dans la barre de recherche..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-langue">Langue</label>
+                    <input type="text" class="form-input" name="langue" id="form-langue" placeholder="Ex: Français, Néerlandais, Espagnol…">
+                </div>
+
+                <!-- Series Linking (Optional) -->
+                <div class="form-group" style="border-top: 1px solid rgba(237,232,223,0.08); padding-top: 1.25rem; margin-top: 1.25rem;">
+                    <label class="form-label" for="form-series-id">Série thématique (Optionnel)</label>
+                    <select class="form-input" name="series_id" id="form-series-id" onchange="toggleFormSeriesFields(this.value)">
+                        <option value="" data-category="">-- Aucune série --</option>
+                        {% for s in series %}
+                            <option value="{{ s.id }}" data-category="{{ s.categorie }}">{{ s.titre }} ({{ s.categorie }}{% if s.commission %} - {{ s.commission }}{% endif %})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div id="form-series-details-group" style="display: none; background: rgba(0,0,0,0.18); padding: 1rem; border-radius: 12px; border: 1px solid rgba(232,130,12,0.08); margin-bottom: 1.25rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem; color: rgba(237,232,223,0.6);" for="form-chapitre">Nom du Chapitre *</label>
+                            <input type="text" class="form-input" name="chapitre" id="form-chapitre" placeholder="ex: Chapitre 1">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem; color: rgba(237,232,223,0.6);" for="form-ordre-episode">Ordre / Épisode N°</label>
+                            <input type="number" class="form-input" name="ordre_episode" id="form-ordre-episode" placeholder="ex: 1" min="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Choix de la source -->
+                <div class="form-group">
+                    <label class="form-label">Provenance du fichier</label>
+                    <div style="display: flex; gap: 2rem; margin-bottom: 0.5rem;">
+                        <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; color: #fff; font-size: 0.85rem;">
+                            <input type="radio" name="source_type" value="local" checked onclick="toggleSourceFields('local')">
+                            Fichier local (Mac)
+                        </label>
+                        <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; color: #fff; font-size: 0.85rem;">
+                            <input type="radio" name="source_type" value="external" onclick="toggleSourceFields('external')">
+                            Lien externe (Cloudflare R2, YouTube, Vimeo...)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- File upload: Media -->
+                <div class="form-group" id="group-source-local">
+                    <label class="form-label">Fichier vidéo ou audio</label>
+                    <div class="file-upload" id="upload-media-zone">
+                        <input type="file" name="media_file" id="form-media-file" accept="video/*,audio/*">
+                        <div class="file-upload-icon">🎬</div>
+                        <div class="file-upload-text">Glissez ou <strong>cliquez</strong> pour choisir un fichier</div>
+                        <div class="file-upload-hint">.mp4, .webm, .mov, .mp3, .wav, .m4a, .aac</div>
+                        <div class="file-name" id="media-file-name"></div>
+                    </div>
+                </div>
+
+                <!-- External URL input -->
+                <div class="form-group" id="group-source-external" style="display: none;">
+                    <label class="form-label" for="form-media-url">Lien URL de la vidéo / audio (Français - Par défaut) *</label>
+                    <input type="url" class="form-input" name="media_url" id="form-media-url" placeholder="Ex: https://pub-xxx.r2.dev/video.mp4 ou https://www.youtube.com/watch?v=...">
+                </div>
+
+                <!-- Secondary Languages Section (URL inputs only) -->
+                <div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid rgba(237,232,223,0.1); padding-top: 1.25rem;">
+                    <h4 style="color: #fff; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem;">Autres langues disponibles (Optionnel - Liens externes)</h4>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem;">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem; color: rgba(237,232,223,0.5);" for="form-media-url-en">🇬🇧 Anglais (Lien URL)</label>
+                            <input type="url" class="form-input" name="media_url_en" id="form-media-url-en" placeholder="https://...">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem; color: rgba(237,232,223,0.5);" for="form-media-url-es">🇪🇸 Espagnol (Lien URL)</label>
+                            <input type="url" class="form-input" name="media_url_es" id="form-media-url-es" placeholder="https://...">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem; color: rgba(237,232,223,0.5);" for="form-media-url-nl">🇳🇱 Néerlandais (Lien URL)</label>
+                            <input type="url" class="form-input" name="media_url_nl" id="form-media-url-nl" placeholder="https://...">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem; color: rgba(237,232,223,0.5);" for="form-media-url-ln">🇨🇩 Lingala (Lien URL)</label>
+                            <input type="url" class="form-input" name="media_url_ln" id="form-media-url-ln" placeholder="https://...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File upload: Miniature -->
+                <div class="form-group">
+                    <label class="form-label">Miniature (optionnel)</label>
+                    <div class="file-upload" id="upload-thumb-zone">
+                        <input type="file" name="thumbnail_file" id="form-thumb-file" accept="image/*">
+                        <div class="file-upload-icon">🖼️</div>
+                        <div class="file-upload-text">Glissez ou <strong>cliquez</strong> pour choisir une image</div>
+                        <div class="file-upload-hint">.jpg, .png, .webp, .gif</div>
+                        <div class="file-name" id="thumb-file-name"></div>
+                    </div>
+                </div>
+
+                <!-- Banner vertical positioning slider -->
+                <div class="form-group" style="margin-top: 1.25rem; background: rgba(0,0,0,0.18); padding: 1.25rem; border-radius: 14px; border: 1px solid rgba(232, 130, 12, 0.15);">
+                    <label class="form-label" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Positionnement vertical de la bannière (Netflix)</span>
+                        <span id="banner-position-val" style="color: #e8820c; font-weight: bold;">15%</span>
+                    </label>
+                    <input type="range" name="position_banniere" id="form-position-banniere" min="0" max="100" value="15" class="form-input" style="padding: 0; cursor: pointer; height: 6px; background: rgba(237,232,223,0.1); border-radius: 100px; -webkit-appearance: none; outline: none;" oninput="document.getElementById('banner-position-val').textContent = this.value + '%'">
+                    <span style="font-size: 0.72rem; color: rgba(237,232,223,0.35); display: block; margin-top: 0.50rem; line-height: 1.4;">
+                        Ajuste le cadrage vertical de l'image pour la bannière géante (0% = cadrage tout en haut (pour ne pas couper le visage), 50% = centré, 100% = cadrage tout en bas).
+                    </span>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-submit" id="btn-form-submit">
+                        Ajouter le média
+                    </button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-form')">
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         MODAL: Ajouter un Utilisateur
+         ═══════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-user-form" onclick="if(event.target===this)closeModal('modal-user-form')">
+        <div class="modal-box" style="max-width: 460px; border-color: rgba(76, 175, 80, 0.2);">
+            <div class="modal-header">
+                <h3 class="modal-title" style="color: #fff; font-weight: 800;">Ajouter un Compte Membre</h3>
+                <button class="modal-close" onclick="closeModal('modal-user-form')">&times;</button>
+            </div>
+            <form action="/admin/comptes/ajouter" method="POST" onsubmit="return validateAdminUserEmail();">
+                <div class="form-group">
+                    <label class="form-label" for="form-user-email">Adresse e-mail *</label>
+                    <input type="email" class="form-input" name="email" id="form-user-email" placeholder="nom@ministereimpact.org" required>
+                    <span style="font-size: 0.72rem; color: rgba(237,232,223,0.35); display: block; margin-top: 0.25rem;">Obligatoirement sous l'extension @ministereimpact.org</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="form-user-password">Mot de passe d'accès *</label>
+                    <input type="password" class="form-input" name="password" id="form-user-password" placeholder="Min. 6 caractères" minlength="6" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-user-form')">Annuler</button>
+                    <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #4caf50, #45a049); box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);">Créer le compte</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Ajouter / Editer un Communique -->
+    <div class="modal-overlay" id="modal-communique-form" onclick="if(event.target===this)closeModal('modal-communique-form')">
+        <div class="modal-box" style="max-width: 650px; border-color: rgba(232, 130, 12, 0.2);">
+            <style>
+                .form-tab-btn {
+                    flex: 1;
+                    border: none;
+                    background: transparent;
+                    color: rgba(237,232,223,0.5);
+                    padding: 0.5rem;
+                    border-radius: 6px;
+                    font-size: 0.78rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .form-tab-btn.active {
+                    background: rgba(232, 130, 12, 0.15);
+                    color: #e8820c;
+                }
+            </style>
+            
+            <div class="modal-header">
+                <h3 class="modal-title" id="communique-modal-title" style="color: #fff; font-weight: 800;">Publier un Communiqué</h3>
+                <button class="modal-close" onclick="closeModal('modal-communique-form')">&times;</button>
+            </div>
+            
+            <form id="communique-form" action="/admin/communiques/ajouter" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="form-comm-title">Titre du Communiqué *</label>
+                    <input type="text" class="form-input" name="titre" id="form-comm-title" placeholder="ex: Communiqués du Dimanche 12 Juillet" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-comm-date">Date de publication (Optionnelle)</label>
+                    <input type="date" class="form-input" name="date_creation" id="form-comm-date" style="color-scheme: dark;">
+                    <span style="font-size: 0.72rem; color: rgba(237,232,223,0.35); display: block; margin-top: 0.25rem;">Par défaut: date de création. Permet de choisir explicitement le dimanche correspondant.</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Contenu par langue</label>
+                    
+                    <!-- Form Tabs -->
+                    <div style="display: flex; gap: 0.25rem; background: rgba(0,0,0,0.25); padding: 0.25rem; border-radius: 10px; margin-bottom: 1rem;">
+                        <button type="button" onclick="switchFormTab('fr')" id="form-tab-fr" class="form-tab-btn active">🇫🇷 Français *</button>
+                        <button type="button" onclick="switchFormTab('en')" id="form-tab-en" class="form-tab-btn">🇬🇧 Anglais</button>
+                        <button type="button" onclick="switchFormTab('es')" id="form-tab-es" class="form-tab-btn">🇪🇸 Espagnol</button>
+                        <button type="button" onclick="switchFormTab('nl')" id="form-tab-nl" class="form-tab-btn">🇳🇱 Néerlandais</button>
+                        <button type="button" onclick="switchFormTab('ln')" id="form-tab-ln" class="form-tab-btn">🇨🇩 Lingala</button>
+                    </div>
+
+                    <!-- Textareas for each language -->
+                    <div class="form-textarea-container" id="form-area-fr">
+                        <textarea class="form-input" name="contenu_fr" id="form-comm-fr" rows="8" placeholder="Écrivez le communiqué en français ici..." required style="resize: vertical; font-family: inherit; font-size: 0.88rem; line-height: 1.6; padding: 0.8rem;"></textarea>
+                    </div>
+                    <div class="form-textarea-container" id="form-area-en" style="display: none;">
+                        <textarea class="form-input" name="contenu_en" id="form-comm-en" rows="8" placeholder="Saisir la version anglaise (facultative)..." style="resize: vertical; font-family: inherit; font-size: 0.88rem; line-height: 1.6; padding: 0.8rem;"></textarea>
+                    </div>
+                    <div class="form-textarea-container" id="form-area-es" style="display: none;">
+                        <textarea class="form-input" name="contenu_es" id="form-comm-es" rows="8" placeholder="Saisir la version espagnole (facultative)..." style="resize: vertical; font-family: inherit; font-size: 0.88rem; line-height: 1.6; padding: 0.8rem;"></textarea>
+                    </div>
+                    <div class="form-textarea-container" id="form-area-nl" style="display: none;">
+                        <textarea class="form-input" name="contenu_nl" id="form-comm-nl" rows="8" placeholder="Saisir la version néerlandaise (facultative)..." style="resize: vertical; font-family: inherit; font-size: 0.88rem; line-height: 1.6; padding: 0.8rem;"></textarea>
+                    </div>
+                    <div class="form-textarea-container" id="form-area-ln" style="display: none;">
+                        <textarea class="form-input" name="contenu_ln" id="form-comm-ln" rows="8" placeholder="Saisir la version lingala (facultative)..." style="resize: vertical; font-family: inherit; font-size: 0.88rem; line-height: 1.6; padding: 0.8rem;"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-communique-form')">Annuler</button>
+                    <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #e8820c, #d4770a); box-shadow: 0 4px 15px rgba(232, 130, 12, 0.2);">Publier le communiqué</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Ajouter / Editer une Serie -->
+    <div class="modal-overlay" id="modal-series-form" onclick="if(event.target===this)closeModal('modal-series-form')">
+        <div class="modal-box" style="max-width: 600px; border-color: rgba(232, 130, 12, 0.2);">
+            <div class="modal-header">
+                <h3 class="modal-title" id="series-modal-title" style="color: #fff; font-weight: 800;">Créer une Série</h3>
+                <button class="modal-close" onclick="closeModal('modal-series-form')">&times;</button>
+            </div>
+            
+            <form id="series-form" action="/admin/series/ajouter" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label" for="form-series-title">Titre de la Série *</label>
+                    <input type="text" class="form-input" name="titre" id="form-series-title" placeholder="ex: La Marche par l'Esprit" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-series-description">Description</label>
+                    <textarea class="form-textarea" name="description" id="form-series-description" placeholder="Une description générale de cette série thématique..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="form-series-categorie">Catégorie *</label>
+                    <select class="form-input" name="categorie" id="form-series-categorie" required onchange="toggleSeriesCommissionField(this.value)">
+                        <option value="Enseignement">Enseignement</option>
+                        <option value="Musique">Musique</option>
+                        <option value="Podcast">Podcast</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="group-series-commission">
+                    <label class="form-label" for="form-series-commission">Commission / Rubrique</label>
+                    <select class="form-input" name="commission" id="form-series-commission">
+                        <option value="">Général (Aucune)</option>
+                        <!-- Enseignement options -->
+                        {% for c in commissions_enseignement %}
+                            <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- File upload: Miniature -->
+                <div class="form-group">
+                    <label class="form-label">Miniature de la Série (optionnel)</label>
+                    <div class="file-upload" id="upload-series-thumb-zone">
+                        <input type="file" name="thumbnail_file" id="form-series-thumb-file" accept="image/*">
+                        <div class="file-upload-icon">🖼️</div>
+                        <div class="file-upload-text">Glissez ou <strong>cliquez</strong> pour choisir une image</div>
+                        <div class="file-upload-hint">.jpg, .png, .webp, .gif</div>
+                        <div class="file-name" id="series-thumb-file-name"></div>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-series-form')">Annuler</button>
+                    <button type="submit" class="btn-submit" id="btn-series-submit" style="background: linear-gradient(135deg, #e8820c, #d4770a); box-shadow: 0 4px 15px rgba(232, 130, 12, 0.2);">Créer la série</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         MODAL: Formulaire de Direct Vidéo
+         ═══════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-live-form" onclick="if(event.target===this)closeModal('modal-live-form')">
+        <div class="modal-box" style="max-width: 550px;">
+            <h2 class="modal-title" id="modal-live-title">Ajouter un direct vidéo</h2>
+            <p class="modal-subtitle" id="modal-live-subtitle">Configurez le titre, la description et l'URL du direct.</p>
+            
+            <form id="live-form" action="/admin/lives/ajouter" method="POST" style="margin-top: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" for="live-form-titre">Titre du Direct *</label>
+                    <input type="text" class="form-input" name="titre" id="live-form-titre" placeholder="ex: Culte d'Adoration Principal" required>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" for="live-form-description">Description / Commission</label>
+                    <input type="text" class="form-input" name="description" id="live-form-description" placeholder="ex: Réunion de prière Nayoth en direct de la chapelle">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" for="live-form-url">URL du Direct vidéo *</label>
+                    <input type="url" class="form-input" name="url_direct" id="live-form-url" placeholder="ex: https://www.youtube.com/watch?v=xxx" required style="font-family: monospace; font-size: 0.9rem;">
+                    <span style="font-size: 0.74rem; color: rgba(237,232,223,0.35); display: block; margin-top: 0.25rem;">Lien direct YouTube, Facebook Live, Vimeo, ou flux direct HLS (.m3u8).</span>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid rgba(237, 232, 223, 0.08); padding: 0.75rem 1rem; border-radius: 12px; background: rgba(255, 255, 255, 0.02);">
+                        <span>Activer la diffusion immédiatement</span>
+                        <div style="position: relative;">
+                            <input type="checkbox" name="is_active" value="1" style="display: none;" id="live-form-active-input" onchange="this.nextElementSibling.style.background = this.checked ? '#ef5350' : 'rgba(255,255,255,0.15)'; this.nextElementSibling.firstElementChild.style.left = this.checked ? '26px' : '2px';">
+                            <div style="width: 50px; height: 26px; background: rgba(255,255,255,0.15); border-radius: 100px; position: relative; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.08);">
+                                <div style="width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-live-form')">Annuler</button>
+                    <button type="submit" class="btn-submit" id="btn-live-submit" style="background: linear-gradient(135deg, #ef5350, #d32f2f); box-shadow: 0 4px 15px rgba(239, 83, 80, 0.2);">Créer la diffusion</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         MODAL: Supprimer
+         ═══════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-delete" onclick="if(event.target===this)closeModal('modal-delete')">
+        <div class="modal-box">
+            <div class="delete-confirm">
+                <div class="delete-icon">🗑️</div>
+                <h3>Supprimer ce média ?</h3>
+                <p id="delete-media-name">Cette action est irréversible.</p>
+                <form id="delete-form" method="POST" style="display: inline;">
+                    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                        <button type="submit" class="btn-danger" id="btn-confirm-delete">Oui, supprimer</button>
+                        <button type="button" class="btn-cancel" onclick="closeModal('modal-delete')">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         MODAL: Ajouter / Modifier Quiz
+         ═══════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-quiz-form" onclick="if(event.target===this)closeModal('modal-quiz-form')">
+        <div class="modal-box" style="max-width: 500px; border-color: rgba(232, 130, 12, 0.25);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">
+                <h3 class="modal-title" id="quiz-modal-title" style="color: #fff; font-weight: 800; margin: 0;">Créer un Quiz Biblique</h3>
+                <button type="button" onclick="closeModal('modal-quiz-form')" style="background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <form id="quiz-form" onsubmit="handleQuizSubmit(event)">
+                <input type="hidden" id="quiz-form-id" value="">
+                
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: rgba(237,232,223,0.7); margin-bottom: 0.5rem; text-transform: uppercase;">Titre du Quiz</label>
+                    <input type="text" id="quiz-form-title" required placeholder="ex: Les Récits de l'Ancien Testament" style="width: 100%; padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.25); color: #fff; font-size: 0.92rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#e8820c'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: rgba(237,232,223,0.7); margin-bottom: 0.5rem; text-transform: uppercase;">Description / Sous-titre</label>
+                    <textarea id="quiz-form-desc" rows="3" placeholder="ex: Réponds aux questions sur Noé, Moïse et Abraham..." style="width: 100%; padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.25); color: #fff; font-size: 0.92rem; outline: none; transition: border-color 0.2s; resize: vertical;" onfocus="this.style.borderColor='#e8820c'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'"></textarea>
+                </div>
+
+                <div class="modal-actions" style="display: flex; gap: 0.75rem; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.25rem;">
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-quiz-form')" style="padding: 0.6rem 1.25rem; font-weight: 700; border-radius: 8px; cursor: pointer;">Annuler</button>
+                    <button type="submit" class="btn-submit" id="btn-quiz-submit" style="padding: 0.6rem 1.5rem; font-weight: 800; border-radius: 8px; background: #e8820c; color: #fff; border: none; cursor: pointer; transition: all 0.2s;">Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         MODAL: Éditeur de Questions du Quiz
+         ═══════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-questions-editor" onclick="if(event.target===this)closeModal('modal-questions-editor')">
+        <div class="modal-box" style="max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; border-color: rgba(232, 130, 12, 0.25);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem; flex-shrink: 0;">
+                <div>
+                    <h3 class="modal-title" style="color: #fff; font-weight: 800; margin: 0;" id="questions-editor-title">Éditer les Questions</h3>
+                    <p style="font-size: 0.78rem; color: rgba(237,232,223,0.45); margin: 0; margin-top: 0.15rem;" id="questions-editor-subtitle">Composez les questions du quiz</p>
+                </div>
+                <button type="button" onclick="closeModal('modal-questions-editor')" style="background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            
+            <!-- Questions List Scrollable Area -->
+            <div style="flex: 1; overflow-y: auto; padding: 1rem 0.5rem; display: flex; flex-direction: column; gap: 1.5rem;" id="questions-editor-list">
+                <!-- Rows dynamically added via JS -->
+            </div>
+
+            <!-- Bottom Tools -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.25rem; margin-top: 1rem; flex-shrink: 0;">
+                <button type="button" onclick="addQuestionEditorRow()" style="padding: 0.6rem 1.25rem; font-size: 0.8rem; font-weight: 800; border-radius: 8px; border: 1px dashed rgba(232,130,12,0.4); background: rgba(232,130,12,0.04); color: #e8820c; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(232,130,12,0.1)'" onmouseout="this.style.background='rgba(232,130,12,0.04)'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Ajouter une Question
+                </button>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-questions-editor')" style="padding: 0.6rem 1.25rem; font-weight: 700; border-radius: 8px;">Annuler</button>
+                    <button type="button" onclick="saveQuizQuestions()" style="padding: 0.6rem 1.5rem; font-weight: 800; border-radius: 8px; background: #e8820c; color: #fff; border: none; cursor: pointer; transition: all 0.2s;">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         JAVASCRIPT
+         ═══════════════════════════════════════════ -->
+    <script>
+        let activeCategory = '';
+        let activeCommission = '';
+
+        const commissionsEnseignement = {{ commissions_enseignement | tojson }};
+        const commissionsMusique = {{ commissions_musique | tojson }};
+
+        // ── Category counts ──
+        function updateCommissionCounts() {
+            const rows = document.querySelectorAll('#media-table tbody tr');
+            const counts = {};
+            const allComs = [...commissionsEnseignement, ...commissionsMusique];
+            allComs.forEach(com => {
+                counts[com] = 0;
+            });
+            rows.forEach(row => {
+                const cat = row.getAttribute('data-category');
+                const com = row.getAttribute('data-commission');
+                if (com && com in counts) {
+                    counts[com]++;
+                }
+            });
+            document.querySelectorAll('.com-count-badge').forEach(badge => {
+                const com = badge.getAttribute('data-commission');
+                const count = counts[com] || 0;
+                badge.textContent = `${count} média${count > 1 ? 's' : ''}`;
+            });
+        }
+
+        // ── Category detail management ──
+        function showCategoryDetail(category, commission = '') {
+            activeCategory = category;
+            activeCommission = commission;
+            
+            // Persist the active category and commission for redirect restoration
+            sessionStorage.setItem('active_admin_category', category);
+            if (commission) {
+                sessionStorage.setItem('active_admin_commission', commission);
+            } else {
+                sessionStorage.removeItem('active_admin_commission');
+            }
+
+            // Update Titles and columns
+            const titleEl = document.getElementById('detail-category-title');
+            if (category === 'Enseignement') {
+                titleEl.textContent = `Gestion des Enseignements — ${commission}`;
+                document.getElementById('btn-add-text').textContent = `Ajouter dans ${commission}`;
+                document.getElementById('th-commission').style.display = '';
+                document.querySelectorAll('.td-commission-cell').forEach(td => td.style.display = '');
+            } else if (category === 'Musique') {
+                titleEl.textContent = `Gestion de la Musique — ${commission}`;
+                document.getElementById('btn-add-text').textContent = `Ajouter dans ${commission}`;
+                document.getElementById('th-commission').style.display = '';
+                document.querySelectorAll('.td-commission-cell').forEach(td => td.style.display = '');
+            } else {
+                titleEl.textContent = 'Gestion des Podcasts';
+                document.getElementById('btn-add-text').textContent = 'Ajouter un podcast';
+                document.getElementById('th-commission').style.display = 'none';
+                document.querySelectorAll('.td-commission-cell').forEach(td => td.style.display = 'none');
+            }
+
+            // Filter rows
+            const rows = document.querySelectorAll('#media-table tbody tr');
+            let visibleCount = 0;
+            rows.forEach(row => {
+                const cat = row.getAttribute('data-category');
+                const com = row.getAttribute('data-commission');
+                let matches = false;
+
+                if (category === 'Enseignement' || category === 'Musique') {
+                    matches = (cat === category && com === commission);
+                } else {
+                    matches = (cat === category);
+                }
+
+                if (matches) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Display table or empty state
+            const table = document.getElementById('media-table');
+            const emptyState = document.getElementById('table-empty-state');
+            if (visibleCount === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = '';
+            } else {
+                table.style.display = '';
+                emptyState.style.display = 'none';
+            }
+
+            // Swap view
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'block';
+        }
+
+        function showCommissions(category) {
+            activeCategory = category;
+            activeCommission = '';
+            
+            sessionStorage.setItem('active_admin_category', category);
+            sessionStorage.removeItem('active_admin_commission');
+
+            // Update title and sub-title
+            const titleEl = document.getElementById('commissions-title');
+            const descEl = document.getElementById('commissions-desc');
+            const gridContainer = document.getElementById('commissions-grid');
+
+            let list = [];
+            let emoji = '🌱';
+            let borderStyle = 'rgba(232, 130, 12, 0.15)';
+            let hoverStyle = 'rgba(232, 130, 12, 0.45)';
+            let hoverShadow = 'rgba(232,130,12,0.15)';
+            let accentColor = '#e8820c';
+
+            if (category === 'Enseignement') {
+                titleEl.textContent = "Enseignement des Commissions";
+                descEl.textContent = "Sélectionnez la commission spécifique à gérer";
+                list = commissionsEnseignement;
+                emoji = '🌱';
+                accentColor = '#e8820c';
+                borderStyle = 'rgba(232, 130, 12, 0.15)';
+                hoverStyle = 'rgba(232, 130, 12, 0.45)';
+                hoverShadow = 'rgba(232,130,12,0.15)';
+            } else {
+                titleEl.textContent = "Rubriques de la Musique";
+                descEl.textContent = "Sélectionnez la rubrique de musique à gérer";
+                list = commissionsMusique;
+                emoji = '🎵';
+                accentColor = '#81c784';
+                borderStyle = 'rgba(76, 175, 80, 0.15)';
+                hoverStyle = 'rgba(76, 175, 80, 0.45)';
+                hoverShadow = 'rgba(76,175,80,0.15)';
+            }
+
+            // Generate HTML
+            let html = '';
+            list.forEach(com => {
+                html += `
+                <div onclick="showCategoryDetail('${category}', '${com}')" 
+                     style="cursor: pointer; position: relative; overflow: hidden; border-radius: 20px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid ${borderStyle}; padding: 2.5rem 1.5rem; text-align: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 15px 30px rgba(0,0,0,0.4);" 
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.borderColor='${hoverStyle}'; this.style.boxShadow='0 20px 40px ${hoverShadow}';" 
+                     onmouseout="this.style.transform='none'; this.style.borderColor='${borderStyle}'; this.style.boxShadow='0 15px 30px rgba(0,0,0,0.4)';" 
+                     id="card-com-${com}">
+                    <div style="width: 60px; height: 60px; border-radius: 16px; background: rgba(232, 130, 12, 0.04); border: 1px solid ${borderStyle}; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1rem;">${emoji}</div>
+                    <h4 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 0.2rem;">${com}</h4>
+                    <div class="com-count-badge" data-commission="${com}" style="font-size: 0.75rem; font-weight: 600; color: #81c784; background: rgba(76, 175, 80, 0.08); padding: 0.15rem 0.6rem; border-radius: 100px; margin-top: 0.25rem;">
+                        0 média
+                    </div>
+                    <span style="display: inline-block; margin-top: 1.5rem; font-size: 0.75rem; font-weight: 700; color: ${accentColor}; text-transform: uppercase; letter-spacing: 0.05em;">Ouvrir &rarr;</span>
+                </div>`;
+            });
+
+            gridContainer.innerHTML = html;
+            
+            updateCommissionCounts();
+
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'block';
+            document.getElementById('view-detail').style.display = 'none';
+        }
+
+        function showCategories() {
+            activeCategory = '';
+            activeCommission = '';
+            
+            sessionStorage.removeItem('active_admin_category');
+            sessionStorage.removeItem('active_admin_commission');
+
+            document.getElementById('view-categories').style.display = 'block';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('lives-section').style.display = 'none';
+            document.getElementById('quizzes-section').style.display = 'none';
+        }
+
+        function goBack() {
+            if (activeCategory === 'Enseignement' || activeCategory === 'Musique') {
+                showCommissions(activeCategory);
+            } else {
+                showCategories();
+            }
+        }
+
+        // ── Source toggle helper ──
+        function toggleSourceFields(type) {
+            if (type === 'local') {
+                document.getElementById('group-source-local').style.display = 'block';
+                document.getElementById('group-source-external').style.display = 'none';
+                document.getElementById('form-media-url').required = false;
+            } else {
+                document.getElementById('group-source-local').style.display = 'none';
+                document.getElementById('group-source-external').style.display = 'block';
+                document.getElementById('form-media-url').required = true;
+            }
+        }
+
+        // ── Comptes section helpers ──
+        function toggleUserAccess(userId, type, checked) {
+            fetch('/admin/comptes/toggle-acces', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    type: type,
+                    value: checked
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    location.reload();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Erreur lors de la mise à jour des accès.');
+                location.reload();
+            });
+        }
+
+        function showComptesSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'block';
+            document.getElementById('quizzes-section').style.display = 'none';
+        }
+
+        function showCommuniquesSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'block';
+            document.getElementById('quizzes-section').style.display = 'none';
+        }
+
+        function openAddCommuniqueModal() {
+            document.getElementById('communique-modal-title').textContent = "Publier un Communiqué";
+            document.getElementById('communique-form').action = "/admin/communiques/ajouter";
+            document.getElementById('form-comm-title').value = "";
+            document.getElementById('form-comm-date').value = "";
+            document.getElementById('form-comm-fr').value = "";
+            document.getElementById('form-comm-en').value = "";
+            document.getElementById('form-comm-es').value = "";
+            document.getElementById('form-comm-nl').value = "";
+            document.getElementById('form-comm-ln').value = "";
+            switchFormTab('fr');
+            openModal('modal-communique-form');
+        }
+
+        function openEditCommuniqueModal(comm) {
+            document.getElementById('communique-modal-title').textContent = "Modifier le Communiqué";
+            document.getElementById('communique-form').action = `/admin/communiques/editer/${comm.id}`;
+            document.getElementById('form-comm-title').value = comm.titre;
+            if (comm.date_creation) {
+                document.getElementById('form-comm-date').value = comm.date_creation.split(' ')[0];
+            } else {
+                document.getElementById('form-comm-date').value = "";
+            }
+            document.getElementById('form-comm-fr').value = comm.contenu_fr || "";
+            document.getElementById('form-comm-en').value = comm.contenu_en || "";
+            document.getElementById('form-comm-es').value = comm.contenu_es || "";
+            document.getElementById('form-comm-nl').value = comm.contenu_nl || "";
+            document.getElementById('form-comm-ln').value = comm.contenu_ln || "";
+            switchFormTab('fr');
+            openModal('modal-communique-form');
+        }
+
+        function switchFormTab(lang) {
+            document.querySelectorAll('.form-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.form-textarea-container').forEach(area => area.style.display = 'none');
+            
+            document.getElementById(`form-tab-${lang}`).classList.add('active');
+            document.getElementById(`form-area-${lang}`).style.display = 'block';
+        }
+
+        function copyInviteLink(inputId, button) {
+            const input = document.getElementById(inputId);
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value).then(() => {
+                const originalText = button.textContent;
+                button.textContent = "Copié !";
+                button.style.background = "#4caf50";
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = "rgba(237, 232, 223, 0.08)";
+                }, 1500);
+            }).catch(err => {
+                console.error("Impossible de copier", err);
+                alert("Lien : " + input.value);
+            });
+        }
+
+        function validateInviteEmail() {
+            const emailInput = document.getElementById('form-invite-email');
+            const email = emailInput.value.trim().toLowerCase();
+            if (!email.endsWith('@ministereimpact.org')) {
+                alert("Domaine non autorisé. L'e-mail doit obligatoirement se terminer par @ministereimpact.org.");
+                return false;
+            }
+            return true;
+        }
+
+        function openAddUserModal() {
+            document.getElementById('form-user-email').value = '';
+            document.getElementById('form-user-password').value = '';
+            openModal('modal-user-form');
+        }
+
+        function validateAdminUserEmail() {
+            const emailInput = document.getElementById('form-user-email');
+            const email = emailInput.value.trim().toLowerCase();
+            if (!email.endsWith('@ministereimpact.org')) {
+                alert('Domaine non autorisé. L\'e-mail doit obligatoirement se terminer par @ministereimpact.org.');
+                return false;
+            }
+            return true;
+        }
+
+        // ── Modal helpers ──
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeModal('modal-form');
+                closeModal('modal-delete');
+            }
+        });
+
+        // ── Add modal ──
+        function openAddModal() {
+            const form = document.getElementById('media-form');
+            form.reset();
+            form.action = '/admin/ajouter';
+            
+            let modalTitle = '';
+            if (activeCategory === 'Enseignement' || activeCategory === 'Musique') {
+                modalTitle = `Ajouter dans ${activeCommission}`;
+            } else {
+                modalTitle = 'Ajouter un podcast';
+            }
+            
+            document.getElementById('modal-form-title').textContent = modalTitle;
+            document.getElementById('modal-form-subtitle').textContent = 'Remplissez les informations et uploadez votre fichier.';
+            document.getElementById('btn-form-submit').textContent = 'Ajouter le média';
+            document.getElementById('media-file-name').textContent = '';
+            document.getElementById('thumb-file-name').textContent = '';
+            
+            // Prefill context hidden inputs
+            document.getElementById('form-categorie').value = activeCategory;
+            document.getElementById('form-commission').value = activeCommission;
+
+            // Filter series dropdown options by active category
+            filterSeriesDropdown(activeCategory);
+            document.getElementById('form-series-id').value = '';
+            toggleFormSeriesFields('');
+
+            // Reset source fields
+            document.querySelector('input[name="source_type"][value="local"]').checked = true;
+            toggleSourceFields('local');
+            document.getElementById('form-media-url').value = '';
+            document.getElementById('form-media-url-en').value = '';
+            document.getElementById('form-media-url-es').value = '';
+            document.getElementById('form-media-url-nl').value = '';
+            document.getElementById('form-media-url-ln').value = '';
+            document.getElementById('form-paroles-keywords').value = '';
+            document.getElementById('form-position-banniere').value = 15;
+            document.getElementById('banner-position-val').textContent = '15%';
+
+            openModal('modal-form');
+        }
+
+        // ── Edit modal ──
+        function openEditModal(mediaId) {
+            fetch(`/admin/api/media/${mediaId}`)
+                .then(r => r.json())
+                .then(media => {
+                    const form = document.getElementById('media-form');
+                    form.action = `/admin/modifier/${mediaId}`;
+                    
+                    let modalTitle = '';
+                    if (media.categorie === 'Enseignement' || media.categorie === 'Musique') {
+                        modalTitle = `Modifier (${media.commission})`;
+                    } else {
+                        modalTitle = 'Modifier le podcast';
+                    }
+                    
+                    document.getElementById('modal-form-title').textContent = modalTitle;
+                    document.getElementById('modal-form-subtitle').textContent = `Modification de « ${media.titre} »`;
+                    document.getElementById('btn-form-submit').textContent = 'Enregistrer les modifications';
+
+                    document.getElementById('form-titre').value = media.titre || '';
+                    document.getElementById('form-description').value = media.description || '';
+                    document.getElementById('form-categorie').value = media.categorie || '';
+                    document.getElementById('form-commission').value = media.commission || '';
+                    document.getElementById('form-langue').value = media.langue || '';
+
+                    // Filter series dropdown options by active category
+                    filterSeriesDropdown(media.categorie);
+                    const sId = media.series_id || '';
+                    document.getElementById('form-series-id').value = sId;
+                    toggleFormSeriesFields(sId);
+                    if (sId) {
+                        document.getElementById('form-chapitre').value = media.chapitre || '';
+                        document.getElementById('form-ordre-episode').value = media.ordre_episode || '';
+                    }
+
+                    // Detect source type (local vs external)
+                    if (media.url_video && (media.url_video.startsWith('http') || !media.url_video.startsWith('/static/'))) {
+                        document.querySelector('input[name="source_type"][value="external"]').checked = true;
+                        toggleSourceFields('external');
+                        document.getElementById('form-media-url').value = media.url_video || '';
+                        document.getElementById('media-file-name').textContent = '';
+                    } else {
+                        document.querySelector('input[name="source_type"][value="local"]').checked = true;
+                        toggleSourceFields('local');
+                        document.getElementById('form-media-url').value = '';
+                        document.getElementById('media-file-name').textContent =
+                            media.url_video ? '📎 Fichier actuel : ' + media.url_video.split('/').pop() : '';
+                    }
+                    // Prefill translations
+                    document.getElementById('form-media-url-en').value = media.url_video_en || '';
+                    document.getElementById('form-media-url-es').value = media.url_video_es || '';
+                    document.getElementById('form-media-url-nl').value = media.url_video_nl || '';
+                    document.getElementById('form-media-url-ln').value = media.url_video_ln || '';
+                    document.getElementById('form-paroles-keywords').value = media.paroles_keywords || '';
+                    document.getElementById('thumb-file-name').textContent =
+                        media.url_miniature ? '📎 Miniature actuelle : ' + media.url_miniature.split('/').pop() : '';
+                    
+                    const posVal = media.position_banniere !== undefined && media.position_banniere !== null ? media.position_banniere : 15;
+                    document.getElementById('form-position-banniere').value = posVal;
+                    document.getElementById('banner-position-val').textContent = posVal + '%';
+
+                    openModal('modal-form');
+                });
+        }
+
+        // ── Delete modal ──
+        function openDeleteModal(mediaId) {
+            const row = document.getElementById(`row-${mediaId}`);
+            const titre = row.getAttribute('data-title');
+            document.getElementById('delete-media-name').textContent =
+                `« ${titre} » sera définitivement supprimé avec ses fichiers.`;
+            document.getElementById('delete-form').action = `/admin/supprimer/${mediaId}`;
+            openModal('modal-delete');
+        }
+
+        // ── File upload feedback ──
+        document.getElementById('form-media-file').addEventListener('change', function() {
+            const name = this.files[0] ? this.files[0].name : '';
+            document.getElementById('media-file-name').textContent = name ? `📎 ${name}` : '';
+        });
+        document.getElementById('form-thumb-file').addEventListener('change', function() {
+            const name = this.files[0] ? this.files[0].name : '';
+            document.getElementById('thumb-file-name').textContent = name ? `📎 ${name}` : '';
+        });
+
+        // ── Drag & drop ──
+        ['upload-media-zone', 'upload-thumb-zone'].forEach(id => {
+            const zone = document.getElementById(id);
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); });
+        });
+
+        // ── Series Helpers ──
+        function showSeriesSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'block';
+            document.getElementById('quizzes-section').style.display = 'none';
+        }
+
+        function toggleSeriesCommissionField(category) {
+            const select = document.getElementById('form-series-commission');
+            select.innerHTML = '<option value="">Général (Aucune)</option>';
+            let list = [];
+            if (category === 'Enseignement') {
+                list = ['Intercession', 'Couples', 'HED', 'Johana', 'Joseph', 'PDS', 'Culte', 'Nayoth', 'FGI', 'Enfants'];
+            } else if (category === 'Musique') {
+                list = ['Adoration MP3', 'Adoration MP4', 'Nayoth', 'Chants PAB', 'Instrumentale'];
+            }
+            list.forEach(c => {
+                select.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+        }
+
+        function openAddSeriesModal() {
+            const form = document.getElementById('series-form');
+            form.reset();
+            form.action = '/admin/series/ajouter';
+            document.getElementById('series-modal-title').textContent = "Créer une Série Thématique";
+            document.getElementById('btn-series-submit').textContent = "Créer la série";
+            document.getElementById('series-thumb-file-name').textContent = '';
+            toggleSeriesCommissionField('Enseignement');
+            openModal('modal-series-form');
+        }
+
+        function openEditSeriesModal(series) {
+            const form = document.getElementById('series-form');
+            form.action = `/admin/series/editer/${series.id}`;
+            document.getElementById('series-modal-title').textContent = "Modifier la Série";
+            document.getElementById('btn-series-submit').textContent = "Enregistrer les modifications";
+            document.getElementById('form-series-title').value = series.titre;
+            document.getElementById('form-series-description').value = series.description || '';
+            document.getElementById('form-series-categorie').value = series.categorie;
+            
+            toggleSeriesCommissionField(series.categorie);
+            document.getElementById('form-series-commission').value = series.commission || '';
+            document.getElementById('series-thumb-file-name').textContent = 
+                series.url_miniature ? '📎 Actuelle : ' + series.url_miniature.split('/').pop() : '';
+            
+            openModal('modal-series-form');
+        }
+
+        document.getElementById('form-series-thumb-file').addEventListener('change', function() {
+            const name = this.files[0] ? this.files[0].name : '';
+            document.getElementById('series-thumb-file-name').textContent = name ? `📎 ${name}` : '';
+        });
+
+        // ── Media form Series helpers ──
+        function toggleFormSeriesFields(seriesId) {
+            const group = document.getElementById('form-series-details-group');
+            const chapitreInput = document.getElementById('form-chapitre');
+            if (seriesId) {
+                group.style.display = 'block';
+                chapitreInput.required = true;
+            } else {
+                group.style.display = 'none';
+                chapitreInput.required = false;
+                chapitreInput.value = '';
+                document.getElementById('form-ordre-episode').value = '';
+            }
+        }
+
+        function filterSeriesDropdown(category) {
+            const select = document.getElementById('form-series-id');
+            const options = select.options;
+            for (let i = 0; i < options.length; i++) {
+                const opt = options[i];
+                const optCat = opt.getAttribute('data-category');
+                if (!optCat || optCat === category) {
+                    opt.style.display = 'block';
+                } else {
+                    opt.style.display = 'none';
+                }
+            }
+        }
+
+        function showRadioSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('radio-section').style.display = 'block';
+            document.getElementById('lives-section').style.display = 'none';
+            document.getElementById('quizzes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'none';
+        }
+
+        function showLivesSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('lives-section').style.display = 'block';
+            document.getElementById('quizzes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'none';
+        }
+
+        function showAttendanceSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('lives-section').style.display = 'none';
+            document.getElementById('quizzes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'block';
+            // Set date filter to today if empty
+            const dateInput = document.getElementById('attendance-date-filter');
+            if (!dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+            // Update clear form and PDF link with current date
+            updateAttendanceDateLinks(dateInput.value);
+        }
+
+        function updateAttendanceDateLinks(dateVal) {
+            document.getElementById('attendance-pdf-link').href = '/admin/attendance/export-pdf?date=' + dateVal;
+            document.getElementById('attendance-clear-date').value = dateVal;
+        }
+
+        async function loadAttendanceByDate(dateVal) {
+            updateAttendanceDateLinks(dateVal);
+            try {
+                const res = await fetch('/admin/attendance/records?date=' + dateVal);
+                const data = await res.json();
+                const tbody = document.getElementById('attendance-table-body');
+                const badge = document.getElementById('attendance-count-badge');
+                badge.textContent = data.count + ' présent' + (data.count > 1 ? 's' : '');
+
+                if (data.records.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 3rem 1.25rem; text-align: center; color: rgba(237,232,223,0.3); font-size: 0.92rem;"><div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📋</div>Aucune présence enregistrée pour cette date.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                data.records.forEach(function(rec, idx) {
+                    const loginTime = rec.login_at.includes(' ') ? rec.login_at.split(' ')[1] : rec.login_at;
+                    const statusHtml = rec.is_late
+                        ? '<span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.85rem; background: rgba(220, 53, 69, 0.12); border: 1px solid rgba(220, 53, 69, 0.25); border-radius: 100px; font-size: 0.78rem; font-weight: 700; color: #ff6b6b;">🔴 En retard</span>'
+                        : '<span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.85rem; background: rgba(76, 175, 80, 0.12); border: 1px solid rgba(76, 175, 80, 0.25); border-radius: 100px; font-size: 0.78rem; font-weight: 700; color: #81c784;">✅ À l\'heure</span>';
+
+                    html += '<tr style="border-bottom: 1px solid rgba(62,59,46,0.08); transition: background 0.2s;" onmouseover="this.style.background=\'rgba(237,232,223,0.03)\';" onmouseout="this.style.background=\'transparent\';">';
+                    html += '<td style="padding: 0.85rem 1.25rem; font-size: 0.88rem; color: rgba(237,232,223,0.4); font-weight: 600;">' + (idx + 1) + '</td>';
+                    html += '<td style="padding: 0.85rem 1.25rem; font-size: 0.92rem; font-weight: 700; color: #fff;">' + rec.display_name + '</td>';
+                    html += '<td style="padding: 0.85rem 1.25rem; font-size: 0.85rem; color: rgba(237,232,223,0.5);">' + rec.user_email + '</td>';
+                    html += '<td style="padding: 0.85rem 1.25rem; font-size: 0.88rem; font-weight: 600; color: #ede8df;">' + loginTime + '</td>';
+                    html += '<td style="padding: 0.85rem 1.25rem; text-align: center;">' + statusHtml + '</td>';
+                    html += '</tr>';
+                });
+                tbody.innerHTML = html;
+            } catch (err) {
+                console.error('Erreur chargement présences:', err);
+            }
+        }
+
+        function openAddLiveModal() {
+            document.getElementById('modal-live-title').textContent = "Ajouter un direct vidéo";
+            document.getElementById('btn-live-submit').textContent = "Créer la diffusion";
+            document.getElementById('live-form').action = "/admin/lives/ajouter";
+            
+            document.getElementById('live-form-titre').value = "";
+            document.getElementById('live-form-description').value = "";
+            document.getElementById('live-form-url').value = "";
+            
+            const activeInput = document.getElementById('live-form-active-input');
+            activeInput.checked = false;
+            activeInput.dispatchEvent(new Event('change'));
+            
+            openModal('modal-live-form');
+        }
+
+        function openEditLiveModal(live) {
+            document.getElementById('modal-live-title').textContent = "Modifier le direct vidéo";
+            document.getElementById('btn-live-submit').textContent = "Sauvegarder";
+            document.getElementById('live-form').action = `/admin/lives/modifier/${live.id}`;
+            
+            document.getElementById('live-form-titre').value = live.titre;
+            document.getElementById('live-form-description').value = live.description || "";
+            document.getElementById('live-form-url').value = live.url_direct;
+            
+            const activeInput = document.getElementById('live-form-active-input');
+            activeInput.checked = (live.is_active === 1);
+            activeInput.dispatchEvent(new Event('change'));
+            
+            openModal('modal-live-form');
+        }
+
+        // ── Quiz Helpers ──
+        let activeQuizId = null;
+
+        function showQuizzesSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('lives-section').style.display = 'none';
+            document.getElementById('quizzes-section').style.display = 'block';
+            loadAdminQuizzes();
+        }
+
+        function loadAdminQuizzes() {
+            fetch('/admin/api/quizzes')
+                .then(r => r.json())
+                .then(quizzes => {
+                    const badge = document.getElementById('admin-quiz-count-badge');
+                    if (badge) badge.innerText = quizzes.length + (quizzes.length > 1 ? ' quiz' : ' quiz');
+
+                    const tbody = document.getElementById('quizzes-table-body');
+                    if (!tbody) return;
+
+                    if (quizzes.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="4" style="padding: 2rem; text-align: center; color: rgba(237,232,223,0.45); font-size: 0.9rem;">
+                                    Aucun quiz créé pour le moment.
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    tbody.innerHTML = quizzes.map(q => {
+                        return `
+                            <tr style="border-bottom: 1px solid rgba(232, 130, 12, 0.08); transition: background 0.2s;" onmouseover="this.style.background='rgba(232, 130, 12, 0.02)'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 1.25rem; font-weight: 700; color: #fff; font-size: 0.92rem; font-family: 'Outfit', sans-serif;">${q.titre}</td>
+                                <td style="padding: 1.25rem; color: rgba(237,232,223,0.6); font-size: 0.85rem;">${q.description || ''}</td>
+                                <td style="padding: 1.25rem; font-weight: 700; color: #e8820c; text-align: center; font-size: 0.9rem;">
+                                    <span style="background: rgba(232, 130, 12, 0.12); padding: 0.25rem 0.6rem; border-radius: 8px; border: 1px solid rgba(232, 130, 12, 0.15);">
+                                        ${q.nb_questions} questions
+                                    </span>
+                                </td>
+                                <td style="padding: 1.25rem; text-align: right;">
+                                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                        <button onclick="openQuestionsEditorModal(${q.id}, '${q.titre.replace(/'/g, "\\'")}')" class="btn-cancel" style="padding: 0.45rem 0.85rem; font-size: 0.78rem; border-radius: 8px; background: rgba(232, 130, 12, 0.08); color: #e8820c; border: 1px solid rgba(232, 130, 12, 0.25); display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                                            ✍️ Questions
+                                        </button>
+                                        <button onclick="openEditQuizModal(${q.id}, '${q.titre.replace(/'/g, "\\'")}', '${(q.description || '').replace(/'/g, "\\'")}')" class="btn-cancel" style="padding: 0.45rem 0.85rem; font-size: 0.78rem; border-radius: 8px; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.15); cursor: pointer;">
+                                            Modifier
+                                        </button>
+                                        <button onclick="deleteQuiz(${q.id})" style="padding: 0.45rem 0.85rem; font-size: 0.78rem; border-radius: 8px; background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.25); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(220, 53, 69, 0.2)'" onmouseout="this.style.background='rgba(220, 53, 69, 0.1)'">
+                                            Supprimer
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                })
+                .catch(err => console.error("Error loading admin quizzes:", err));
+        }
+
+        function openAddQuizModal() {
+            document.getElementById('quiz-form').reset();
+            document.getElementById('quiz-form-id').value = '';
+            document.getElementById('quiz-modal-title').innerText = "Créer un Quiz Biblique";
+            openModal('modal-quiz-form');
+        }
+
+        function openEditQuizModal(quizId, titre, description) {
+            document.getElementById('quiz-form-id').value = quizId;
+            document.getElementById('quiz-form-title').value = titre;
+            document.getElementById('quiz-form-desc').value = description;
+            document.getElementById('quiz-modal-title').innerText = "Modifier le Quiz";
+            openModal('modal-quiz-form');
+        }
+
+        function handleQuizSubmit(event) {
+            event.preventDefault();
+            const quizId = document.getElementById('quiz-form-id').value;
+            const titre = document.getElementById('quiz-form-title').value;
+            const description = document.getElementById('quiz-form-desc').value;
+
+            const url = quizId ? `/admin/api/quizzes/${quizId}` : '/admin/api/quizzes';
+            const method = quizId ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ titre: titre, description: description })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    closeModal('modal-quiz-form');
+                    loadAdminQuizzes();
+                } else {
+                    alert(res.error || "Une erreur s'est produite.");
+                }
+            })
+            .catch(err => console.error("Error saving quiz:", err));
+        }
+
+        function deleteQuiz(quizId) {
+            if (confirm("Êtes-vous sûr de vouloir supprimer ce quiz et toutes ses questions ?")) {
+                fetch(`/admin/api/quizzes/${quizId}`, { method: 'DELETE' })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            loadAdminQuizzes();
+                        } else {
+                            alert(res.error || "Erreur de suppression");
+                        }
+                    })
+                    .catch(err => console.error("Error deleting quiz:", err));
+            }
+        }
+
+        // ── Question Editor Helpers ──
+        function openQuestionsEditorModal(quizId, quizTitle) {
+            activeQuizId = quizId;
+            document.getElementById('questions-editor-title').innerText = `Questions du Quiz : ${quizTitle}`;
+            const list = document.getElementById('questions-editor-list');
+            if (list) list.innerHTML = `<div style="text-align:center; padding: 2rem; color: rgba(237,232,223,0.4);">Chargement des questions...</div>`;
+            openModal('modal-questions-editor');
+
+            fetch(`/admin/api/quizzes/${quizId}/questions`)
+                .then(r => r.json())
+                .then(questions => {
+                    if (list) list.innerHTML = '';
+                    if (questions.length === 0) {
+                        addQuestionEditorRow();
+                    } else {
+                        questions.forEach(q => addQuestionEditorRow(q));
+                    }
+                })
+                .catch(err => console.error("Error loading quiz questions:", err));
+        }
+
+        function addQuestionEditorRow(data = {}) {
+            const list = document.getElementById('questions-editor-list');
+            if (!list) return;
+
+            const rowId = 'q-row-' + Math.random().toString(36).substr(2, 9);
+            const questionText = data.question_text || '';
+            const optA = data.option_a || '';
+            const optB = data.option_b || '';
+            const optC = data.option_c || '';
+            const correctOpt = data.correct_option !== undefined ? data.correct_option : 0;
+
+            const div = document.createElement('div');
+            div.id = rowId;
+            div.className = 'question-editor-card';
+            div.style.background = 'rgba(255, 255, 255, 0.02)';
+            div.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+            div.style.borderRadius = '16px';
+            div.style.padding = '1.25rem';
+            div.style.position = 'relative';
+
+            div.innerHTML = `
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" style="position: absolute; top: 1rem; right: 1rem; background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.25); border-radius: 8px; color: #dc3545; font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(220, 53, 69, 0.2)'" onmouseout="this.style.background='rgba(220, 53, 69, 0.1)'">
+                    Supprimer la Question
+                </button>
+                
+                <div style="margin-bottom: 1rem; width: calc(100% - 140px);">
+                    <label style="display: block; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.5); margin-bottom: 0.35rem; text-transform: uppercase;">Intitulé de la Question</label>
+                    <input type="text" class="q-text" value="${questionText.replace(/"/g, '&quot;')}" required placeholder="ex: Qui a vaincu Goliath ?" style="width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.2); color: #fff; font-size: 0.88rem; outline: none;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.5); margin-bottom: 0.35rem; text-transform: uppercase;">Option A</label>
+                        <input type="text" class="q-opt-a" value="${optA.replace(/"/g, '&quot;')}" required placeholder="Option A" style="width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.2); color: #fff; font-size: 0.88rem; outline: none; margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: #ede8df; cursor: pointer;">
+                            <input type="radio" name="correct-${rowId}" value="0" ${correctOpt === 0 ? 'checked' : ''} style="accent-color: #e8820c;">
+                            Bonne réponse (A)
+                        </label>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.5); margin-bottom: 0.35rem; text-transform: uppercase;">Option B</label>
+                        <input type="text" class="q-opt-b" value="${optB.replace(/"/g, '&quot;')}" required placeholder="Option B" style="width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.2); color: #fff; font-size: 0.88rem; outline: none; margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: #ede8df; cursor: pointer;">
+                            <input type="radio" name="correct-${rowId}" value="1" ${correctOpt === 1 ? 'checked' : ''} style="accent-color: #e8820c;">
+                            Bonne réponse (B)
+                        </label>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.5); margin-bottom: 0.35rem; text-transform: uppercase;">Option C</label>
+                        <input type="text" class="q-opt-c" value="${optC.replace(/"/g, '&quot;')}" required placeholder="Option C" style="width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.2); color: #fff; font-size: 0.88rem; outline: none; margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: #ede8df; cursor: pointer;">
+                            <input type="radio" name="correct-${rowId}" value="2" ${correctOpt === 2 ? 'checked' : ''} style="accent-color: #e8820c;">
+                            Bonne réponse (C)
+                        </label>
+                    </div>
+                </div>
+            `;
+            list.appendChild(div);
+        }
+
+        function saveQuizQuestions() {
+            if (!activeQuizId) return;
+
+            const list = document.getElementById('questions-editor-list');
+            if (!list) return;
+
+            const cards = list.querySelectorAll('.question-editor-card');
+            const questions = [];
+
+            for (let card of cards) {
+                const text = card.querySelector('.q-text').value.trim();
+                const optA = card.querySelector('.q-opt-a').value.trim();
+                const optB = card.querySelector('.q-opt-b').value.trim();
+                const optC = card.querySelector('.q-opt-c').value.trim();
+                
+                const radios = card.querySelectorAll(`input[type="radio"]`);
+                let correctOpt = 0;
+                radios.forEach(r => {
+                    if (r.checked) correctOpt = parseInt(r.value);
+                });
+
+                if (!text || !optA || !optB || !optC) {
+                    alert("Toutes les questions doivent avoir un énoncé et 3 options complétées.");
+                    return;
+                }
+
+                questions.push({
+                    question_text: text,
+                    option_a: optA,
+                    option_b: optB,
+                    option_c: optC,
+                    correct_option: correctOpt
+                });
+            }
+
+            fetch(`/admin/api/quizzes/${activeQuizId}/questions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(questions)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    closeModal('modal-questions-editor');
+                    loadAdminQuizzes();
+                } else {
+                    alert(res.error || "Une erreur s'est produite lors de l'enregistrement.");
+                }
+            })
+            .catch(err => console.error("Error saving quiz questions:", err));
+        }
+
+        // ── Initial view checking ──
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCommissionCounts();
+            
+            // Load quizzes stats count
+            fetch('/admin/api/quizzes')
+                .then(r => r.json())
+                .then(quizzes => {
+                    const badge = document.getElementById('admin-quiz-count-badge');
+                    if (badge) badge.innerText = quizzes.length + (quizzes.length > 1 ? ' quiz' : ' quiz');
+                })
+                .catch(err => console.error("Error loading quiz count:", err));
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            if (tabParam === 'series') {
+                showSeriesSection();
+                return;
+            }
+            if (tabParam === 'radio') {
+                showRadioSection();
+                return;
+            }
+            if (tabParam === 'lives') {
+                showLivesSection();
+                return;
+            }
+            if (tabParam === 'quizzes') {
+                showQuizzesSection();
+                return;
+            }
+
+            const hasFlash = document.querySelector('.flash-msg') !== null;
+            const savedCat = sessionStorage.getItem('active_admin_category');
+            const savedCom = sessionStorage.getItem('active_admin_commission');
+            
+            if (hasFlash && savedCat) {
+                if ((savedCat === 'Enseignement' || savedCat === 'Musique') && savedCom) {
+                    showCategoryDetail(savedCat, savedCom);
+                } else if (savedCat === 'Enseignement' || savedCat === 'Musique') {
+                    showCommissions(savedCat);
+                } else {
+                    showCategoryDetail(savedCat);
+                }
+            } else {
+                showCategories();
+            }
+        });
+    </script>
+</body>
+</html>
