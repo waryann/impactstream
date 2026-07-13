@@ -14,6 +14,9 @@ static/videos/*
 !static/videos/.gitkeep
 static/images/*
 !static/images/.gitkeep
+!static/images/logo.png
+!static/images/intro.webp
+!static/images/intro.gif
 
 # Fichiers système
 .DS_Store
