@@ -1,4 +1,4 @@
-const CACHE_NAME = 'impactstream-v1';
+const CACHE_NAME = 'impactstream-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/static/images/logo.png',
@@ -37,7 +37,22 @@ self.addEventListener('activate', event => {
 
 // Fetch Event (Network first, fall back to cache)
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/') || event.request.url.includes('/video')) {
+  const url = new URL(event.request.url);
+  
+  // Contourner le Service Worker pour les fichiers média (audio/vidéo) et les requêtes de type Range (streaming/reprise)
+  const isMedia = 
+    event.request.destination === 'audio' ||
+    event.request.destination === 'video' ||
+    event.request.headers.has('range') ||
+    url.pathname.includes('/videos/') ||
+    url.pathname.match(/\.(mp3|mp4|wav|m4a|webm|ogg|flac|aac|mov|avi|mkv)$/i);
+
+  if (
+    event.request.method !== 'GET' || 
+    url.pathname.includes('/api/') || 
+    url.pathname.includes('/video') || 
+    isMedia
+  ) {
     return;
   }
 
@@ -45,7 +60,6 @@ self.addEventListener('fetch', event => {
     fetch(event.request)
       .then(response => {
         if (response && response.status === 200 && response.type === 'basic') {
-          const url = new URL(event.request.url);
           if (url.pathname.startsWith('/static/')) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then(cache => {
