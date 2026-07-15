@@ -64,12 +64,125 @@ os.makedirs(UPLOAD_IMAGES, exist_ok=True)
 # Base de données
 # ─────────────────────────────────────────────
 
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    import psycopg2
+    from psycopg2.extras import DictCursor
+    sqlite3.IntegrityError = psycopg2.IntegrityError
+
+class PostgresRowWrapper:
+    def __init__(self, dict_row):
+        self._row = dict_row
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list(self._row.values())[key]
+        return self._row[key]
+
+    def keys(self):
+        return list(self._row.keys())
+
+    def __iter__(self):
+        return iter(self._row.values())
+
+    def __len__(self):
+        return len(self._row)
+
+    def items(self):
+        return self._row.items()
+
+class PostgresCursorWrapper:
+    def __init__(self, pg_cursor):
+        self.cursor = pg_cursor
+        self._lastrowid = None
+
+    def execute(self, query, params=None):
+        if isinstance(query, str):
+            query = query.replace('?', '%s')
+            if 'INSERT OR IGNORE' in query.upper():
+                query = query.replace('INSERT OR IGNORE', 'INSERT') + ' ON CONFLICT DO NOTHING'
+            elif 'INSERT OR REPLACE' in query.upper():
+                query = query.replace('INSERT OR REPLACE', 'INSERT') + ' ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value'
+            
+            is_insert = query.strip().upper().startswith('INSERT')
+            if is_insert and 'RETURNING' not in query.upper():
+                if 'INTO SETTINGS' not in query.upper():
+                    query += ' RETURNING id'
+        else:
+            is_insert = False
+
+        self.cursor.execute(query, params)
+
+        if is_insert and 'INTO SETTINGS' not in query.upper():
+            try:
+                row = self.cursor.fetchone()
+                if row:
+                    self._lastrowid = row[0]
+            except Exception:
+                self._lastrowid = None
+        else:
+            self._lastrowid = None
+
+    def fetchone(self):
+        try:
+            res = self.cursor.fetchone()
+            if res is None:
+                return None
+            return PostgresRowWrapper(res)
+        except Exception:
+            return None
+
+    def fetchall(self):
+        try:
+            rows = self.cursor.fetchall()
+            return [PostgresRowWrapper(r) for r in rows]
+        except Exception:
+            return []
+
+    @property
+    def rowcount(self):
+        return self.cursor.rowcount
+
+    @property
+    def lastrowid(self):
+        return self._lastrowid
+
+    def close(self):
+        self.cursor.close()
+
+class PostgresConnectionWrapper:
+    def __init__(self, pg_conn):
+        self.conn = pg_conn
+
+    def cursor(self):
+        return PostgresCursorWrapper(self.conn.cursor(cursor_factory=DictCursor))
+
+    def execute(self, query, params=None):
+        cur = self.cursor()
+        cur.execute(query, params)
+        return cur
+
+    def commit(self):
+        self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
+
+    def close(self):
+        self.conn.close()
+
 def get_db():
-    """Obtenir une connexion à la base de données SQLite avec auto-migration."""
+    """Obtenir une connexion à la base de données (SQLite en local, PostgreSQL/Supabase en prod)."""
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL)
+        return PostgresConnectionWrapper(conn)
+
     db_exists = os.path.exists(DATABASE)
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
+
 
     # Création table medias
     cursor.execute('''

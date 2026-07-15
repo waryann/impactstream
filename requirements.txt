@@ -10,3 +10,5 @@ fonttools==4.63.0
 itsdangerous==2.2.0
 MarkupSafe==3.0.3
 pillow==12.3.0
+psycopg2-binary==2.9.10
+
