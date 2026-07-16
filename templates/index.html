@@ -1324,7 +1324,6 @@
                 <a href="#" class="nav-link" data-category="Communique" id="nav-communiques">Communiqués</a>
                 <a href="#" class="nav-link" data-category="Bible" id="nav-bible">Bible</a>
                 <a href="#" class="nav-link" data-category="Espaces" id="nav-espaces">Espaces</a>
-                <a href="#" class="nav-link" data-category="Playlist" id="nav-playlist">Ma Playlist</a>
                 <a href="#" class="nav-link" data-category="Radio" id="nav-radio" style="display: none;">Radio Live</a>
                 <a href="#" class="nav-link" data-category="Lives" id="nav-lives" style="display: none; color: #ef5350; font-weight: 700;">● Directs Vidéo</a>
             </div>
@@ -1779,10 +1778,6 @@
                 <a href="#" onclick="switchCategory('Podcast', this); toggleMobileMoreMenu();" data-category="Podcast" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
                     <span>Podcasts</span>
-                </a>
-                <a href="#" onclick="switchCategory('Playlist', this); toggleMobileMoreMenu();" data-category="Playlist" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                    <span>Ma Playlist</span>
                 </a>
                 <a href="#" onclick="switchCategory('Radio', this); toggleMobileMoreMenu();" data-category="Radio" id="mobile-nav-radio" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none; display: none;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-11.31-.01a6 6 0 0 1 0-8.49m14.14-2.82a10 10 0 0 1 0 14.14m-16.97 0a10 10 0 0 1 0-14.14"></path></svg>
@@ -2784,8 +2779,6 @@
 
             noResults.style.display = 'none';
 
-            const playlist = getPlaylist();
-
             grid.innerHTML = medias.map((m, index) => {
                 const emoji = categoryEmojis[m.categorie] || '🎬';
                 const gradient = categoryGradients[m.categorie] || 'linear-gradient(135deg, #1b1a14, #24231a)';
@@ -2797,7 +2790,7 @@
                            <span>${emoji}</span>
                        </div>`;
 
-                const isInPlaylist = playlist.includes(m.id);
+                const isInPlaylist = getPlaylist(m.categorie).map(Number).includes(Number(m.id));
                 const playlistIconHtml = isInPlaylist
                     ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="#e8820c" stroke="#e8820c" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`
                     : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`;
@@ -2839,6 +2832,11 @@
         let selectedCommission = '';
 
         function fetchMedias() {
+            if (selectedCommission === 'playlist') {
+                renderCategoryPlaylistGrid();
+                return;
+            }
+
             const search = document.getElementById('search-input').value;
             const langue = document.getElementById('filter-langue').value;
 
@@ -2894,10 +2892,16 @@
                 list.forEach(c => {
                     html += `<button class="pill-btn ${selectedCommission === c ? 'active' : ''}" onclick="selectCommission('${c}')">${c}</button>`;
                 });
+                // Add Ma Playlist pill
+                html += `<button class="pill-btn ${selectedCommission === 'playlist' ? 'active' : ''}" onclick="selectCommission('playlist')" style="border-color: rgba(232, 130, 12, 0.4); color: ${selectedCommission === 'playlist' ? '#fff' : '#e8820c'}">📁 Ma Playlist</button>`;
                 pillsContainer.innerHTML = html;
             }
             
-            fetchMedias();
+            if (selectedCommission === 'playlist') {
+                renderCategoryPlaylistGrid();
+            } else {
+                fetchMedias();
+            }
         }
 
         window.switchCategory = function(category, element) {
@@ -2918,7 +2922,7 @@
             });
             
             // Highlight the "Plus" button if category is inside the "More" menu
-            const moreCategories = ['Musique', 'Podcast', 'Playlist', 'Radio', 'Lives', 'Espaces'];
+            const moreCategories = ['Musique', 'Podcast', 'Radio', 'Lives', 'Espaces'];
             const btnMore = document.getElementById('btn-mobile-more');
             if (btnMore) {
                 if (moreCategories.includes(category)) {
@@ -4547,26 +4551,6 @@
                     if (bibleContainer) bibleContainer.style.display = 'none';
                     if (radioContainer) radioContainer.style.display = 'block';
                     heading.textContent = "Radio Live en Direct";
-                } else if (currentCategory === 'Playlist') {
-                    if (heroSection) heroSection.style.display = 'none';
-                    if (filtersSection) filtersSection.style.display = 'none';
-                    mediaGrid.style.display = 'grid';
-                    noResults.style.display = 'none';
-                    pillsContainer.style.display = 'none';
-                    communiquesContainer.style.display = 'none';
-                    if (radioContainer) radioContainer.style.display = 'none';
-                    if (livesContainer) livesContainer.style.display = 'none';
-                    if (bibleContainer) bibleContainer.style.display = 'none';
-                    if (radioAudio) {
-                        radioAudio.pause();
-                        radioAudio = null;
-                        isRadioPlaying = false;
-                        document.getElementById('radio-play-icon').style.display = 'block';
-                        document.getElementById('radio-pause-icon').style.display = 'none';
-                        document.getElementById('radio-visualizer').classList.remove('playing');
-                    }
-                    heading.textContent = "Ma Playlist Personnelle";
-                    renderPlaylistGrid();
                 } else if (currentCategory === 'Lives') {
                     if (heroSection) heroSection.style.display = 'none';
                     if (filtersSection) filtersSection.style.display = 'none';
@@ -4662,6 +4646,8 @@
                         list.forEach(com => {
                             html += `<button class="pill-btn" onclick="selectCommission('${com}')">${com}</button>`;
                         });
+                        // Add Ma Playlist pill
+                        html += `<button class="pill-btn" onclick="selectCommission('playlist')" style="border-color: rgba(232, 130, 12, 0.4); color: #e8820c;">📁 Ma Playlist</button>`;
                         pillsContainer.innerHTML = html;
                         pillsContainer.style.display = 'flex';
                     } else {
@@ -4956,7 +4942,7 @@
                 `;
             }
 
-            const isInPlaylist = getPlaylist().includes(media.id);
+            const isInPlaylist = getPlaylist(media.categorie).map(Number).includes(Number(media.id));
             const playlistBtnHtml = `
                 <button id="modal-playlist-toggle-btn" onclick="togglePlaylistItem(null, ${media.id})" class="btn-playlist-toggle" style="display: inline-flex; align-items: center; gap: 0.5rem; background: ${isInPlaylist ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)'}; border: 1px solid ${isInPlaylist ? 'rgba(232, 130, 12, 0.4)' : 'rgba(237, 232, 223, 0.15)'}; color: ${isInPlaylist ? '#e8820c' : '#ede8df'}; padding: 0.6rem 1.25rem; border-radius: 100px; font-size: 0.85rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='${isInPlaylist ? 'rgba(232, 130, 12, 0.25)' : 'rgba(237, 232, 223, 0.12)'}'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='${isInPlaylist ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)'}'; this.style.transform='none';">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="${isInPlaylist ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -6049,9 +6035,10 @@
         // ═══════════════════════════════════════════
         // Playlist Logic
         // ═══════════════════════════════════════════
-        window.getPlaylist = function() {
+        window.getPlaylist = function(category) {
             try {
-                return JSON.parse(localStorage.getItem('impactstream_playlist')) || [];
+                const key = `impactstream_playlist_${category || 'default'}`;
+                return JSON.parse(localStorage.getItem(key)) || [];
             } catch (e) {
                 return [];
             }
@@ -6059,18 +6046,26 @@
 
         window.togglePlaylistItem = function(event, mediaId) {
             if (event) event.stopPropagation();
-            let playlist = getPlaylist().map(Number);
+            
+            // Find the media item to determine its category
+            const media = allMedias.find(m => Number(m.id) === Number(mediaId));
+            if (!media) return;
+            
+            const category = media.categorie;
+            let playlist = getPlaylist(category).map(Number);
             const index = playlist.indexOf(Number(mediaId));
             if (index > -1) {
                 playlist.splice(index, 1);
             } else {
                 playlist.push(Number(mediaId));
             }
-            localStorage.setItem('impactstream_playlist', JSON.stringify(playlist));
+            
+            const key = `impactstream_playlist_${category}`;
+            localStorage.setItem(key, JSON.stringify(playlist));
             
             // Re-render UI
-            if (currentCategory === 'Playlist') {
-                renderPlaylistGrid();
+            if (selectedCommission === 'playlist') {
+                renderCategoryPlaylistGrid();
             } else {
                 // Just update the card's button
                 const cards = document.querySelectorAll(`[id="card-${mediaId}"] .card-playlist-btn`);
@@ -6091,7 +6086,9 @@
             const btn = document.getElementById('modal-playlist-toggle-btn');
             const txt = document.getElementById('modal-playlist-btn-text');
             if (btn && txt) {
-                const isInPlaylist = getPlaylist().map(Number).includes(Number(mediaId));
+                const media = allMedias.find(m => Number(m.id) === Number(mediaId));
+                const category = media ? media.categorie : 'default';
+                const isInPlaylist = getPlaylist(category).map(Number).includes(Number(mediaId));
                 btn.style.background = isInPlaylist ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)';
                 btn.style.borderColor = isInPlaylist ? 'rgba(232, 130, 12, 0.4)' : 'rgba(237, 232, 223, 0.15)';
                 btn.style.color = isInPlaylist ? '#e8820c' : '#ede8df';
@@ -6104,9 +6101,27 @@
             }
         };
 
-        window.renderPlaylistGrid = function() {
-            const playlistIds = getPlaylist().map(Number);
-            const playlistMedias = allMedias.filter(m => playlistIds.includes(Number(m.id)));
+        window.renderCategoryPlaylistGrid = function() {
+            const category = currentCategory;
+            const playlistIds = getPlaylist(category).map(Number);
+            let playlistMedias = allMedias.filter(m => m.categorie === category && playlistIds.includes(Number(m.id)));
+            
+            // Apply search locally
+            const search = document.getElementById('search-input').value.toLowerCase().trim();
+            if (search) {
+                playlistMedias = playlistMedias.filter(m => {
+                    const title = (m.titre || '').toLowerCase();
+                    const desc = (m.description || '').toLowerCase();
+                    const kw = (m.paroles_keywords || '').toLowerCase();
+                    return title.includes(search) || desc.includes(search) || kw.includes(search);
+                });
+            }
+            
+            // Apply language filter locally
+            const langue = document.getElementById('filter-langue').value;
+            if (langue) {
+                playlistMedias = playlistMedias.filter(m => m.langue === langue);
+            }
             
             const grid = document.getElementById('media-grid');
             const noResults = document.getElementById('no-results');
@@ -6116,7 +6131,13 @@
                 if (noResults) {
                     noResults.style.display = 'block';
                     const noResultsText = noResults.querySelector('p');
-                    if (noResultsText) noResultsText.innerHTML = "Votre playlist est vide.<br><span style='font-size: 0.9rem; opacity: 0.7;'>Ajoutez des musiques ou des enseignements à votre playlist pour les retrouver ici.</span>";
+                    if (noResultsText) {
+                        if (search || langue) {
+                            noResultsText.textContent = "Aucun média trouvé dans votre playlist pour ces filtres.";
+                        } else {
+                            noResultsText.innerHTML = `Votre playlist de ${category.toLowerCase()}s est vide.<br><span style='font-size: 0.9rem; opacity: 0.7;'>Ajoutez des éléments à votre playlist en cliquant sur l'icône signet.</span>`;
+                        }
+                    }
                 }
                 return;
             }
