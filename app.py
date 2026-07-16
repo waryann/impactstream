@@ -64,6 +64,7 @@ os.makedirs(UPLOAD_IMAGES, exist_ok=True)
 # Base de données
 # ─────────────────────────────────────────────
 
+# Déploiement test - vérification de la persistance de la base de données
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
