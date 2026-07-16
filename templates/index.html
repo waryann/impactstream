@@ -6174,6 +6174,11 @@
 
         // Check live streams status
         checkLivesStatus();
+
+        // Check session status every 8 seconds (for instant eviction checking)
+        setInterval(() => {
+            fetch('/api/session-status').catch(err => console.error('Session check error:', err));
+        }, 8000);
     </script>
 </body>
 </html>

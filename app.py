@@ -836,6 +836,13 @@ def index():
     )
 
 
+@app.route('/api/session-status')
+@user_login_required
+def api_session_status():
+    """Vérifier rapidement si la session de l'utilisateur est toujours valide et non expulsée."""
+    return jsonify({'status': 'ok'})
+
+
 @app.route('/api/medias')
 @user_login_required
 def api_medias():
