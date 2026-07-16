@@ -185,7 +185,27 @@ def get_db():
     """Obtenir une connexion à la base de données (SQLite en local, PostgreSQL/Supabase en prod)."""
     if DATABASE_URL:
         conn = psycopg2.connect(DATABASE_URL)
-        return PostgresConnectionWrapper(conn)
+        wrapper = PostgresConnectionWrapper(conn)
+        
+        # Auto-migration PostgreSQL (salle d'attente)
+        try:
+            cur = wrapper.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS waiting_room (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            # Garantir la présence de la configuration de la salle d'attente
+            cur.execute("INSERT INTO settings (key, value) VALUES ('waiting_room_enabled', '0') ON CONFLICT (key) DO NOTHING")
+            wrapper.commit()
+        except Exception as e:
+            wrapper.rollback()
+            print(f"⚠️ Erreur auto-migration PostgreSQL: {e}")
+            
+        return wrapper
 
     db_exists = os.path.exists(DATABASE)
     conn = sqlite3.connect(DATABASE)
