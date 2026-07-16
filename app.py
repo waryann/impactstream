@@ -462,9 +462,31 @@ def get_file_size_mb(filepath):
 
 
 
+R2_PUBLIC_URL = os.environ.get('R2_PUBLIC_URL', 'https://pub-518d7a54eb024008841fbc5cddb7b0a4.r2.dev')
+
+@app.route('/static/images/<path:filename>')
+def serve_static_images(filename):
+    local_path = os.path.join(app.root_path, 'static', 'images', filename)
+    if os.path.exists(local_path):
+        return send_from_directory(os.path.join(app.root_path, 'static', 'images'), filename)
+    if R2_PUBLIC_URL:
+        return redirect(f"{R2_PUBLIC_URL.rstrip('/')}/{filename}")
+    return "File not found", 404
+
+@app.route('/static/videos/<path:filename>')
+def serve_static_videos(filename):
+    local_path = os.path.join(app.root_path, 'static', 'videos', filename)
+    if os.path.exists(local_path):
+        return send_from_directory(os.path.join(app.root_path, 'static', 'videos'), filename)
+    if R2_PUBLIC_URL:
+        return redirect(f"{R2_PUBLIC_URL.rstrip('/')}/{filename}")
+    return "File not found", 404
+
+
 # ─────────────────────────────────────────────
 # Routes d'authentification utilisateur
 # ─────────────────────────────────────────────
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def user_login():
