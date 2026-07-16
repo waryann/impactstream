@@ -42,7 +42,7 @@ ALLOWED_VIDEO = {'.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'}
 ALLOWED_AUDIO = {'.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac'}
 ALLOWED_IMAGE = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 
-# Code d'accès admin
+# Code d'accès adminn
 ADMIN_CODE = 'Bungudi128'
 
 # Commissions autorisées
