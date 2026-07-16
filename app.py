@@ -69,7 +69,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
     import psycopg2
-    from psycopg2.extras import DictCursor
+    from psycopg2.extras import RealDictCursor
     sqlite3.IntegrityError = psycopg2.IntegrityError
 
 class PostgresRowWrapper:
@@ -85,7 +85,7 @@ class PostgresRowWrapper:
         return list(self._row.keys())
 
     def __iter__(self):
-        return iter(self._row.values())
+        return iter(self._row.keys())
 
     def __len__(self):
         return len(self._row)
@@ -157,7 +157,7 @@ class PostgresConnectionWrapper:
         self.conn = pg_conn
 
     def cursor(self):
-        return PostgresCursorWrapper(self.conn.cursor(cursor_factory=DictCursor))
+        return PostgresCursorWrapper(self.conn.cursor(cursor_factory=RealDictCursor))
 
     def execute(self, query, params=None):
         cur = self.cursor()
