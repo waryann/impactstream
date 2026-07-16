@@ -2795,15 +2795,20 @@
                     ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="#e8820c" stroke="#e8820c" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`
                     : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`;
 
+                const showPlaylistBtn = currentCategory !== "";
+                const playlistBtnHtml = showPlaylistBtn
+                    ? `<button class="card-playlist-btn" onclick="togglePlaylistItem(event, ${m.id})" title="${isInPlaylist ? 'Retirer de ma playlist' : 'Ajouter à ma playlist'}" style="position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(20, 20, 16, 0.7); border: 1px solid rgba(237, 232, 223, 0.15); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(20, 20, 16, 0.95)';" onmouseout="this.style.transform='none'; this.style.background='rgba(20, 20, 16, 0.7)';">
+                            ${playlistIconHtml}
+                       </button>`
+                    : '';
+
                 return `
                     <article class="media-card" onclick="openPlayer(${m.id})" style="animation-delay: ${index * 0.07}s" id="card-${m.id}">
                         <div class="card-thumbnail">
                             ${thumbnailHtml}
                             <div class="card-thumbnail-overlay"></div>
                             
-                            <button class="card-playlist-btn" onclick="togglePlaylistItem(event, ${m.id})" title="${isInPlaylist ? 'Retirer de ma playlist' : 'Ajouter à ma playlist'}" style="position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(20, 20, 16, 0.7); border: 1px solid rgba(237, 232, 223, 0.15); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(20, 20, 16, 0.95)';" onmouseout="this.style.transform='none'; this.style.background='rgba(20, 20, 16, 0.7)';">
-                                ${playlistIconHtml}
-                            </button>
+                            ${playlistBtnHtml}
 
                             <div class="card-play-icon">
                                 ${isAudio
