@@ -1324,6 +1324,7 @@
                 <a href="#" class="nav-link" data-category="Communique" id="nav-communiques">Communiqués</a>
                 <a href="#" class="nav-link" data-category="Bible" id="nav-bible">Bible</a>
                 <a href="#" class="nav-link" data-category="Espaces" id="nav-espaces">Espaces</a>
+                <a href="#" class="nav-link" data-category="Playlist" id="nav-playlist">Ma Playlist</a>
                 <a href="#" class="nav-link" data-category="Radio" id="nav-radio" style="display: none;">Radio Live</a>
                 <a href="#" class="nav-link" data-category="Lives" id="nav-lives" style="display: none; color: #ef5350; font-weight: 700;">● Directs Vidéo</a>
             </div>
@@ -1778,6 +1779,10 @@
                 <a href="#" onclick="switchCategory('Podcast', this); toggleMobileMoreMenu();" data-category="Podcast" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
                     <span>Podcasts</span>
+                </a>
+                <a href="#" onclick="switchCategory('Playlist', this); toggleMobileMoreMenu();" data-category="Playlist" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                    <span>Ma Playlist</span>
                 </a>
                 <a href="#" onclick="switchCategory('Radio', this); toggleMobileMoreMenu();" data-category="Radio" id="mobile-nav-radio" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none; display: none;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-11.31-.01a6 6 0 0 1 0-8.49m14.14-2.82a10 10 0 0 1 0 14.14m-16.97 0a10 10 0 0 1 0-14.14"></path></svg>
@@ -2271,6 +2276,9 @@
                 navigator.mediaSession.setActionHandler('nexttrack', () => {
                     playNextBibleChapter();
                 });
+                navigator.mediaSession.setActionHandler('previoustrack', () => {
+                    playPreviousBibleChapter();
+                });
             }
         }
 
@@ -2307,6 +2315,51 @@
                         updateBibleMediaSession();
                     }).catch(err => {
                         console.error("Background next chapter failed:", err);
+                    });
+                }
+
+                // If document is hidden, defer text fetching to prevent OS from suspending audio
+                if (document.hidden) {
+                    window.bibleTextNeedsUpdate = true;
+                } else {
+                    loadBibleChapter();
+                }
+            } else {
+                stopStudioAudio();
+            }
+        }
+
+        window.playPreviousBibleChapter = function() {
+            const isFirstChapterOfBible = (currentBibleBook === 1 && currentBibleChapter === 1);
+            if (!isFirstChapterOfBible) {
+                let prevChapter = currentBibleChapter - 1;
+                let prevBook = currentBibleBook;
+                if (prevChapter < 1) {
+                    prevBook = currentBibleBook - 1;
+                    const book = BIBLE_BOOKS.find(b => b.nr === prevBook);
+                    prevChapter = book.chapters;
+                }
+
+                currentBibleBook = prevBook;
+                currentBibleChapter = prevChapter;
+
+                const bookSelect = document.getElementById('bible-book-select');
+                if (bookSelect) bookSelect.value = currentBibleBook;
+                updateChapterSelect();
+                const chapterSelect = document.getElementById('bible-chapter-select');
+                if (chapterSelect) chapterSelect.value = currentBibleChapter;
+
+                // Play synchronously first to maintain background session
+                if (!nativeAudio) nativeAudio = document.getElementById('bible-native-audio');
+                if (nativeAudio) {
+                    nativeAudio.src = getStudioAudioUrl();
+                    nativeAudio.load();
+                    nativeAudio.play().then(() => {
+                        isStudioPlaying = true;
+                        updateStudioPlayerUI(true);
+                        updateBibleMediaSession();
+                    }).catch(err => {
+                        console.error("Background previous chapter failed:", err);
                     });
                 }
 
@@ -2718,6 +2771,11 @@
             const grid = document.getElementById('media-grid');
             const noResults = document.getElementById('no-results');
 
+            if (noResults) {
+                const noResultsText = noResults.querySelector('p');
+                if (noResultsText) noResultsText.textContent = "Aucun média trouvé pour cette recherche.";
+            }
+
             if (medias.length === 0) {
                 grid.innerHTML = '';
                 noResults.style.display = 'block';
@@ -2725,6 +2783,8 @@
             }
 
             noResults.style.display = 'none';
+
+            const playlist = getPlaylist();
 
             grid.innerHTML = medias.map((m, index) => {
                 const emoji = categoryEmojis[m.categorie] || '🎬';
@@ -2737,11 +2797,21 @@
                            <span>${emoji}</span>
                        </div>`;
 
+                const isInPlaylist = playlist.includes(m.id);
+                const playlistIconHtml = isInPlaylist
+                    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="#e8820c" stroke="#e8820c" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`
+                    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`;
+
                 return `
                     <article class="media-card" onclick="openPlayer(${m.id})" style="animation-delay: ${index * 0.07}s" id="card-${m.id}">
                         <div class="card-thumbnail">
                             ${thumbnailHtml}
                             <div class="card-thumbnail-overlay"></div>
+                            
+                            <button class="card-playlist-btn" onclick="togglePlaylistItem(event, ${m.id})" title="${isInPlaylist ? 'Retirer de ma playlist' : 'Ajouter à ma playlist'}" style="position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(20, 20, 16, 0.7); border: 1px solid rgba(237, 232, 223, 0.15); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(20, 20, 16, 0.95)';" onmouseout="this.style.transform='none'; this.style.background='rgba(20, 20, 16, 0.7)';">
+                                ${playlistIconHtml}
+                            </button>
+
                             <div class="card-play-icon">
                                 ${isAudio
                                     ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3" fill="white"/><circle cx="18" cy="16" r="3" fill="white"/></svg>'
@@ -2848,7 +2918,7 @@
             });
             
             // Highlight the "Plus" button if category is inside the "More" menu
-            const moreCategories = ['Musique', 'Podcast', 'Radio', 'Lives', 'Espaces'];
+            const moreCategories = ['Musique', 'Podcast', 'Playlist', 'Radio', 'Lives', 'Espaces'];
             const btnMore = document.getElementById('btn-mobile-more');
             if (btnMore) {
                 if (moreCategories.includes(category)) {
@@ -4477,6 +4547,26 @@
                     if (bibleContainer) bibleContainer.style.display = 'none';
                     if (radioContainer) radioContainer.style.display = 'block';
                     heading.textContent = "Radio Live en Direct";
+                } else if (currentCategory === 'Playlist') {
+                    if (heroSection) heroSection.style.display = 'none';
+                    if (filtersSection) filtersSection.style.display = 'none';
+                    mediaGrid.style.display = 'grid';
+                    noResults.style.display = 'none';
+                    pillsContainer.style.display = 'none';
+                    communiquesContainer.style.display = 'none';
+                    if (radioContainer) radioContainer.style.display = 'none';
+                    if (livesContainer) livesContainer.style.display = 'none';
+                    if (bibleContainer) bibleContainer.style.display = 'none';
+                    if (radioAudio) {
+                        radioAudio.pause();
+                        radioAudio = null;
+                        isRadioPlaying = false;
+                        document.getElementById('radio-play-icon').style.display = 'block';
+                        document.getElementById('radio-pause-icon').style.display = 'none';
+                        document.getElementById('radio-visualizer').classList.remove('playing');
+                    }
+                    heading.textContent = "Ma Playlist Personnelle";
+                    renderPlaylistGrid();
                 } else if (currentCategory === 'Lives') {
                     if (heroSection) heroSection.style.display = 'none';
                     if (filtersSection) filtersSection.style.display = 'none';
@@ -4723,6 +4813,32 @@
             }
         }
 
+        function playPreviousMediaTrack(currentMediaId) {
+            const mediaGrid = document.getElementById('media-grid');
+            if (!mediaGrid) return;
+            
+            const cards = Array.from(mediaGrid.querySelectorAll('.media-card'));
+            const visibleCards = cards.filter(card => {
+                return card.offsetWidth > 0 && card.offsetHeight > 0;
+            });
+
+            if (visibleCards.length === 0) return;
+
+            const currentIndex = visibleCards.findIndex(card => {
+                return card.id === `card-${currentMediaId}` || (card.getAttribute('onclick') && card.getAttribute('onclick').includes(`openPlayer(${currentMediaId})`));
+            });
+
+            if (currentIndex !== -1 && currentIndex - 1 >= 0) {
+                const prevCard = visibleCards[currentIndex - 1];
+                const prevMediaId = prevCard.id.replace('card-', '');
+                if (prevMediaId) {
+                    openPlayer(prevMediaId);
+                } else {
+                    prevCard.click();
+                }
+            }
+        }
+
         function openPlayer(mediaId) {
             // Stop live radio if playing
             if (typeof isRadioPlaying !== 'undefined' && isRadioPlaying) {
@@ -4840,6 +4956,16 @@
                 `;
             }
 
+            const isInPlaylist = getPlaylist().includes(media.id);
+            const playlistBtnHtml = `
+                <button id="modal-playlist-toggle-btn" onclick="togglePlaylistItem(null, ${media.id})" class="btn-playlist-toggle" style="display: inline-flex; align-items: center; gap: 0.5rem; background: ${isInPlaylist ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)'}; border: 1px solid ${isInPlaylist ? 'rgba(232, 130, 12, 0.4)' : 'rgba(237, 232, 223, 0.15)'}; color: ${isInPlaylist ? '#e8820c' : '#ede8df'}; padding: 0.6rem 1.25rem; border-radius: 100px; font-size: 0.85rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='${isInPlaylist ? 'rgba(232, 130, 12, 0.25)' : 'rgba(237, 232, 223, 0.12)'}'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='${isInPlaylist ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)'}'; this.style.transform='none';">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${isInPlaylist ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span id="modal-playlist-btn-text">${isInPlaylist ? 'Dans ma playlist' : 'Ajouter à ma playlist'}</span>
+                </button>
+            `;
+
             info.innerHTML = `
                 <h2>${media.titre}</h2>
                 <div class="modal-tags">
@@ -4849,8 +4975,9 @@
                 </div>
                 <p class="modal-description">${media.description}</p>
                 ${langSelectorHtml}
-                <div id="modal-download-container" style="margin-top: 1.5rem;">
+                <div id="modal-actions-container" style="margin-top: 1.5rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
                     ${downloadBtnHtml}
+                    ${playlistBtnHtml}
                 </div>
             `;
 
@@ -4898,6 +5025,9 @@
                 });
                 navigator.mediaSession.setActionHandler('nexttrack', () => {
                     playNextMediaTrack(media.id);
+                });
+                navigator.mediaSession.setActionHandler('previoustrack', () => {
+                    playPreviousMediaTrack(media.id);
                 });
             }
         }
@@ -5915,6 +6045,85 @@
         // Start reminder engine polling
         setInterval(checkCommuniqueReminders, 15000);
         setTimeout(checkCommuniqueReminders, 2000);
+
+        // ═══════════════════════════════════════════
+        // Playlist Logic
+        // ═══════════════════════════════════════════
+        window.getPlaylist = function() {
+            try {
+                return JSON.parse(localStorage.getItem('impactstream_playlist')) || [];
+            } catch (e) {
+                return [];
+            }
+        };
+
+        window.togglePlaylistItem = function(event, mediaId) {
+            if (event) event.stopPropagation();
+            let playlist = getPlaylist().map(Number);
+            const index = playlist.indexOf(Number(mediaId));
+            if (index > -1) {
+                playlist.splice(index, 1);
+            } else {
+                playlist.push(Number(mediaId));
+            }
+            localStorage.setItem('impactstream_playlist', JSON.stringify(playlist));
+            
+            // Re-render UI
+            if (currentCategory === 'Playlist') {
+                renderPlaylistGrid();
+            } else {
+                // Just update the card's button
+                const cards = document.querySelectorAll(`[id="card-${mediaId}"] .card-playlist-btn`);
+                cards.forEach(btn => {
+                    const isInPlaylist = playlist.includes(Number(mediaId));
+                    btn.title = isInPlaylist ? 'Retirer de ma playlist' : 'Ajouter à ma playlist';
+                    btn.innerHTML = isInPlaylist
+                        ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="#e8820c" stroke="#e8820c" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`
+                        : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`;
+                });
+            }
+
+            // Also update the button inside the player modal if open
+            updatePlayerModalPlaylistButton(mediaId);
+        };
+
+        window.updatePlayerModalPlaylistButton = function(mediaId) {
+            const btn = document.getElementById('modal-playlist-toggle-btn');
+            const txt = document.getElementById('modal-playlist-btn-text');
+            if (btn && txt) {
+                const isInPlaylist = getPlaylist().map(Number).includes(Number(mediaId));
+                btn.style.background = isInPlaylist ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)';
+                btn.style.borderColor = isInPlaylist ? 'rgba(232, 130, 12, 0.4)' : 'rgba(237, 232, 223, 0.15)';
+                btn.style.color = isInPlaylist ? '#e8820c' : '#ede8df';
+                
+                const svg = btn.querySelector('svg');
+                if (svg) {
+                    svg.setAttribute('fill', isInPlaylist ? 'currentColor' : 'none');
+                }
+                txt.textContent = isInPlaylist ? 'Dans ma playlist' : 'Ajouter à ma playlist';
+            }
+        };
+
+        window.renderPlaylistGrid = function() {
+            const playlistIds = getPlaylist().map(Number);
+            const playlistMedias = allMedias.filter(m => playlistIds.includes(Number(m.id)));
+            
+            const grid = document.getElementById('media-grid');
+            const noResults = document.getElementById('no-results');
+            
+            if (playlistMedias.length === 0) {
+                grid.innerHTML = '';
+                if (noResults) {
+                    noResults.style.display = 'block';
+                    const noResultsText = noResults.querySelector('p');
+                    if (noResultsText) noResultsText.innerHTML = "Votre playlist est vide.<br><span style='font-size: 0.9rem; opacity: 0.7;'>Ajoutez des musiques ou des enseignements à votre playlist pour les retrouver ici.</span>";
+                }
+                return;
+            }
+            
+            if (noResults) noResults.style.display = 'none';
+            renderGrid(playlistMedias);
+        };
 
         // ── Initial Render ──
         // Render all media
