@@ -46,7 +46,7 @@ ALLOWED_IMAGE = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 ADMIN_CODE = 'Bungudi128'
 
 # Commissions autorisées
-COMMISSIONS_ENSEIGNEMENT = ['Intercession', 'Couples', 'HED', 'Johana', 'Joseph', 'PDS', 'Culte', 'Nayoth', 'FGI', 'Enfants']
+COMMISSIONS_ENSEIGNEMENT = ['Intercession', 'Couples', 'HED', 'Johanna', 'Joseph', 'PDS', 'Culte', 'Nayoth', 'FGI', 'Enfants']
 COMMISSIONS_MUSIQUE = ['Adoration MP3', 'Adoration MP4', 'Nayoth', 'Chants PAB', 'Instrumentale']
 CATEGORIES = ['Enseignement', 'Musique', 'Podcast']
 
@@ -1883,7 +1883,7 @@ def admin_delete_live(live_id):
 
 
 # ─────────────────────────────────────────────
-# Quiz Routes
+# Quiz Routes hmm
 # ─────────────────────────────────────────────
 
 @app.route('/api/quizzes', methods=['GET'])
