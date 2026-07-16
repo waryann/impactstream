@@ -78,8 +78,16 @@ class PostgresRowWrapper:
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return list(self._row.values())[key]
-        return self._row[key]
+            val = list(self._row.values())[key]
+        else:
+            val = self._row[key]
+        
+        from datetime import datetime, date
+        if isinstance(val, datetime):
+            return val.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(val, date):
+            return val.strftime('%Y-%m-%d')
+        return val
 
     def keys(self):
         return list(self._row.keys())
@@ -91,7 +99,7 @@ class PostgresRowWrapper:
         return len(self._row)
 
     def items(self):
-        return self._row.items()
+        return [(k, self[k]) for k in self.keys()]
 
 class PostgresCursorWrapper:
     def __init__(self, pg_cursor):
