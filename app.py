@@ -187,7 +187,7 @@ def get_db():
         conn = psycopg2.connect(DATABASE_URL)
         wrapper = PostgresConnectionWrapper(conn)
         
-        # Auto-migration PostgreSQL (salle d'attente)
+        # Auto-migration PostgreSQL (salle d'attente & expulsion)
         try:
             cur = wrapper.cursor()
             cur.execute('''
@@ -200,6 +200,8 @@ def get_db():
             ''')
             # Garantir la présence de la configuration de la salle d'attente
             cur.execute("INSERT INTO settings (key, value) VALUES ('waiting_room_enabled', '0') ON CONFLICT (key) DO NOTHING")
+            # Ajouter la colonne is_evicted à la table attendance si elle n'existe pas
+            cur.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS is_evicted INTEGER DEFAULT 0")
             wrapper.commit()
         except Exception as e:
             wrapper.rollback()
@@ -365,6 +367,12 @@ def get_db():
     # Settings pour la salle d'attente
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('waiting_room_enabled', '0'))
 
+    # Auto-migration SQLite pour attendance (is_evicted)
+    try:
+        cursor.execute("ALTER TABLE attendance ADD COLUMN is_evicted INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
     conn.commit()
 
     # Auto-migration medias
@@ -467,8 +475,31 @@ def user_login_required(f):
     """Décorateur pour exiger que l'utilisateur soit connecté au site public."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not session.get('user_logged_in'):
+        email = session.get('user_email')
+        if not session.get('user_logged_in') or not email:
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'unauthorized'}), 401
             return redirect(url_for('user_login'))
+
+        # Vérifier si l'utilisateur est expulsé aujourd'hui
+        try:
+            conn = get_db()
+            today_key = datetime.now(ATTENDANCE_TZ).strftime('%Y-%m-%d')
+            row = conn.execute(
+                'SELECT is_evicted FROM attendance WHERE user_email = ? AND date_key = ?',
+                (email, today_key)
+            ).fetchone()
+            conn.close()
+            if row and row['is_evicted'] == 1:
+                session.pop('user_logged_in', None)
+                session.pop('user_email', None)
+                if request.path.startswith('/api/'):
+                    return jsonify({'error': 'evicted'}), 401
+                flash("⚠️ Vous avez été déconnecté par un administrateur.", "error")
+                return redirect(url_for('user_login'))
+        except Exception as e:
+            print(f"⚠️ Erreur vérification expulsion: {e}")
+
         return f(*args, **kwargs)
     return decorated_function
 
@@ -604,6 +635,19 @@ def user_login():
                     return redirect(url_for('user_waiting_room'))
             
             conn_wr.close()
+
+            # Réinitialiser l'expulsion s'ils se reconnectent
+            try:
+                conn_ev = get_db()
+                today_key = datetime.now(ATTENDANCE_TZ).strftime('%Y-%m-%d')
+                conn_ev.execute(
+                    'UPDATE attendance SET is_evicted = 0 WHERE user_email = ? AND date_key = ?',
+                    (email, today_key)
+                )
+                conn_ev.commit()
+                conn_ev.close()
+            except Exception as e:
+                print(f"⚠️ Erreur réinitialisation expulsion: {e}")
                 
             session['user_logged_in'] = True
             session['user_email'] = email
@@ -1182,6 +1226,28 @@ def admin_attendance_clear():
     conn.close()
     flash(f'🗑️ Présences du {date_key} effacées.', 'success')
     return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/attendance/evict', methods=['POST'])
+@login_required
+def admin_attendance_evict():
+    """AJAX : Expulser un utilisateur connecté pour la journée."""
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    date_key = data.get('date', datetime.now(ATTENDANCE_TZ).strftime('%Y-%m-%d'))
+    
+    if not email:
+        return jsonify({'error': 'Adresse e-mail manquante.'}), 400
+        
+    conn = get_db()
+    conn.execute(
+        'UPDATE attendance SET is_evicted = 1 WHERE user_email = ? AND date_key = ?',
+        (email, date_key)
+    )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
 
 
 @app.route('/admin/comptes/ajouter', methods=['POST'])

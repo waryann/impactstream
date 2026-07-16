@@ -1793,6 +1793,16 @@
 
     <!-- ─── JavaScript ─── -->
     <script>
+        // Global Fetch Interceptor for 401 Unauthorized/Evicted redirect
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+            const response = await originalFetch(...args);
+            if (response.status === 401) {
+                window.location.href = '/login';
+            }
+            return response;
+        };
+
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

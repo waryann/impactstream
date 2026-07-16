@@ -908,6 +908,7 @@
                             <th style="padding: 1rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.08em;">Email</th>
                             <th style="padding: 1rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.08em;">Heure d'arrivée</th>
                             <th style="padding: 1rem 1.25rem; text-align: center; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.08em;">Statut</th>
+                            <th style="padding: 1rem 1.25rem; text-align: right; font-size: 0.75rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.08em;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="attendance-table-body">
@@ -931,11 +932,18 @@
                                         </span>
                                     {% endif %}
                                 </td>
+                                <td style="padding: 0.85rem 1.25rem; text-align: right;">
+                                    {% if rec.is_evicted == 1 %}
+                                        <span style="font-size: 0.8rem; font-weight: 700; color: #ef5350;">Expulsé</span>
+                                    {% else %}
+                                        <button onclick="evictUser('{{ rec.user_email }}')" style="padding: 0.4rem 0.8rem; background: rgba(239, 83, 80, 0.1); border: 1px solid rgba(239, 83, 80, 0.3); border-radius: 8px; color: #ef5350; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,83,80,0.2)'" onmouseout="this.style.background='rgba(239,83,80,0.1)'">Expulser</button>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="5" style="padding: 3rem 1.25rem; text-align: center; color: rgba(237,232,223,0.3); font-size: 0.92rem;">
+                                <td colspan="6" style="padding: 3rem 1.25rem; text-align: center; color: rgba(237,232,223,0.3); font-size: 0.92rem;">
                                     <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📋</div>
                                     Aucune présence enregistrée pour cette date.
                                 </td>
@@ -2616,7 +2624,7 @@
                 badge.textContent = data.count + ' présent' + (data.count > 1 ? 's' : '');
 
                 if (data.records.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 3rem 1.25rem; text-align: center; color: rgba(237,232,223,0.3); font-size: 0.92rem;"><div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📋</div>Aucune présence enregistrée pour cette date.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="padding: 3rem 1.25rem; text-align: center; color: rgba(237,232,223,0.3); font-size: 0.92rem;"><div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📋</div>Aucune présence enregistrée pour cette date.</td></tr>';
                     return;
                 }
 
@@ -2627,17 +2635,50 @@
                         ? '<span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.85rem; background: rgba(220, 53, 69, 0.12); border: 1px solid rgba(220, 53, 69, 0.25); border-radius: 100px; font-size: 0.78rem; font-weight: 700; color: #ff6b6b;">🔴 En retard</span>'
                         : '<span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.85rem; background: rgba(76, 175, 80, 0.12); border: 1px solid rgba(76, 175, 80, 0.25); border-radius: 100px; font-size: 0.78rem; font-weight: 700; color: #81c784;">✅ À l\'heure</span>';
 
+                    let actionHtml = '';
+                    if (rec.is_evicted === 1) {
+                        actionHtml = '<span style="font-size: 0.8rem; font-weight: 700; color: #ef5350;">Expulsé</span>';
+                    } else {
+                        actionHtml = `<button onclick="evictUser('${rec.user_email}', '${dateVal}')" style="padding: 0.4rem 0.8rem; background: rgba(239, 83, 80, 0.1); border: 1px solid rgba(239, 83, 80, 0.3); border-radius: 8px; color: #ef5350; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,83,80,0.2)'" onmouseout="this.style.background='rgba(239,83,80,0.1)'">Expulser</button>`;
+                    }
+
                     html += '<tr style="border-bottom: 1px solid rgba(62,59,46,0.08); transition: background 0.2s;" onmouseover="this.style.background=\'rgba(237,232,223,0.03)\';" onmouseout="this.style.background=\'transparent\';">';
                     html += '<td style="padding: 0.85rem 1.25rem; font-size: 0.88rem; color: rgba(237,232,223,0.4); font-weight: 600;">' + (idx + 1) + '</td>';
                     html += '<td style="padding: 0.85rem 1.25rem; font-size: 0.92rem; font-weight: 700; color: #fff;">' + rec.display_name + '</td>';
                     html += '<td style="padding: 0.85rem 1.25rem; font-size: 0.85rem; color: rgba(237,232,223,0.5);">' + rec.user_email + '</td>';
                     html += '<td style="padding: 0.85rem 1.25rem; font-size: 0.88rem; font-weight: 600; color: #ede8df;">' + loginTime + '</td>';
                     html += '<td style="padding: 0.85rem 1.25rem; text-align: center;">' + statusHtml + '</td>';
+                    html += '<td style="padding: 0.85rem 1.25rem; text-align: right;">' + actionHtml + '</td>';
                     html += '</tr>';
                 });
                 tbody.innerHTML = html;
             } catch (err) {
                 console.error('Erreur chargement présences:', err);
+            }
+        }
+
+        async function evictUser(email, dateVal) {
+            if (!dateVal) {
+                const dateInput = document.getElementById('attendance-date-filter');
+                dateVal = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+            }
+            if (!confirm(`Voulez-vous vraiment expulser l'utilisateur ${email} ?`)) {
+                return;
+            }
+            try {
+                const res = await fetch('/admin/attendance/evict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, date: dateVal })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadAttendanceByDate(dateVal);
+                } else {
+                    alert("Erreur lors de l'expulsion: " + (data.error || "inconnue"));
+                }
+            } catch (err) {
+                console.error("Erreur action expulsion :", err);
             }
         }
 
