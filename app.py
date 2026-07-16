@@ -332,6 +332,19 @@ def get_db():
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('attendance_enabled', '0'))
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('attendance_target_hour', '09:00'))
 
+    # Création table waiting_room
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS waiting_room (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Settings pour la salle d'attente
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('waiting_room_enabled', '0'))
+
     conn.commit()
 
     # Auto-migration medias
@@ -544,6 +557,33 @@ def user_login():
                 activation_link = f"{request.host_url.rstrip('/')}/verify-email?token={user['verification_token']}"
                 flash(f"⚠️ Votre adresse e-mail n'est pas encore vérifiée. <a href='{activation_link}' style='text-decoration: underline; font-weight: bold;'>Cliquez ici pour l'activer temporairement ({email})</a>", "error")
                 return redirect(url_for('user_login'))
+
+            # Vérification salle d'attente
+            conn_wr = get_db()
+            wr_setting = conn_wr.execute("SELECT value FROM settings WHERE key = 'waiting_room_enabled'").fetchone()
+            waiting_enabled = wr_setting['value'] == '1' if wr_setting else False
+            
+            if waiting_enabled:
+                # Vérifier si l'utilisateur a déjà une demande
+                existing = conn_wr.execute("SELECT * FROM waiting_room WHERE email = ?", (email,)).fetchone()
+                if not existing:
+                    conn_wr.execute("INSERT INTO waiting_room (email, status) VALUES (?, 'pending')", (email,))
+                    conn_wr.commit()
+                elif existing['status'] == 'approved':
+                    # Déjà approuvé, on le laisse passer
+                    pass
+                else:
+                    # Si c'était rejeté ou en cours, on s'assure qu'il repasse en pending
+                    conn_wr.execute("UPDATE waiting_room SET status = 'pending' WHERE email = ?", (email,))
+                    conn_wr.commit()
+
+                # S'il n'est pas déjà approved, on le redirige vers la salle d'attente
+                if not existing or existing['status'] != 'approved':
+                    session['waiting_for_approval'] = email
+                    conn_wr.close()
+                    return redirect(url_for('user_waiting_room'))
+            
+            conn_wr.close()
                 
             session['user_logged_in'] = True
             session['user_email'] = email
@@ -601,7 +641,75 @@ def user_logout():
     """Déconnexion utilisateur."""
     session.pop('user_logged_in', None)
     session.pop('user_email', None)
+    session.pop('waiting_for_approval', None)
     return redirect(url_for('user_login'))
+
+
+# ─────────────────────────────────────────────
+# Salle d'Attente
+# ─────────────────────────────────────────────
+
+@app.route('/waiting-room')
+def user_waiting_room():
+    """Affiche la salle d'attente."""
+    email = session.get('waiting_for_approval')
+    if not email:
+        return redirect(url_for('user_login'))
+    return render_template('waiting_room.html', email=email)
+
+
+@app.route('/api/waiting-status')
+def api_waiting_status():
+    """API publique pour vérifier le statut d'approbation d'un utilisateur."""
+    email = session.get('waiting_for_approval')
+    if not email:
+        return jsonify({'status': 'none'}), 400
+        
+    conn = get_db()
+    entry = conn.execute("SELECT status FROM waiting_room WHERE email = ?", (email,)).fetchone()
+    status = entry['status'] if entry else 'pending'
+    
+    if status == 'approved':
+        # Connexion complète de l'utilisateur
+        session['user_logged_in'] = True
+        session['user_email'] = email
+        session.pop('waiting_for_approval', None)
+        
+        # Enregistrer la présence au culte (prise de présence automatique)
+        try:
+            att_enabled = conn.execute("SELECT value FROM settings WHERE key = 'attendance_enabled'").fetchone()
+            if att_enabled and att_enabled['value'] == '1':
+                now = datetime.now(ATTENDANCE_TZ)
+                date_key = now.strftime('%Y-%m-%d')
+                existing = conn.execute(
+                    'SELECT id FROM attendance WHERE user_email = ? AND date_key = ?',
+                    (email, date_key)
+                ).fetchone()
+                if not existing:
+                    local_part = email.split('@')[0]
+                    parts = local_part.split('.')
+                    display_name = ' '.join(p.capitalize() for p in parts)
+                    
+                    target_row = conn.execute("SELECT value FROM settings WHERE key = 'attendance_target_hour'").fetchone()
+                    target_hour_str = target_row['value'] if target_row else '09:00'
+                    t_parts = target_hour_str.split(':')
+                    target_h, target_m = int(t_parts[0]), int(t_parts[1])
+                    login_minutes = now.hour * 60 + now.minute
+                    target_minutes = target_h * 60 + target_m
+                    delta = (login_minutes - target_minutes) % (24 * 60)
+                    is_late = 1 if (0 < delta <= 720) else 0
+                    
+                    conn.execute(
+                        'INSERT INTO attendance (user_email, display_name, login_at, is_late, date_key) VALUES (?, ?, ?, ?, ?)',
+                        (email, display_name, now.strftime('%Y-%m-%d %H:%M:%S'), is_late, date_key)
+                    )
+                    conn.commit()
+        except Exception as e:
+            print(f"⚠️ Erreur prise de présence dans la salle d'attente: {e}")
+            
+    conn.close()
+    return jsonify({'status': status})
+
 
 # ─────────────────────────────────────────────
 # Routes publiques
@@ -825,6 +933,14 @@ def admin_dashboard():
     ).fetchall()
     attendance_count = len(attendance_records)
 
+    # Configuration de la salle d'attente
+    wr_enabled_row = conn.execute("SELECT value FROM settings WHERE key = 'waiting_room_enabled'").fetchone()
+    waiting_room_config = {
+        'enabled': wr_enabled_row['value'] if wr_enabled_row else '0'
+    }
+    wr_pending_row = conn.execute("SELECT COUNT(*) FROM waiting_room WHERE status = 'pending'").fetchone()
+    waiting_room_pending_count = wr_pending_row[0] if wr_pending_row else 0
+
     conn.close()
 
     return render_template(
@@ -839,11 +955,81 @@ def admin_dashboard():
         attendance_config=attendance_config,
         attendance_records=[dict(r) for r in attendance_records],
         attendance_count=attendance_count,
+        waiting_room_config=waiting_room_config,
+        waiting_room_pending_count=waiting_room_pending_count,
         stats=stats,
         commissions_enseignement=COMMISSIONS_ENSEIGNEMENT,
         commissions_musique=COMMISSIONS_MUSIQUE,
         categories=CATEGORIES
     )
+
+
+# ─────────────────────────────────────────────
+# Routes Admin — Salle d'Attente
+# ─────────────────────────────────────────────
+
+@app.route('/admin/waiting-room/config', methods=['POST'])
+@login_required
+def admin_waiting_room_config():
+    """Activer ou désactiver la salle d'attente."""
+    enabled = request.form.get('waiting_room_enabled', '0').strip()
+    conn = get_db()
+    conn.execute("UPDATE settings SET value = ? WHERE key = 'waiting_room_enabled'", (enabled,))
+    
+    # Si on désactive la salle d'attente, on peut nettoyer la file
+    if enabled == '0':
+        conn.execute("DELETE FROM waiting_room")
+        
+    conn.commit()
+    conn.close()
+    flash("✅ Configuration de la salle d'attente mise à jour.", 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/waiting-room/records')
+@login_required
+def admin_waiting_room_records():
+    """API admin pour récupérer la liste des entrées de la salle d'attente."""
+    conn = get_db()
+    records = conn.execute("SELECT * FROM waiting_room ORDER BY created_at DESC").fetchall()
+    conn.close()
+    return jsonify({
+        'records': [dict(r) for r in records]
+    })
+
+
+@app.route('/admin/waiting-room/action', methods=['POST'])
+@login_required
+def admin_waiting_room_action():
+    """AJAX : Accepter ou rejeter une demande d'accès par e-mail."""
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    action = data.get('action', '').strip() # 'approve' or 'reject'
+    
+    if not email or action not in ['approve', 'reject']:
+        return jsonify({'error': 'Paramètres invalides.'}), 400
+        
+    status = 'approved' if action == 'approve' else 'rejected'
+    
+    conn = get_db()
+    conn.execute("UPDATE waiting_room SET status = ? WHERE email = ?", (status, email))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
+
+@app.route('/admin/waiting-room/clear', methods=['POST'])
+@login_required
+def admin_waiting_room_clear():
+    """Effacer toutes les demandes d'accès."""
+    conn = get_db()
+    conn.execute("DELETE FROM waiting_room")
+    conn.commit()
+    conn.close()
+    flash('🗑️ Salle d\'attente réinitialisée.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
 
 # ─────────────────────────────────────────────
 # Routes Admin — Prise de Présence

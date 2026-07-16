@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImpactStream — Salle d'attente</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e8820c;
+            --primary-grad: linear-gradient(135deg, #e8820c 0%, #d4770a 100%);
+            --bg-dark: #090906;
+            --bg-card: rgba(27, 26, 20, 0.75);
+            --border-glow: rgba(232, 130, 12, 0.15);
+            --text-main: #ede8df;
+            --text-muted: rgba(237, 232, 223, 0.4);
+            --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: radial-gradient(circle at 50% -20%, #20180a 0%, var(--bg-dark) 70%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            overflow-x: hidden;
+        }
+
+        .ambient-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(232, 130, 12, 0.08) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .waiting-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 460px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .logo-wrap {
+            margin-bottom: 2rem;
+        }
+
+        .logo-img {
+            max-height: 50px;
+            margin-bottom: 1rem;
+        }
+
+        .logo-title {
+            font-size: 1.65rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 0%, #ede8df 60%, #e8820c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Spinner / loader status */
+        .status-visual {
+            margin: 2.5rem auto;
+            position: relative;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner-outer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid rgba(232, 130, 12, 0.1);
+            border-top: 4px solid var(--primary);
+            animation: spin 1.5s linear infinite;
+        }
+
+        .spinner-inner {
+            position: absolute;
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: 3px solid rgba(232, 130, 12, 0.05);
+            border-bottom: 3px solid rgba(232, 130, 12, 0.5);
+            animation: spin-reverse 2s linear infinite;
+        }
+
+        .status-icon {
+            font-size: 2.2rem;
+            z-index: 5;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spin-reverse {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        h2.waiting-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        p.waiting-desc {
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: rgba(237, 232, 223, 0.7);
+            margin-bottom: 1.5rem;
+        }
+
+        .user-email-pill {
+            display: inline-block;
+            background: rgba(237, 232, 223, 0.05);
+            border: 1px solid rgba(237, 232, 223, 0.1);
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 2rem;
+        }
+
+        /* Error/Success states style */
+        .waiting-container.rejected {
+            border-color: rgba(239, 83, 80, 0.3);
+            box-shadow: 0 30px 60px rgba(239, 83, 80, 0.1), 0 0 40px rgba(0, 0, 0, 0.8);
+        }
+
+        .waiting-container.rejected .spinner-outer,
+        .waiting-container.rejected .spinner-inner {
+            animation-play-state: paused;
+            border-color: rgba(239, 83, 80, 0.2);
+        }
+
+        .waiting-container.rejected .spinner-outer {
+            border-top-color: #ef5350;
+        }
+
+        .waiting-container.rejected .status-icon {
+            color: #ef5350;
+        }
+
+        .btn-action {
+            display: block;
+            width: 100%;
+            padding: 0.9rem;
+            background: rgba(237, 232, 223, 0.05);
+            border: 1px solid rgba(237, 232, 223, 0.1);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-action:hover {
+            background: rgba(237, 232, 223, 0.12);
+            border-color: rgba(237, 232, 223, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-action.btn-danger {
+            background: rgba(239, 83, 80, 0.1);
+            border-color: rgba(239, 83, 80, 0.2);
+            color: #ef5350;
+        }
+
+        .btn-action.btn-danger:hover {
+            background: rgba(239, 83, 80, 0.2);
+            border-color: rgba(239, 83, 80, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+    
+    <div class="waiting-container" id="container">
+        <div class="logo-wrap">
+            <img src="/static/images/logo.png" alt="Logo" class="logo-img">
+            <div class="logo-title">Impact<span>Stream</span></div>
+        </div>
+
+        <div class="status-visual">
+            <div class="spinner-outer" id="spin1"></div>
+            <div class="spinner-inner" id="spin2"></div>
+            <div class="status-icon" id="icon">⏳</div>
+        </div>
+
+        <h2 class="waiting-title" id="title">Salle d'attente active</h2>
+        <p class="waiting-desc" id="desc">
+            Le système de régulation est activé. Veuillez patienter pendant qu'un administrateur valide votre accès à la plateforme.
+        </p>
+
+        <div class="user-email-pill">{{ email }}</div>
+
+        <div style="margin-top: 1rem;">
+            <a href="/logout" class="btn-action" id="action-btn">Se déconnecter / Retour</a>
+        </div>
+    </div>
+
+    <script>
+        let pollingInterval = null;
+
+        function checkStatus() {
+            fetch('/api/waiting-status')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'approved') {
+                        clearInterval(pollingInterval);
+                        document.getElementById('icon').textContent = '✅';
+                        document.getElementById('title').textContent = 'Accès approuvé !';
+                        document.getElementById('desc').textContent = 'Votre accès a été validé. Redirection en cours...';
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1500);
+                    } else if (data.status === 'rejected') {
+                        clearInterval(pollingInterval);
+                        document.getElementById('container').classList.add('rejected');
+                        document.getElementById('icon').textContent = '❌';
+                        document.getElementById('title').textContent = 'Accès refusé';
+                        document.getElementById('desc').textContent = 'Désolé, votre demande d\'accès à ImpactStream pour cette session a été rejetée par l\'administrateur.';
+                        
+                        const actionBtn = document.getElementById('action-btn');
+                        actionBtn.textContent = "Retourner à la connexion";
+                        actionBtn.className = "btn-action btn-danger";
+                    }
+                })
+                .catch(err => console.error("Erreur de vérification :", err));
+        }
+
+        // Commencer le polling automatique toutes les 4 secondes
+        pollingInterval = setInterval(checkStatus, 4000);
+        // Premier appel immédiat
+        setTimeout(checkStatus, 1000);
+    </script>
+</body>
+</html>

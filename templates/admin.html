@@ -737,6 +737,94 @@
                     <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Suivre les présences aux cultes, détecter les retards et exporter en PDF.</p>
                     <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #4caf50; text-transform: uppercase; letter-spacing: 0.05em;">Gérer les présences &rarr;</span>
                 </div>
+
+                <!-- Card Salle d'Attente -->
+                <div onclick="showWaitingRoomSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(232, 130, 12, 0.4)'; this.style.boxShadow='0 25px 60px rgba(232,130,12,0.2), 0 0 40px rgba(232,130,12,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">⏳</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Salle d'Attente</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;" id="admin-waiting-room-status-badge">
+                        {% if waiting_room_config.enabled == '1' %}
+                            <span style="color: #e8820c;">● Activé</span> — <span id="admin-waiting-count">{{ waiting_room_pending_count }}</span> en attente
+                        {% else %}
+                            <span style="color: rgba(237,232,223,0.4);">○ Désactivé</span>
+                        {% endif %}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Filtrer les connexions en temps réel en approuvant ou rejetant les demandes d'entrée.</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer la salle &rarr;</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Waiting Room Section ─── -->
+        <div class="admin-detail-view fade-in" id="waitingroom-section" style="display: none;">
+            <div class="detail-header" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="goBack()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">⏳ Salle d'Attente</h2>
+                </div>
+            </div>
+
+            <div class="admin-card" style="margin-bottom: 2rem; padding: 2.5rem; border-radius: 20px; background: linear-gradient(165deg, rgba(27, 26, 20, 0.5), rgba(14, 14, 10, 0.7)); border: 1px solid rgba(232, 130, 12, 0.15);">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    ⚙️ Paramètres de Régulation
+                </h3>
+                
+                <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem;">
+                    <form action="/admin/waiting-room/config" method="POST" id="waiting-room-config-form" style="display: flex; align-items: center; gap: 1rem;">
+                        <div>
+                            <label style="font-size: 0.82rem; color: rgba(237,232,223,0.5); font-weight: 600; display: block; margin-bottom: 0.5rem;">Salle d'attente globale</label>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <label style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
+                                    <input type="checkbox" name="waiting_room_enabled" value="1" {% if waiting_room_config.enabled == '1' %}checked{% endif %} style="opacity: 0; width: 0; height: 0;" onchange="this.nextElementSibling.style.background = this.checked ? '#e8820c' : 'rgba(62,59,46,0.4)'; this.nextElementSibling.firstElementChild.style.left = this.checked ? '27px' : '3px'; document.getElementById('waiting-room-config-form').submit();">
+                                    <span style="position: absolute; inset: 0; background: {% if waiting_room_config.enabled == '1' %}#e8820c{% else %}rgba(62,59,46,0.4){% endif %}; border-radius: 28px; transition: all 0.3s;">
+                                        <span style="position: absolute; top: 3px; left: {% if waiting_room_config.enabled == '1' %}27px{% else %}3px{% endif %}; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: left 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></span>
+                                    </span>
+                                </label>
+                                <span style="font-size: 0.88rem; font-weight: 600; color: {% if waiting_room_config.enabled == '1' %}#e8820c{% else %}rgba(237,232,223,0.4){% endif %};">
+                                    {% if waiting_room_config.enabled == '1' %}Activé{% else %}Désactivé{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form action="/admin/waiting-room/clear" method="POST" onsubmit="return confirm('Voulez-vous vraiment vider la salle d\'attente ?');">
+                        <button type="submit" class="btn-cancel" style="background: rgba(239, 83, 80, 0.1); border-color: rgba(239, 83, 80, 0.2); color: #ef5350; font-size: 0.85rem; padding: 0.6rem 1.25rem; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+                            🗑️ Réinitialiser la file
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Liste des connexions -->
+            <div class="admin-card" style="padding: 2.5rem; border-radius: 20px; background: rgba(27, 26, 20, 0.4); border: 1px solid rgba(232, 130, 12, 0.1);">
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span>👥 Demandes de connexion</span>
+                    <span style="font-size: 0.75rem; background: rgba(232, 130, 12, 0.12); color: #e8820c; padding: 0.25rem 0.75rem; border-radius: 100px; font-weight: 700;">
+                        Auto-refresh actif
+                    </span>
+                </h3>
+
+                <div style="overflow-x: auto; margin-top: 1rem;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid rgba(237,232,223,0.08); color: rgba(237,232,223,0.5); font-weight: 600;">
+                                <th style="padding: 1rem 0.75rem;">Utilisateur</th>
+                                <th style="padding: 1rem 0.75rem;">Date Demande</th>
+                                <th style="padding: 1rem 0.75rem;">Statut</th>
+                                <th style="padding: 1rem 0.75rem; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="waiting-room-table-body">
+                            <tr style="border-bottom: 1px solid rgba(237,232,223,0.04);">
+                                <td colspan="4" style="padding: 2rem; text-align: center; color: rgba(237,232,223,0.4);">
+                                    Chargement des données...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1895,6 +1983,7 @@
     <script>
         let activeCategory = '';
         let activeCommission = '';
+        let waitingRoomPollingInterval = null;
 
         const commissionsEnseignement = {{ commissions_enseignement | tojson }};
         const commissionsMusique = {{ commissions_musique | tojson }};
@@ -2074,6 +2163,13 @@
             document.getElementById('radio-section').style.display = 'none';
             document.getElementById('lives-section').style.display = 'none';
             document.getElementById('quizzes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'none';
+            document.getElementById('waitingroom-section').style.display = 'none';
+            
+            if (waitingRoomPollingInterval) {
+                clearInterval(waitingRoomPollingInterval);
+                waitingRoomPollingInterval = null;
+            }
         }
 
         function goBack() {
@@ -2833,6 +2929,111 @@
             .catch(err => console.error("Error saving quiz questions:", err));
         }
 
+        // ── Waiting Room Section JS Helpers ──
+        function showWaitingRoomSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('lives-section').style.display = 'none';
+            document.getElementById('quizzes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'none';
+            document.getElementById('waitingroom-section').style.display = 'block';
+
+            // Fetch list immediately
+            refreshWaitingRoomRecords();
+
+            // Set polling interval every 4 seconds
+            if (!waitingRoomPollingInterval) {
+                waitingRoomPollingInterval = setInterval(refreshWaitingRoomRecords, 4000);
+            }
+        }
+
+        async function refreshWaitingRoomRecords() {
+            try {
+                const res = await fetch('/admin/waiting-room/records');
+                const data = await res.json();
+                const tbody = document.getElementById('waiting-room-table-body');
+                
+                // Update badge and card counts if elements exist
+                const pendingCount = data.records.filter(r => r.status === 'pending').length;
+                const badgeCount = document.getElementById('admin-waiting-count');
+                if (badgeCount) badgeCount.textContent = pendingCount;
+                
+                if (data.records.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="padding: 3rem 1.25rem; text-align: center; color: rgba(237,232,223,0.3); font-size: 0.92rem;"><div style="font-size: 2.5rem; margin-bottom: 0.75rem;">⏳</div>Aucune demande d\'accès dans la salle d\'attente.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                data.records.forEach(function(rec) {
+                    let statusHtml = '';
+                    if (rec.status === 'pending') {
+                        statusHtml = '<span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.85rem; background: rgba(232, 130, 12, 0.12); border: 1px solid rgba(232, 130, 12, 0.25); border-radius: 100px; font-size: 0.78rem; font-weight: 700; color: #e8820c;">⏳ En attente</span>';
+                    } else if (rec.status === 'approved') {
+                        statusHtml = '<span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.85rem; background: rgba(76, 175, 80, 0.12); border: 1px solid rgba(76, 175, 80, 0.25); border-radius: 100px; font-size: 0.78rem; font-weight: 700; color: #81c784;">✅ Approuvé</span>';
+                    } else {
+                        statusHtml = '<span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.85rem; background: rgba(239, 83, 80, 0.12); border: 1px solid rgba(239, 83, 80, 0.25); border-radius: 100px; font-size: 0.78rem; font-weight: 700; color: #ef5350;">❌ Rejeté</span>';
+                    }
+
+                    // Format dates
+                    const dateObj = new Date(rec.created_at);
+                    const formattedDate = dateObj.toLocaleDateString('fr-FR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    });
+
+                    // Action buttons
+                    let actionsHtml = '';
+                    if (rec.status === 'pending') {
+                        actionsHtml = `
+                            <button onclick="handleWaitingRoomAction('${rec.email}', 'approve')" style="padding: 0.4rem 0.8rem; background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); border-radius: 8px; color: #81c784; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(76,175,80,0.2)'" onmouseout="this.style.background='rgba(76,175,80,0.1)'">Valider</button>
+                            <button onclick="handleWaitingRoomAction('${rec.email}', 'reject')" style="padding: 0.4rem 0.8rem; background: rgba(239, 83, 80, 0.1); border: 1px solid rgba(239, 83, 80, 0.3); border-radius: 8px; color: #ef5350; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,83,80,0.2)'" onmouseout="this.style.background='rgba(239,83,80,0.1)'">Rejeter</button>
+                        `;
+                    } else if (rec.status === 'approved') {
+                        actionsHtml = `
+                            <button onclick="handleWaitingRoomAction('${rec.email}', 'reject')" style="padding: 0.4rem 0.8rem; background: rgba(239, 83, 80, 0.05); border: 1px solid rgba(239, 83, 80, 0.2); border-radius: 8px; color: #ef5350; font-weight: 600; font-size: 0.78rem; cursor: pointer; transition: all 0.2s;">Bloquer</button>
+                        `;
+                    } else {
+                        actionsHtml = `
+                            <button onclick="handleWaitingRoomAction('${rec.email}', 'approve')" style="padding: 0.4rem 0.8rem; background: rgba(76, 175, 80, 0.05); border: 1px solid rgba(76, 175, 80, 0.2); border-radius: 8px; color: #81c784; font-weight: 600; font-size: 0.78rem; cursor: pointer; transition: all 0.2s;">Autoriser</button>
+                        `;
+                    }
+
+                    html += `<tr style="border-bottom: 1px solid rgba(237,232,223,0.04); transition: background 0.2s;" onmouseover="this.style.background='rgba(237,232,223,0.02)'" onmouseout="this.style.background='transparent'">`;
+                    html += `<td style="padding: 1rem 0.75rem; font-weight: 700; color: #fff;">${rec.email}</td>`;
+                    html += `<td style="padding: 1rem 0.75rem; color: rgba(237,232,223,0.5);">${formattedDate}</td>`;
+                    html += `<td style="padding: 1rem 0.75rem;">${statusHtml}</td>`;
+                    html += `<td style="padding: 1rem 0.75rem; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">${actionsHtml}</td>`;
+                    html += `</tr>`;
+                });
+                tbody.innerHTML = html;
+            } catch (err) {
+                console.error("Erreur de rafraîchissement de la salle d'attente :", err);
+            }
+        }
+
+        async function handleWaitingRoomAction(email, action) {
+            try {
+                const res = await fetch('/admin/waiting-room/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, action: action })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    refreshWaitingRoomRecords();
+                } else {
+                    alert("Erreur lors de l'action: " + (data.error || "inconnue"));
+                }
+            } catch (err) {
+                console.error("Erreur action salle d'attente :", err);
+            }
+        }
+
         // ── Initial view checking ──
         window.addEventListener('DOMContentLoaded', () => {
             updateCommissionCounts();
@@ -2862,6 +3063,10 @@
             }
             if (tabParam === 'quizzes') {
                 showQuizzesSection();
+                return;
+            }
+            if (tabParam === 'waitingroom') {
+                showWaitingRoomSection();
                 return;
             }
 
