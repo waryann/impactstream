@@ -476,7 +476,7 @@ def redirect_missing_media_to_r2():
         relative_path = path[len('/static/videos/'):]
         local_path = os.path.join(app.root_path, 'static', 'videos', relative_path)
         if not os.path.exists(local_path) and R2_PUBLIC_URL:
-            return redirect(f"{R2_PUBLIC_URL.rstrip('/')}/{relative_path}")
+            return redirect(f"{R2_PUBLIC_URL.rstrip('/')}/video/{relative_path}")
 
 
 # ─────────────────────────────────────────────
