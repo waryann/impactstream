@@ -181,37 +181,46 @@ class PostgresConnectionWrapper:
     def close(self):
         self.conn.close()
 
+_db_initialized = False
+
 def get_db():
     """Obtenir une connexion à la base de données (SQLite en local, PostgreSQL/Supabase en prod)."""
+    global _db_initialized
     if DATABASE_URL:
         conn = psycopg2.connect(DATABASE_URL)
         wrapper = PostgresConnectionWrapper(conn)
         
-        # Auto-migration PostgreSQL (salle d'attente & expulsion)
-        try:
-            cur = wrapper.cursor()
-            cur.execute('''
-                CREATE TABLE IF NOT EXISTS waiting_room (
-                    id SERIAL PRIMARY KEY,
-                    email VARCHAR(255) UNIQUE NOT NULL,
-                    status VARCHAR(50) NOT NULL DEFAULT 'pending',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            # Garantir la présence de la configuration de la salle d'attente
-            cur.execute("INSERT INTO settings (key, value) VALUES ('waiting_room_enabled', '0') ON CONFLICT (key) DO NOTHING")
-            # Ajouter la colonne is_evicted à la table attendance si elle n'existe pas
-            cur.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS is_evicted INTEGER DEFAULT 0")
-            wrapper.commit()
-        except Exception as e:
-            wrapper.rollback()
-            print(f"⚠️ Erreur auto-migration PostgreSQL: {e}")
+        # Auto-migration PostgreSQL (salle d'attente & expulsion) - exécutée une seule fois
+        if not _db_initialized:
+            try:
+                cur = wrapper.cursor()
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS waiting_room (
+                        id SERIAL PRIMARY KEY,
+                        email VARCHAR(255) UNIQUE NOT NULL,
+                        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                # Garantir la présence de la configuration de la salle d'attente
+                cur.execute("INSERT INTO settings (key, value) VALUES ('waiting_room_enabled', '0') ON CONFLICT (key) DO NOTHING")
+                # Ajouter la colonne is_evicted à la table attendance si elle n'existe pas
+                cur.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS is_evicted INTEGER DEFAULT 0")
+                wrapper.commit()
+                _db_initialized = True
+            except Exception as e:
+                wrapper.rollback()
+                print(f"⚠️ Erreur auto-migration PostgreSQL: {e}")
             
         return wrapper
 
     db_exists = os.path.exists(DATABASE)
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
+    
+    if _db_initialized:
+        return conn
+        
     cursor = conn.cursor()
 
 
@@ -448,6 +457,7 @@ def get_db():
         cursor.execute('UPDATE users SET acces_nayoth = 1, acces_intercession = 1, is_verified = 1 WHERE email = ?', ('yann.noukaze@ministereimpact.org',))
         conn.commit()
 
+    _db_initialized = True
     return conn
 
 

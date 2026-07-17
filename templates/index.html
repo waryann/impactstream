@@ -1823,18 +1823,17 @@
             }
 
             const splashLogoImg = document.getElementById('splash-logo-img');
-            let audio1 = null;
-            let audio2 = null;
 
-            // Helper to play sound with defensive browser compatibility
-            function playIntroSound(src, volume = 1.0) {
-                const audio = new Audio(src);
-                audio.volume = volume;
-                audio.play().catch(err => {
-                    console.warn("Audio autoplay blocked or unsupported:", err);
-                });
-                return audio;
-            }
+            // Instanciate and preload both audio tracks immediately
+            const audio1 = new Audio('/static/audio/premier_intro.mp3');
+            audio1.volume = 0.8;
+            audio1.preload = 'auto';
+
+            const audio2 = new Audio('/static/audio/deuxieme_intro.mp3');
+            audio2.volume = 0.9;
+            audio2.preload = 'auto';
+
+            const startTime = new Date().getTime();
 
             // Helper to fade out audio smoothly
             function fadeAudioOut(audio, durationMs) {
@@ -1861,11 +1860,26 @@
                 }, interval);
             }
 
-            // Play the first intro audio
-            audio1 = playIntroSound('/static/audio/premier_intro.mp3', 0.8);
-
             // Flag as played for the current session
             sessionStorage.setItem('splash_played', 'true');
+
+            // Try to play audio 1 immediately
+            audio1.play().catch(err => {
+                console.warn("Autoplay blocked, waiting for user gesture to start intro sound...");
+                
+                // Fallback: unlock audio and play synchronized on first user interaction
+                const unlock = () => {
+                    const elapsed = (new Date().getTime() - startTime) / 1000;
+                    if (elapsed < 5.3) {
+                        audio1.currentTime = elapsed;
+                        audio1.play().catch(e => console.warn(e));
+                    }
+                    document.removeEventListener('click', unlock);
+                    document.removeEventListener('touchstart', unlock);
+                };
+                document.addEventListener('click', unlock);
+                document.addEventListener('touchstart', unlock);
+            });
 
             // The animation in the WebP file lasts exactly 5335ms (97 frames of 55ms)
             // Staggered reveal of the final logo at the end of the first loop
@@ -1873,8 +1887,18 @@
                 // Fade out / Stop the first audio track
                 fadeAudioOut(audio1, 300);
 
-                // Play the second logo reveal audio track
-                audio2 = playIntroSound('/static/audio/deuxieme_intro.mp3', 0.9);
+                // Play the preloaded second audio track immediately
+                audio2.play().catch(err => {
+                    console.warn("Audio 2 autoplay blocked:", err);
+                    // In case audio context is still locked, we listen to interactions
+                    const unlock2 = () => {
+                        audio2.play().catch(e => console.warn(e));
+                        document.removeEventListener('click', unlock2);
+                        document.removeEventListener('touchstart', unlock2);
+                    };
+                    document.addEventListener('click', unlock2);
+                    document.addEventListener('touchstart', unlock2);
+                });
 
                 // Reveal final premium logo
                 if (splashLogoImg) {
