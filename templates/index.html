@@ -1863,22 +1863,47 @@
             // Flag as played for the current session
             sessionStorage.setItem('splash_played', 'true');
 
+            // Setup global unmute handler for interactions
+            const unmuteAll = () => {
+                audio1.muted = false;
+                audio2.muted = false;
+                document.removeEventListener('click', unmuteAll);
+                document.removeEventListener('touchstart', unmuteAll);
+            };
+            document.addEventListener('click', unmuteAll);
+            document.addEventListener('touchstart', unmuteAll);
+
             // Try to play audio 1 immediately
             audio1.play().catch(err => {
-                console.warn("Autoplay blocked, waiting for user gesture to start intro sound...");
-                
-                // Fallback: unlock audio and play synchronized on first user interaction
-                const unlock = () => {
-                    const elapsed = (new Date().getTime() - startTime) / 1000;
-                    if (elapsed < 5.3) {
-                        audio1.currentTime = elapsed;
-                        audio1.play().catch(e => console.warn(e));
-                    }
-                    document.removeEventListener('click', unlock);
-                    document.removeEventListener('touchstart', unlock);
-                };
-                document.addEventListener('click', unlock);
-                document.addEventListener('touchstart', unlock);
+                console.warn("Autoplay blocked, falling back to muted autoplay and gesture unmute...");
+                audio1.muted = true;
+                audio1.play().then(() => {
+                    // Sync playback time in case the user clicked after some time
+                    const syncPlay = () => {
+                        const elapsed = (new Date().getTime() - startTime) / 1000;
+                        if (elapsed < 5.3) {
+                            audio1.currentTime = elapsed;
+                        }
+                        document.removeEventListener('click', syncPlay);
+                        document.removeEventListener('touchstart', syncPlay);
+                    };
+                    document.addEventListener('click', syncPlay);
+                    document.addEventListener('touchstart', syncPlay);
+                }).catch(e => {
+                    console.error("Muted autoplay failed:", e);
+                    // Absolute fallback if even muted play fails
+                    const gesturePlay = () => {
+                        const elapsed = (new Date().getTime() - startTime) / 1000;
+                        if (elapsed < 5.3) {
+                            audio1.currentTime = elapsed;
+                            audio1.play().catch(ex => console.warn(ex));
+                        }
+                        document.removeEventListener('click', gesturePlay);
+                        document.removeEventListener('touchstart', gesturePlay);
+                    };
+                    document.addEventListener('click', gesturePlay);
+                    document.addEventListener('touchstart', gesturePlay);
+                });
             });
 
             // The animation in the WebP file lasts exactly 5335ms (97 frames of 55ms)
@@ -1887,17 +1912,14 @@
                 // Fade out / Stop the first audio track
                 fadeAudioOut(audio1, 300);
 
-                // Play the preloaded second audio track immediately
+                // Play the preloaded second audio track immediately (inherit mute status of audio1)
+                if (audio1.muted) {
+                    audio2.muted = true;
+                }
                 audio2.play().catch(err => {
-                    console.warn("Audio 2 autoplay blocked:", err);
-                    // In case audio context is still locked, we listen to interactions
-                    const unlock2 = () => {
-                        audio2.play().catch(e => console.warn(e));
-                        document.removeEventListener('click', unlock2);
-                        document.removeEventListener('touchstart', unlock2);
-                    };
-                    document.addEventListener('click', unlock2);
-                    document.addEventListener('touchstart', unlock2);
+                    console.warn("Audio 2 autoplay blocked, trying muted play...", err);
+                    audio2.muted = true;
+                    audio2.play().catch(e => console.error("Audio 2 play failed:", e));
                 });
 
                 // Reveal final premium logo

@@ -607,9 +607,9 @@ def user_login():
             return redirect(url_for('user_login'))
 
         # Étape 2 : Recherche en base
+        # Étape 2 : Recherche en base
         conn = get_db()
         user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
-        conn.close()
 
         # Étape 3 : Comparaison mot de passe
         if user and check_password_hash(user['password_hash'], password):
@@ -617,45 +617,41 @@ def user_login():
             if not user['is_verified']:
                 activation_link = f"{request.host_url.rstrip('/')}/verify-email?token={user['verification_token']}"
                 flash(f"⚠️ Votre adresse e-mail n'est pas encore vérifiée. <a href='{activation_link}' style='text-decoration: underline; font-weight: bold;'>Cliquez ici pour l'activer temporairement ({email})</a>", "error")
+                conn.close()
                 return redirect(url_for('user_login'))
 
             # Vérification salle d'attente
-            conn_wr = get_db()
-            wr_setting = conn_wr.execute("SELECT value FROM settings WHERE key = 'waiting_room_enabled'").fetchone()
+            wr_setting = conn.execute("SELECT value FROM settings WHERE key = 'waiting_room_enabled'").fetchone()
             waiting_enabled = wr_setting['value'] == '1' if wr_setting else False
             
             if waiting_enabled:
                 # Vérifier si l'utilisateur a déjà une demande
-                existing = conn_wr.execute("SELECT * FROM waiting_room WHERE email = ?", (email,)).fetchone()
+                existing = conn.execute("SELECT * FROM waiting_room WHERE email = ?", (email,)).fetchone()
                 if not existing:
-                    conn_wr.execute("INSERT INTO waiting_room (email, status) VALUES (?, 'pending')", (email,))
-                    conn_wr.commit()
+                    conn.execute("INSERT INTO waiting_room (email, status) VALUES (?, 'pending')", (email,))
+                    conn.commit()
                 elif existing['status'] == 'approved':
                     # Déjà approuvé, on le laisse passer
                     pass
                 else:
                     # Si c'était rejeté ou en cours, on s'assure qu'il repasse en pending
-                    conn_wr.execute("UPDATE waiting_room SET status = 'pending' WHERE email = ?", (email,))
-                    conn_wr.commit()
+                    conn.execute("UPDATE waiting_room SET status = 'pending' WHERE email = ?", (email,))
+                    conn.commit()
 
                 # S'il n'est pas déjà approved, on le redirige vers la salle d'attente
                 if not existing or existing['status'] != 'approved':
                     session['waiting_for_approval'] = email
-                    conn_wr.close()
+                    conn.close()
                     return redirect(url_for('user_waiting_room'))
-            
-            conn_wr.close()
 
             # Réinitialiser l'expulsion s'ils se reconnectent
             try:
-                conn_ev = get_db()
                 today_key = datetime.now(ATTENDANCE_TZ).strftime('%Y-%m-%d')
-                conn_ev.execute(
+                conn.execute(
                     'UPDATE attendance SET is_evicted = 0 WHERE user_email = ? AND date_key = ?',
                     (email, today_key)
                 )
-                conn_ev.commit()
-                conn_ev.close()
+                conn.commit()
             except Exception as e:
                 print(f"⚠️ Erreur réinitialisation expulsion: {e}")
                 
@@ -664,13 +660,12 @@ def user_login():
 
             # ── Prise de présence automatique ──
             try:
-                conn2 = get_db()
-                att_enabled = conn2.execute("SELECT value FROM settings WHERE key = 'attendance_enabled'").fetchone()
+                att_enabled = conn.execute("SELECT value FROM settings WHERE key = 'attendance_enabled'").fetchone()
                 if att_enabled and att_enabled['value'] == '1':
                     now = datetime.now(ATTENDANCE_TZ)
                     date_key = now.strftime('%Y-%m-%d')
                     # Anti-doublon : vérifier si déjà enregistré aujourd'hui
-                    existing = conn2.execute(
+                    existing = conn.execute(
                         'SELECT id FROM attendance WHERE user_email = ? AND date_key = ?',
                         (email, date_key)
                     ).fetchone()
@@ -680,7 +675,7 @@ def user_login():
                         parts = local_part.split('.')
                         display_name = ' '.join(p.capitalize() for p in parts)
                         # Déterminer si en retard (gère le passage de minuit)
-                        target_row = conn2.execute("SELECT value FROM settings WHERE key = 'attendance_target_hour'").fetchone()
+                        target_row = conn.execute("SELECT value FROM settings WHERE key = 'attendance_target_hour'").fetchone()
                         target_hour_str = target_row['value'] if target_row else '09:00'
                         t_parts = target_hour_str.split(':')
                         target_h, target_m = int(t_parts[0]), int(t_parts[1])
@@ -689,18 +684,19 @@ def user_login():
                         # Delta en minutes (modulo 24h) : si entre 1 et 720 min après la cible → en retard
                         delta = (login_minutes - target_minutes) % (24 * 60)
                         is_late = 1 if (0 < delta <= 720) else 0
-                        conn2.execute(
+                        conn.execute(
                             'INSERT INTO attendance (user_email, display_name, login_at, is_late, date_key) VALUES (?, ?, ?, ?, ?)',
                             (email, display_name, now.strftime('%Y-%m-%d %H:%M:%S'), is_late, date_key)
                         )
-                        conn2.commit()
-                conn2.close()
+                        conn.commit()
             except Exception as e:
                 print(f'⚠️ Erreur prise de présence: {e}')
 
+            conn.close()
             return redirect(url_for('index'))
         else:
             flash('Identifiants incorrects.', 'error')
+            conn.close()
             return redirect(url_for('user_login'))
 
     return render_template(
