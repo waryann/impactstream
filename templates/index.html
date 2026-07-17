@@ -1823,6 +1823,46 @@
             }
 
             const splashLogoImg = document.getElementById('splash-logo-img');
+            let audio1 = null;
+            let audio2 = null;
+
+            // Helper to play sound with defensive browser compatibility
+            function playIntroSound(src, volume = 1.0) {
+                const audio = new Audio(src);
+                audio.volume = volume;
+                audio.play().catch(err => {
+                    console.warn("Audio autoplay blocked or unsupported:", err);
+                });
+                return audio;
+            }
+
+            // Helper to fade out audio smoothly
+            function fadeAudioOut(audio, durationMs) {
+                if (!audio) return;
+                const startVol = audio.volume;
+                const interval = 50;
+                const steps = durationMs / interval;
+                const stepVol = startVol / steps;
+                let currentStep = 0;
+                
+                const fadeTimer = setInterval(() => {
+                    currentStep++;
+                    if (audio.volume - stepVol > 0) {
+                        audio.volume -= stepVol;
+                    } else {
+                        audio.volume = 0;
+                        audio.pause();
+                        clearInterval(fadeTimer);
+                    }
+                    if (currentStep >= steps) {
+                        audio.pause();
+                        clearInterval(fadeTimer);
+                    }
+                }, interval);
+            }
+
+            // Play the first intro audio
+            audio1 = playIntroSound('/static/audio/premier_intro.mp3', 0.8);
 
             // Flag as played for the current session
             sessionStorage.setItem('splash_played', 'true');
@@ -1830,6 +1870,12 @@
             // The animation in the WebP file lasts exactly 5335ms (97 frames of 55ms)
             // Staggered reveal of the final logo at the end of the first loop
             setTimeout(() => {
+                // Fade out / Stop the first audio track
+                fadeAudioOut(audio1, 300);
+
+                // Play the second logo reveal audio track
+                audio2 = playIntroSound('/static/audio/deuxieme_intro.mp3', 0.9);
+
                 // Reveal final premium logo
                 if (splashLogoImg) {
                     splashLogoImg.style.opacity = '1';
@@ -1849,6 +1895,9 @@
             }, 5300);
 
             function dismissSplash() {
+                // Fade out the second audio track smoothly as the overlay vanishes
+                fadeAudioOut(audio2, 1000);
+
                 if (splashScreen) {
                     splashScreen.style.opacity = '0';
                     setTimeout(() => {
