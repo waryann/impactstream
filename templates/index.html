@@ -1882,7 +1882,13 @@
                     const syncPlay = () => {
                         const elapsed = (new Date().getTime() - startTime) / 1000;
                         if (elapsed < 5.3) {
-                            audio1.currentTime = elapsed;
+                            if (audio1.readyState >= 1) {
+                                audio1.currentTime = elapsed;
+                            } else {
+                                audio1.addEventListener('loadedmetadata', () => {
+                                    audio1.currentTime = elapsed;
+                                }, { once: true });
+                            }
                         }
                         document.removeEventListener('click', syncPlay);
                         document.removeEventListener('touchstart', syncPlay);
@@ -1895,7 +1901,13 @@
                     const gesturePlay = () => {
                         const elapsed = (new Date().getTime() - startTime) / 1000;
                         if (elapsed < 5.3) {
-                            audio1.currentTime = elapsed;
+                            if (audio1.readyState >= 1) {
+                                audio1.currentTime = elapsed;
+                            } else {
+                                audio1.addEventListener('loadedmetadata', () => {
+                                    audio1.currentTime = elapsed;
+                                }, { once: true });
+                            }
                             audio1.play().catch(ex => console.warn(ex));
                         }
                         document.removeEventListener('click', gesturePlay);
