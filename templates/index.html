@@ -1827,8 +1827,8 @@
             // Flag as played for the current session
             sessionStorage.setItem('splash_played', 'true');
 
-            // The animation in the WebP file lasts exactly 8 seconds (8000ms)
-            // Staggered reveal of the final logo after 8 seconds
+            // The animation in the WebP file lasts exactly 5335ms (97 frames of 55ms)
+            // Staggered reveal of the final logo at the end of the first loop
             setTimeout(() => {
                 // Reveal final premium logo
                 if (splashLogoImg) {
@@ -1836,11 +1836,17 @@
                     splashLogoImg.style.transform = 'scale(1)';
                 }
                 
+                // Hide the animated WebP to prevent any secondary looping in the background
+                const splashImg = document.getElementById('splash-img');
+                if (splashImg) {
+                    splashImg.style.display = 'none';
+                }
+                
                 // Dismiss the overlay in 1.8 seconds after logo reveal
                 setTimeout(() => {
                     dismissSplash();
                 }, 1800);
-            }, 8000);
+            }, 5300);
 
             function dismissSplash() {
                 if (splashScreen) {
