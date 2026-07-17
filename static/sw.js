@@ -1,4 +1,4 @@
-const CACHE_NAME = 'impactstream-v4';
+const CACHE_NAME = 'impactstream-v5';
 const ASSETS_TO_CACHE = [
   '/',
   '/static/images/logo.png',

@@ -3145,6 +3145,13 @@
                     desc: "Apprendre la Parole en s'amusant avec des jeux interactifs et des défis bibliques.",
                     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6h-2V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM9 4h6v2H9V4zm9 14H6V8h12v10z"></path><circle cx="9" cy="11" r="1"></circle><circle cx="15" cy="11" r="1"></circle><path d="M9 14c1 1.5 3 1.5 4 0"></path></svg>`,
                     visible: true
+                },
+                {
+                    name: "Plan de lecture biblique",
+                    subtitle: "Plan de Lecture Biblique",
+                    desc: "Méditez la Parole de Dieu quotidiennement à travers notre plan de lecture guidé sur 365 jours.",
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
+                    visible: true
                 }
             ];
 
@@ -3192,12 +3199,47 @@
             container.innerHTML = html;
         }
 
+        window.renderEspacePlanLecture = function(s, container) {
+            container.innerHTML = `
+                <div style="animation: fadeIn 0.4s ease; max-width: 900px; margin: 0 auto; padding: 1rem 0; position: relative;">
+                    <!-- Back button -->
+                    <button onclick="renderEspacesGrid()" style="background: rgba(237,232,223,0.06); border: 1px solid rgba(237,232,223,0.15); border-radius: 100px; color: #ede8df; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.25rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 2rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(232, 130, 12, 0.15)'; this.style.borderColor='#e8820c';" onmouseout="this.style.background='rgba(237,232,223,0.06)'; this.style.borderColor='rgba(237,232,223,0.15)';">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Retour aux Espaces
+                    </button>
+                    
+                    <!-- Espace Header -->
+                    <div style="display: flex; align-items: center; gap: 1.5rem; border-bottom: 1px solid rgba(237,232,223,0.08); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                        <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(232, 130, 12, 0.08); border: 2px solid #e8820c; display: flex; align-items: center; justify-content: center; color: #e8820c; box-shadow: 0 0 15px rgba(232, 130, 12, 0.25); flex-shrink: 0;">
+                            ${s.icon}
+                        </div>
+                        <div>
+                            <span style="font-size: 0.72rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 0.25rem;">
+                                ${s.subtitle}
+                            </span>
+                            <h2 style="font-size: 1.8rem; font-weight: 900; color: #fff; margin: 0; font-family: 'Outfit', sans-serif;">${s.name}</h2>
+                        </div>
+                    </div>
+
+                    <!-- Empty Space Area -->
+                    <div style="background: linear-gradient(135deg, rgba(27,26,20,0.5) 0%, rgba(14,14,10,0.85) 100%); border: 1px solid rgba(232, 130, 12, 0.15); border-radius: 24px; padding: 4rem 2rem; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                        <p style="font-size: 0.95rem; color: rgba(237,232,223,0.6); margin: 0;">Cet espace est actuellement vide.</p>
+                    </div>
+                </div>
+            `;
+        };
+
         window.openEspaceView = function(idx) {
             const s = globalEspaces[idx];
             if (!s) return;
             
             const container = document.getElementById('espaces-container');
             if (!container) return;
+
+            if (s.name === "Plan de lecture biblique") {
+                renderEspacePlanLecture(s, container);
+                return;
+            }
 
             if (s.name === "Enfants") {
                 renderEspaceEnfants(s, container);
