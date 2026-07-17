@@ -3443,6 +3443,22 @@
                             <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 1.5rem; font-family: 'Outfit', sans-serif;">Choisis ton jeu biblique :</h3>
                             
                             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;">
+                                <!-- Game Featured: La Grande Aventure de la Bible -->
+                                <div onclick="startBibleAdventureGame()" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(232, 130, 12, 0.12) 0%, rgba(27,26,20,0.65) 100%); border: 2px solid #e8820c; border-radius: 20px; padding: 1.75rem; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 30px rgba(232,130,12,0.2)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                                    <div style="position: absolute; top: 1.25rem; right: 1.25rem; background: #e8820c; color: #fff; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; padding: 0.35rem 0.75rem; border-radius: 50px; letter-spacing: 0.05em; box-shadow: 0 0 12px rgba(232, 130, 12, 0.6); animation: bounce 1.5s infinite;">
+                                        🔥 NOUVEAUTÉ INTERACTIVE
+                                    </div>
+                                    <div style="width: 55px; height: 55px; border-radius: 12px; background: rgba(232,130,12,0.15); border: 1px solid rgba(232,130,12,0.4); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin-bottom: 1.25rem; box-shadow: 0 0 15px rgba(232,130,12,0.1);">
+                                        ⛵🏹
+                                    </div>
+                                    <h4 style="font-size: 1.35rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">La Grande Aventure de la Bible</h4>
+                                    <p style="font-size: 0.85rem; color: rgba(237,232,223,0.75); margin: 0; line-height: 1.6; max-width: 85%;">Choisis ton héros biblique (Noé, David, Moïse), joue à des mini-jeux interactifs de précision, de tri ou de labyrinthe, résous les quiz et récolte des couronnes !</p>
+                                    <div style="font-size: 0.78rem; font-weight: 800; color: #e8820c; margin-top: 1.25rem; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 0.4rem;">
+                                        <span>🎮 Lancer l'aventure chrétienne</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                    </div>
+                                </div>
+
                                 <!-- Game 1: Memory Match -->
                                 <div onclick="startMemoryMatchGame()" style="background: linear-gradient(135deg, rgba(232, 130, 12, 0.05) 0%, rgba(27,26,20,0.5) 100%); border: 2px solid rgba(232, 130, 12, 0.15); border-radius: 20px; padding: 1.5rem; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#e8820c'; this.style.boxShadow='0 8px 25px rgba(232,130,12,0.15)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232,130,12,0.15)'; this.style.boxShadow='none';">
                                     <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(232,130,12,0.1); border: 1px solid rgba(232,130,12,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 1.25rem;">
@@ -4607,6 +4623,555 @@
             `;
         }
 
+        // ═══════════════════════════════════════════════════════════
+        // 🏛️  LA GRANDE AVENTURE DE LA BIBLE  ─  Jeu Chrétien Interactif
+        // ═══════════════════════════════════════════════════════════
+
+        let adventureState = {
+            currentHero: '',
+            currentPhase: 'story',
+            trophies: JSON.parse(localStorage.getItem('bible_adventure_trophies') || '{}'),
+            quizScore: 0,
+            quizIndex: 0
+        };
+
+        const ADVENTURES = {
+            david: {
+                title: "David contre Goliath",
+                emoji: "🎯⚔️",
+                story: "David est un jeune berger qui aime Dieu de tout son cœur. Un jour, le géant Goliath défie l'armée d'Israël. Alors que tous les soldats tremblent, David s'avance confiant : \"Je viens contre toi au nom de l'Éternel des armées !\" Il ramasse 5 pierres lisses au ruisseau et prend sa fronde.",
+                questName: "Le Défi de la Fronde",
+                quiz: [
+                    { q: "Quel était le métier de David avant d'affronter Goliath ?", a: ["Forgeron", "Berger", "Guerrier de l'armée"], c: 1 },
+                    { q: "Avec quoi David s'est-il armé pour combattre le géant ?", a: ["Une épée royale du roi Saül", "Une armure d'or", "Une fronde et 5 pierres lisses"], c: 2 },
+                    { q: "Au nom de qui David a-t-il marché contre Goliath ?", a: ["Au nom de l'Éternel des armées", "Au nom du Roi Saül", "En son propre nom"], c: 0 }
+                ]
+            },
+            noel: {
+                title: "L'Arche de Noé",
+                emoji: "⛵🦁",
+                story: "Dieu parle à Noé : \"Je vais envoyer un déluge. Construis une arche en bois de gofer et fais-y entrer un couple de chaque animal !\" Noé obéit fidèlement pendant 100 ans. Le ciel se couvre, la pluie commence à tomber... il faut vite faire monter tous les animaux par paires !",
+                questName: "Le Rassemblement des Couples",
+                quiz: [
+                    { q: "Quel type de bois Dieu a-t-il demandé pour construire l'arche ?", a: ["Bois de gofer (cyprès)", "Bois de chêne", "Bois d'olivier"], c: 0 },
+                    { q: "Combien de jours et de nuits la pluie est-elle tombée ?", a: ["7 jours", "40 jours et 40 nuits", "120 jours"], c: 1 },
+                    { q: "Quel oiseau Noé a-t-il envoyé pour voir si la terre était sèche ?", a: ["Un aigle majestueux", "Un corbeau brillant", "Une colombe blanche"], c: 2 }
+                ]
+            },
+            moise: {
+                title: "La Traversée de Moïse",
+                emoji: "🌊📜",
+                story: "Le peuple d'Israël fuit l'Égypte, mais ils arrivent au bord de la mer Rouge. L'armée du Pharaon arrive derrière eux ! Moïse lève son bâton vers le ciel... et un vent puissant s'élève ! La mer s'ouvre en deux, créant un chemin de terre sèche. Il faut guider tout le peuple jusqu'à l'autre rive !",
+                questName: "La Traversée de la Mer Rouge",
+                quiz: [
+                    { q: "Qu'est-ce que Moïse a dû lever pour que la mer s'ouvre ?", a: ["Son bâton", "Une épée de métal", "Ses mains nues"], c: 0 },
+                    { q: "Comment le peuple était-il guidé la nuit dans le désert ?", a: ["Par une boussole magique", "Par une colonne de feu", "Par des étoiles filantes"], c: 1 },
+                    { q: "Comment s'appelle le fleuve sacré qui traverse l'Égypte ?", a: ["Le Nil", "Le Jourdain", "L'Euphrate"], c: 0 }
+                ]
+            }
+        };
+
+        // ─── Web Audio Synthesizer ───────────────────────────
+        window.playSynthSound = function(type) {
+            try {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return;
+                const ctx = new AC();
+                if (type === 'click') {
+                    const o = ctx.createOscillator(), g = ctx.createGain();
+                    o.type = 'sine';
+                    o.frequency.setValueAtTime(600, ctx.currentTime);
+                    o.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
+                    g.gain.setValueAtTime(0.15, ctx.currentTime);
+                    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(); o.stop(ctx.currentTime + 0.1);
+                } else if (type === 'success') {
+                    const o = ctx.createOscillator(), g = ctx.createGain();
+                    o.type = 'triangle';
+                    o.frequency.setValueAtTime(1046.50, ctx.currentTime);
+                    o.frequency.setValueAtTime(1567.98, ctx.currentTime + 0.08);
+                    g.gain.setValueAtTime(0.2, ctx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(); o.stop(ctx.currentTime + 0.3);
+                } else if (type === 'error') {
+                    const o = ctx.createOscillator(), g = ctx.createGain();
+                    o.type = 'sawtooth';
+                    o.frequency.setValueAtTime(120, ctx.currentTime);
+                    o.frequency.linearRampToValueAtTime(60, ctx.currentTime + 0.25);
+                    g.gain.setValueAtTime(0.2, ctx.currentTime);
+                    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.25);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(); o.stop(ctx.currentTime + 0.25);
+                } else if (type === 'shoot') {
+                    const o = ctx.createOscillator(), g = ctx.createGain();
+                    o.type = 'sine';
+                    o.frequency.setValueAtTime(150, ctx.currentTime);
+                    o.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.18);
+                    g.gain.setValueAtTime(0.2, ctx.currentTime);
+                    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.18);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(); o.stop(ctx.currentTime + 0.18);
+                } else if (type === 'victory') {
+                    [261.63, 329.63, 392.00, 523.25].forEach((freq, i) => {
+                        const o = ctx.createOscillator(), g = ctx.createGain();
+                        o.type = 'triangle';
+                        o.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.13);
+                        g.gain.setValueAtTime(0.18, ctx.currentTime + i * 0.13);
+                        g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.13 + 0.38);
+                        o.connect(g); g.connect(ctx.destination);
+                        o.start(ctx.currentTime + i * 0.13);
+                        o.stop(ctx.currentTime + i * 0.13 + 0.38);
+                    });
+                }
+            } catch(e) {}
+        };
+
+        // ─── confetti helper (uses existing startConfetti if available) ─────
+        function launchAdventureConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            if (!canvas) return;
+            if (typeof startConfetti === 'function') {
+                canvas.style.display = 'block';
+                startConfetti();
+            }
+        }
+
+        // ─── MENU PRINCIPAL ─────────────────────────────────────
+        window.startBibleAdventureGame = function() {
+            if (window.clearConfetti) window.clearConfetti();
+            const content = document.getElementById('kids-tab-content');
+            if (!content) return;
+
+            adventureState.trophies = JSON.parse(localStorage.getItem('bible_adventure_trophies') || '{}');
+            const totalTrophies = ['david','noel','moise'].filter(h => adventureState.trophies[h]).length;
+
+            const heroCard = (id, adv) => {
+                const done = adventureState.trophies[id];
+                return `
+                    <div onclick="window.playSynthSound('click'); loadAdventureStory('${id}')"
+                         style="background: linear-gradient(135deg, rgba(232,130,12,0.06) 0%, rgba(27,26,20,0.6) 100%);
+                                border: 2px solid ${done ? '#e8820c' : 'rgba(237,232,223,0.1)'};
+                                border-radius: 20px; padding: 1.5rem; cursor: pointer;
+                                transition: all 0.3s ease; position: relative;"
+                         onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='#e8820c'; this.style.boxShadow='0 8px 25px rgba(232,130,12,0.2)';"
+                         onmouseout="this.style.transform='none'; this.style.borderColor='${done ? '#e8820c' : 'rgba(237,232,223,0.1)'}'; this.style.boxShadow='none';">
+                        <div style="font-size:2.2rem; margin-bottom:0.75rem;">${adv.emoji}</div>
+                        <h4 style="font-size:1.15rem; font-weight:900; color:#fff; margin-bottom:0.4rem; font-family:'Outfit',sans-serif;">${adv.title}</h4>
+                        <div style="font-size:0.72rem; font-weight:800; color:#e8820c; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">${adv.questName}</div>
+                        <span style="font-size:0.72rem; font-weight:800; padding:0.3rem 0.75rem; border-radius:50px; ${done ? 'background:rgba(232,130,12,0.15); color:#ff941a; border:1px solid rgba(232,130,12,0.3);' : 'background:rgba(237,232,223,0.06); color:rgba(237,232,223,0.45);'}">
+                            ${done ? '✅ Complété — Couronne 👑' : '⏳ À accomplir'}
+                        </span>
+                    </div>`;
+            };
+
+            content.innerHTML = `
+                <div style="animation: fadeIn 0.4s ease; max-width: 750px; margin: 0 auto;">
+                    <button onclick="switchKidsSubTab('games')" style="background:transparent; border:none; color:#e8820c; font-size:0.8rem; font-weight:800; padding:0; cursor:pointer; display:inline-flex; align-items:center; gap:0.3rem; margin-bottom:1.5rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Retour aux jeux
+                    </button>
+                    <div style="text-align:center; margin-bottom:2rem;">
+                        <h3 style="font-size:2rem; font-weight:900; color:#fff; margin-bottom:0.5rem; font-family:'Outfit',sans-serif; background:linear-gradient(to right,#ff941a,#ede8df); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">⛵ La Grande Aventure de la Bible</h3>
+                        <p style="font-size:0.9rem; color:rgba(237,232,223,0.6);">Choisis un héros, surmonte son défi, et réponds aux questions de sagesse pour gagner une couronne !</p>
+                        <div style="display:inline-flex; align-items:center; gap:0.75rem; background:rgba(232,130,12,0.1); border:1px solid rgba(232,130,12,0.3); border-radius:50px; padding:0.5rem 1.25rem; margin-top:0.75rem;">
+                            <span style="font-size:1.2rem;">👑</span>
+                            <span style="font-size:0.9rem; font-weight:800; color:#fff;">Couronnes : <span style="color:#ff941a;">${totalTrophies} / 3</span></span>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.5rem;">
+                        ${heroCard('david', ADVENTURES.david)}
+                        ${heroCard('noel', ADVENTURES.noel)}
+                        ${heroCard('moise', ADVENTURES.moise)}
+                    </div>
+                </div>`;
+        };
+
+        // ─── RÉCIT ───────────────────────────────────────────────
+        window.loadAdventureStory = function(heroId) {
+            const content = document.getElementById('kids-tab-content');
+            if (!content) return;
+            const adv = ADVENTURES[heroId];
+            adventureState.currentHero = heroId;
+
+            content.innerHTML = `
+                <div style="animation:fadeIn 0.4s ease; max-width:580px; margin:0 auto; background:rgba(27,26,20,0.65); border:2px solid rgba(237,232,223,0.1); border-radius:24px; padding:2rem; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+                    <div style="font-size:3.2rem; margin-bottom:0.75rem;">${adv.emoji}</div>
+                    <h3 style="font-size:1.7rem; font-weight:900; color:#fff; margin-bottom:0.25rem; font-family:'Outfit',sans-serif;">${adv.title}</h3>
+                    <div style="font-size:0.72rem; font-weight:800; color:#e8820c; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1.5rem;">Récit Biblique</div>
+                    <p style="font-size:0.95rem; line-height:1.7; color:rgba(237,232,223,0.85); text-align:justify; border-left:3px solid #e8820c; padding-left:1rem; margin-bottom:2rem; background:rgba(232,130,12,0.03);">${adv.story}</p>
+                    <div style="display:flex; gap:1rem; justify-content:center;">
+                        <button onclick="window.playSynthSound('click'); startAdventureAction('${heroId}')" style="background:#e8820c; border:none; border-radius:50px; color:#fff; font-size:0.9rem; font-weight:800; padding:0.75rem 2rem; cursor:pointer; box-shadow:0 4px 15px rgba(232,130,12,0.35);" onmouseover="this.style.background='#ff941a';" onmouseout="this.style.background='#e8820c';">
+                            Commencer le Défi ➔
+                        </button>
+                        <button onclick="window.playSynthSound('click'); startBibleAdventureGame()" style="background:rgba(237,232,223,0.06); border:1px solid rgba(237,232,223,0.15); border-radius:50px; color:#ede8df; font-size:0.9rem; font-weight:800; padding:0.75rem 1.5rem; cursor:pointer;" onmouseover="this.style.background='rgba(237,232,223,0.1)';" onmouseout="this.style.background='rgba(237,232,223,0.06)';">
+                            Retour
+                        </button>
+                    </div>
+                </div>`;
+        };
+
+        // ─── MINI-JEUX ───────────────────────────────────────────
+        window.startAdventureAction = function(heroId) {
+            const content = document.getElementById('kids-tab-content');
+            if (!content) return;
+            const adv = ADVENTURES[heroId];
+
+            let gameHtml = '';
+            if (heroId === 'david') {
+                gameHtml = `
+                    <div style="text-align:center;">
+                        <div style="font-size:2.2rem; margin-bottom:0.5rem;">🪨🏹</div>
+                        <h4 style="font-size:1.2rem; font-weight:800; color:#fff; margin-bottom:0.25rem;">La Fronde de David</h4>
+                        <p style="font-size:0.8rem; color:rgba(237,232,223,0.55); margin-bottom:1.5rem;">Clique sur <strong>Lancer</strong> quand le curseur orange est dans la zone 🟢 verte !</p>
+                        <div id="stones-counter" style="font-size:0.9rem; color:#ede8df; margin-bottom:1rem;">🪨 Pierres restantes : <span style="font-weight:800; color:#ff941a;">🪨🪨🪨🪨🪨</span></div>
+                        <div style="position:relative; width:300px; height:24px; background:rgba(255,255,255,0.06); border-radius:12px; border:2px solid rgba(237,232,223,0.12); overflow:hidden; margin:1.5rem auto; box-shadow:inset 0 2px 10px rgba(0,0,0,0.5);">
+                            <div style="position:absolute; left:135px; width:30px; height:100%; background:#4caf50; opacity:0.85; box-shadow:0 0 12px rgba(76,175,80,0.6);"></div>
+                            <div id="slingshot-cursor" style="position:absolute; left:0; top:0; width:8px; height:100%; background:#ff941a; border-radius:2px; box-shadow:0 0 8px #ff941a;"></div>
+                        </div>
+                        <button id="btn-shoot" onclick="shootDavidSling()" style="background:#e8820c; border:none; border-radius:50px; color:#fff; font-size:0.95rem; font-weight:800; padding:0.75rem 2rem; cursor:pointer; box-shadow:0 4px 15px rgba(232,130,12,0.4);" onmouseover="this.style.background='#ff941a';" onmouseout="this.style.background='#e8820c';">
+                            🎯 Lancer !
+                        </button>
+                    </div>`;
+            } else if (heroId === 'noel') {
+                gameHtml = `
+                    <div style="text-align:center;">
+                        <div style="font-size:2.2rem; margin-bottom:0.5rem;">⛵🦁</div>
+                        <h4 style="font-size:1.2rem; font-weight:800; color:#fff; margin-bottom:0.25rem;">Le Tri des Animaux</h4>
+                        <p style="font-size:0.8rem; color:rgba(237,232,223,0.55); margin-bottom:1.5rem;">Clique sur deux animaux identiques pour les faire monter dans l'Arche par couples !</p>
+                        <div id="noah-matching-board" style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.6rem; max-width:360px; margin:0 auto;"></div>
+                    </div>`;
+            } else if (heroId === 'moise') {
+                gameHtml = `
+                    <div style="text-align:center;">
+                        <div style="font-size:2.2rem; margin-bottom:0.5rem;">🌊🚶</div>
+                        <h4 style="font-size:1.2rem; font-weight:800; color:#fff; margin-bottom:0.25rem;">La Traversée de la Mer</h4>
+                        <p style="font-size:0.8rem; color:rgba(237,232,223,0.55); margin-bottom:1rem;">Guide Moïse (🚶) jusqu'au drapeau (🚩). Évite l'eau (🌊) et les rochers (🪨) !</p>
+                        <div id="moses-maze-board" style="display:grid; grid-template-columns:repeat(6,1fr); gap:4px; max-width:320px; margin:0 auto; background:rgba(0,0,0,0.3); border:2px solid rgba(237,232,223,0.12); border-radius:12px; padding:8px;"></div>
+                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.5rem; max-width:160px; margin:1.25rem auto;">
+                            <div></div>
+                            <button onclick="moveMoses('up')" style="background:rgba(237,232,223,0.08); border:1px solid rgba(237,232,223,0.2); border-radius:10px; color:#fff; font-size:1.3rem; height:44px; cursor:pointer;" onmousedown="this.style.background='rgba(232,130,12,0.25)';" onmouseup="this.style.background='rgba(237,232,223,0.08)';">▲</button>
+                            <div></div>
+                            <button onclick="moveMoses('left')" style="background:rgba(237,232,223,0.08); border:1px solid rgba(237,232,223,0.2); border-radius:10px; color:#fff; font-size:1.3rem; height:44px; cursor:pointer;" onmousedown="this.style.background='rgba(232,130,12,0.25)';" onmouseup="this.style.background='rgba(237,232,223,0.08)';">◀</button>
+                            <button onclick="moveMoses('down')" style="background:rgba(237,232,223,0.08); border:1px solid rgba(237,232,223,0.2); border-radius:10px; color:#fff; font-size:1.3rem; height:44px; cursor:pointer;" onmousedown="this.style.background='rgba(232,130,12,0.25)';" onmouseup="this.style.background='rgba(237,232,223,0.08)';">▼</button>
+                            <button onclick="moveMoses('right')" style="background:rgba(237,232,223,0.08); border:1px solid rgba(237,232,223,0.2); border-radius:10px; color:#fff; font-size:1.3rem; height:44px; cursor:pointer;" onmousedown="this.style.background='rgba(232,130,12,0.25)';" onmouseup="this.style.background='rgba(237,232,223,0.08)';">▶</button>
+                        </div>
+                    </div>`;
+            }
+
+            content.innerHTML = `
+                <div style="animation:fadeIn 0.4s ease; max-width:580px; margin:0 auto; background:rgba(27,26,20,0.65); border:2px solid rgba(237,232,223,0.1); border-radius:24px; padding:1.5rem; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(237,232,223,0.08); padding-bottom:0.75rem; margin-bottom:1.5rem;">
+                        <span style="font-size:0.75rem; font-weight:800; color:#e8820c; text-transform:uppercase;">${adv.questName}</span>
+                        <button onclick="window.playSynthSound('click'); loadAdventureStory('${heroId}')" style="background:transparent; border:none; color:rgba(237,232,223,0.45); font-size:0.75rem; cursor:pointer;">Quitter</button>
+                    </div>
+                    ${gameHtml}
+                </div>`;
+
+            if (heroId === 'david') initDavidAction();
+            else if (heroId === 'noel') initNoahAction();
+            else if (heroId === 'moise') initMosesAction();
+        };
+
+        // ── David's Slingshot Game ───────────────────────────────
+        let davidGame = { cursorX: 0, dir: 1, speed: 4.5, active: true, stones: 5, rafId: null };
+
+        function initDavidAction() {
+            davidGame = { cursorX: 0, dir: 1, speed: 4.5, active: true, stones: 5, rafId: null };
+            const loop = () => {
+                if (!davidGame.active) return;
+                davidGame.cursorX += davidGame.speed * davidGame.dir;
+                if (davidGame.cursorX >= 292 || davidGame.cursorX <= 0) davidGame.dir *= -1;
+                const cur = document.getElementById('slingshot-cursor');
+                if (cur) cur.style.left = davidGame.cursorX + 'px';
+                davidGame.rafId = requestAnimationFrame(loop);
+            };
+            davidGame.rafId = requestAnimationFrame(loop);
+        }
+
+        window.shootDavidSling = function() {
+            if (!davidGame.active) return;
+            davidGame.active = false;
+            cancelAnimationFrame(davidGame.rafId);
+            window.playSynthSound('shoot');
+
+            const hit = (davidGame.cursorX >= 135 && davidGame.cursorX <= 165);
+            const content = document.getElementById('kids-tab-content');
+
+            if (hit) {
+                window.playSynthSound('success');
+                content.innerHTML = `
+                    <div style="animation:fadeIn 0.4s ease; max-width:580px; margin:0 auto; background:rgba(27,26,20,0.65); border:2px solid #4caf50; border-radius:24px; padding:2rem; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+                        <div style="font-size:3.5rem; margin-bottom:0.75rem;">💥🤩</div>
+                        <h4 style="font-size:1.5rem; font-weight:900; color:#fff; margin-bottom:0.5rem;">Coup Parfait !</h4>
+                        <p style="font-size:0.9rem; color:rgba(237,232,223,0.8); line-height:1.6; margin-bottom:2rem;">La pierre frappe Goliath en plein front ! Le géant s'effondre dans un grand bruit. Tu as triomphé par la foi !</p>
+                        <button onclick="window.playSynthSound('click'); startAdventureQuiz('david')" style="background:#4caf50; border:none; border-radius:50px; color:#fff; font-size:0.9rem; font-weight:800; padding:0.75rem 2rem; cursor:pointer; box-shadow:0 4px 15px rgba(76,175,80,0.4);" onmouseover="this.style.background='#66bb6a';" onmouseout="this.style.background='#4caf50';">
+                            Passer au Quiz de Sagesse ➔
+                        </button>
+                    </div>`;
+            } else {
+                window.playSynthSound('error');
+                davidGame.stones--;
+                const counter = document.getElementById('stones-counter');
+                if (counter) {
+                    const icons = '🪨'.repeat(davidGame.stones) || 'Aucune';
+                    counter.innerHTML = `🪨 Pierres restantes : <span style="font-weight:800;color:#ff941a;">${icons}</span>`;
+                }
+                if (davidGame.stones <= 0) {
+                    content.innerHTML = `
+                        <div style="animation:fadeIn 0.4s ease; max-width:580px; margin:0 auto; background:rgba(27,26,20,0.65); border:2px solid #ef5350; border-radius:24px; padding:2rem; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+                            <div style="font-size:3rem; margin-bottom:0.75rem;">😢🛡️</div>
+                            <h4 style="font-size:1.4rem; font-weight:900; color:#fff; margin-bottom:0.5rem;">Plus de pierres !</h4>
+                            <p style="font-size:0.85rem; color:rgba(237,232,223,0.7); margin-bottom:1.5rem;">Goliath rit mais David retourne au ruisseau. Ne te décourage pas, la foi peut tout !</p>
+                            <button onclick="window.playSynthSound('click'); startAdventureAction('david')" style="background:#e8820c; border:none; border-radius:50px; color:#fff; font-size:0.9rem; font-weight:800; padding:0.75rem 1.75rem; cursor:pointer;" onmouseover="this.style.background='#ff941a';" onmouseout="this.style.background='#e8820c';">
+                                Réessayer
+                            </button>
+                        </div>`;
+                } else {
+                    davidGame.active = true;
+                    davidGame.speed += 0.5;
+                    const cur = document.getElementById('slingshot-cursor');
+                    if (cur) cur.style.borderColor = '#ef5350';
+                    setTimeout(() => {
+                        if (cur) cur.style.borderColor = '#ff941a';
+                        const loop2 = () => {
+                            if (!davidGame.active) return;
+                            davidGame.cursorX += davidGame.speed * davidGame.dir;
+                            if (davidGame.cursorX >= 292 || davidGame.cursorX <= 0) davidGame.dir *= -1;
+                            const c2 = document.getElementById('slingshot-cursor');
+                            if (c2) c2.style.left = davidGame.cursorX + 'px';
+                            davidGame.rafId = requestAnimationFrame(loop2);
+                        };
+                        davidGame.rafId = requestAnimationFrame(loop2);
+                    }, 400);
+                }
+            }
+        };
+
+        // ── Noah's Matching Game ─────────────────────────────────
+        let noahGame = { selected: [], matchedCount: 0 };
+        const NOAH_ANIMALS = ['🐘','🦁','🐼','🦒','🐒','🦊','🐧','🐸'];
+
+        function initNoahAction() {
+            noahGame = { selected: [], matchedCount: 0 };
+            const board = document.getElementById('noah-matching-board');
+            if (!board) return;
+            const doubled = [...NOAH_ANIMALS, ...NOAH_ANIMALS].sort(() => Math.random() - 0.5);
+            board.innerHTML = '';
+            doubled.forEach((animal, idx) => {
+                const card = document.createElement('div');
+                card.dataset.animal = animal;
+                card.dataset.idx = idx;
+                card.style.cssText = 'aspect-ratio:1; background:rgba(237,232,223,0.06); border:2px solid rgba(237,232,223,0.12); border-radius:12px; font-size:1.8rem; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;';
+                card.innerHTML = animal;
+                card.onmouseover = () => { if (!card.classList.contains('matched') && !card.classList.contains('locked')) { card.style.transform='scale(1.07)'; card.style.borderColor='#e8820c'; } };
+                card.onmouseout  = () => { if (!card.classList.contains('matched') && !card.classList.contains('selected')) { card.style.transform='scale(1)'; card.style.borderColor='rgba(237,232,223,0.12)'; } };
+                card.onclick = () => selectNoahCard(card);
+                board.appendChild(card);
+            });
+        }
+
+        function selectNoahCard(card) {
+            if (card.classList.contains('matched') || card.classList.contains('selected') || card.classList.contains('locked') || noahGame.selected.length >= 2) return;
+            window.playSynthSound('click');
+            card.classList.add('selected');
+            card.style.background = 'rgba(232,130,12,0.12)';
+            card.style.borderColor = '#e8820c';
+            noahGame.selected.push(card);
+
+            if (noahGame.selected.length === 2) {
+                const [c1, c2] = noahGame.selected;
+                // Lock all cards temporarily
+                document.querySelectorAll('#noah-matching-board > div').forEach(c => c.classList.add('locked'));
+
+                setTimeout(() => {
+                    if (c1.dataset.animal === c2.dataset.animal) {
+                        window.playSynthSound('success');
+                        [c1, c2].forEach(c => { c.classList.remove('selected'); c.classList.add('matched'); c.style.background='rgba(76,175,80,0.15)'; c.style.borderColor='#4caf50'; c.style.opacity='0.4'; c.style.transform='scale(0.95)'; });
+                        noahGame.matchedCount += 2;
+                        if (noahGame.matchedCount === 16) {
+                            setTimeout(() => {
+                                const content = document.getElementById('kids-tab-content');
+                                if (content) content.innerHTML = `
+                                    <div style="animation:fadeIn 0.4s ease; max-width:580px; margin:0 auto; background:rgba(27,26,20,0.65); border:2px solid #4caf50; border-radius:24px; padding:2rem; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+                                        <div style="font-size:3.5rem; margin-bottom:0.75rem;">⛵🎉</div>
+                                        <h4 style="font-size:1.4rem; font-weight:900; color:#fff; margin-bottom:0.5rem;">Tous les animaux sont à bord !</h4>
+                                        <p style="font-size:0.9rem; color:rgba(237,232,223,0.8); line-height:1.6; margin-bottom:2rem;">La porte de l'Arche se ferme. Noé et toute sa famille sont sains et saufs. L'obéissance à Dieu sauve !</p>
+                                        <button onclick="window.playSynthSound('click'); startAdventureQuiz('noel')" style="background:#4caf50; border:none; border-radius:50px; color:#fff; font-size:0.9rem; font-weight:800; padding:0.75rem 2rem; cursor:pointer; box-shadow:0 4px 15px rgba(76,175,80,0.4);" onmouseover="this.style.background='#66bb6a';" onmouseout="this.style.background='#4caf50';">
+                                            Passer au Quiz de Sagesse ➔
+                                        </button>
+                                    </div>`;
+                            }, 600);
+                        }
+                    } else {
+                        window.playSynthSound('error');
+                        [c1, c2].forEach(c => { c.classList.remove('selected'); c.style.background='rgba(239,83,80,0.1)'; c.style.borderColor='#ef5350'; });
+                        setTimeout(() => { [c1, c2].forEach(c => { c.style.background='rgba(237,232,223,0.06)'; c.style.borderColor='rgba(237,232,223,0.12)'; }); }, 400);
+                    }
+                    noahGame.selected = [];
+                    document.querySelectorAll('#noah-matching-board > div').forEach(c => c.classList.remove('locked'));
+                }, 700);
+            }
+        }
+
+        // ── Moses Maze Game ──────────────────────────────────────
+        const MAZE = [
+            ['🌊','🌊','🌊','🌊','🪨','🌊'],
+            ['🌊','🏜️','🪨','🏜️','🏜️','🌊'],
+            ['🚶','🏜️','🏜️','🏜️','🏜️','🚩'],
+            ['🌊','🏜️','🏜️','🪨','🏜️','🌊'],
+            ['🌊','🪨','🌊','🌊','🌊','🌊']
+        ];
+        let mosesPos = { r: 2, c: 0 };
+
+        function initMosesAction() {
+            mosesPos = { r: 2, c: 0 };
+            drawMosesGrid();
+        }
+
+        function drawMosesGrid() {
+            const board = document.getElementById('moses-maze-board');
+            if (!board) return;
+            board.innerHTML = '';
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 6; c++) {
+                    const cell = document.createElement('div');
+                    cell.style.cssText = 'aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:1.2rem; border-radius:6px; transition:all 0.15s;';
+                    if (r === mosesPos.r && c === mosesPos.c) {
+                        cell.innerHTML = '🚶';
+                        cell.style.background = 'rgba(232,130,12,0.2)';
+                        cell.style.border = '1px solid #e8820c';
+                    } else {
+                        const t = MAZE[r][c];
+                        if (t === '🌊') { cell.innerHTML = '🌊'; cell.style.background = 'rgba(30,144,255,0.12)'; }
+                        else if (t === '🪨') { cell.innerHTML = '🪨'; cell.style.background = 'rgba(255,255,255,0.04)'; }
+                        else if (t === '🚩') { cell.innerHTML = '🚩'; cell.style.background = 'rgba(76,175,80,0.12)'; cell.style.border = '1px dashed #4caf50'; }
+                        else { cell.innerHTML = ''; cell.style.background = 'rgba(237,232,223,0.02)'; }
+                    }
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        window.moveMoses = function(dir) {
+            const dr = {up:-1,down:1,left:0,right:0}[dir] || 0;
+            const dc = {up:0,down:0,left:-1,right:1}[dir] || 0;
+            const nr = mosesPos.r + dr, nc = mosesPos.c + dc;
+            if (nr < 0 || nr >= 5 || nc < 0 || nc >= 6) { window.playSynthSound('error'); return; }
+            const target = MAZE[nr][nc];
+            if (target === '🌊' || target === '🪨') {
+                window.playSynthSound('error');
+                const board = document.getElementById('moses-maze-board');
+                if (board) { board.style.transform='translateX(5px)'; setTimeout(()=>{board.style.transform='translateX(-5px)';},50); setTimeout(()=>{board.style.transform='none';},100); }
+                return;
+            }
+            window.playSynthSound('click');
+            mosesPos = { r: nr, c: nc };
+            drawMosesGrid();
+            if (target === '🚩') {
+                setTimeout(() => {
+                    window.playSynthSound('victory');
+                    const content = document.getElementById('kids-tab-content');
+                    if (content) content.innerHTML = `
+                        <div style="animation:fadeIn 0.4s ease; max-width:580px; margin:0 auto; background:rgba(27,26,20,0.65); border:2px solid #4caf50; border-radius:24px; padding:2rem; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+                            <div style="font-size:3.5rem; margin-bottom:0.75rem;">🚩🙌🌅</div>
+                            <h4 style="font-size:1.4rem; font-weight:900; color:#fff; margin-bottom:0.5rem;">Rivage Atteint !</h4>
+                            <p style="font-size:0.9rem; color:rgba(237,232,223,0.8); line-height:1.6; margin-bottom:2rem;">Moïse et tout le peuple traversent à sec ! La foi en Dieu ouvre des chemins là où il n'y en a pas.</p>
+                            <button onclick="window.playSynthSound('click'); startAdventureQuiz('moise')" style="background:#4caf50; border:none; border-radius:50px; color:#fff; font-size:0.9rem; font-weight:800; padding:0.75rem 2rem; cursor:pointer; box-shadow:0 4px 15px rgba(76,175,80,0.4);" onmouseover="this.style.background='#66bb6a';" onmouseout="this.style.background='#4caf50';">
+                                Passer au Quiz de Sagesse ➔
+                            </button>
+                        </div>`;
+                }, 350);
+            }
+        };
+
+        // ─── QUIZ DE SAGESSE ─────────────────────────────────────
+        window.startAdventureQuiz = function(heroId) {
+            adventureState.currentHero = heroId;
+            adventureState.quizScore = 0;
+            adventureState.quizIndex = 0;
+            renderAdventureQuestion();
+        };
+
+        function renderAdventureQuestion() {
+            const content = document.getElementById('kids-tab-content');
+            if (!content) return;
+            const adv = ADVENTURES[adventureState.currentHero];
+            const q = adv.quiz[adventureState.quizIndex];
+
+            content.innerHTML = `
+                <div style="animation:fadeIn 0.4s ease; max-width:580px; margin:0 auto; background:rgba(27,26,20,0.65); border:2px solid rgba(237,232,223,0.1); border-radius:24px; padding:2rem; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(237,232,223,0.08); padding-bottom:0.75rem; margin-bottom:1.5rem;">
+                        <span style="font-size:0.75rem; font-weight:800; color:#e8820c; text-transform:uppercase;">Question ${adventureState.quizIndex + 1} / 3</span>
+                        <span style="font-size:0.75rem; color:rgba(237,232,223,0.5);">Score : ⭐ ${adventureState.quizScore}</span>
+                    </div>
+                    <h4 style="font-size:1.15rem; font-weight:800; color:#fff; margin-bottom:1.75rem; line-height:1.5; font-family:'Outfit',sans-serif;">${q.q}</h4>
+                    <div style="display:flex; flex-direction:column; gap:0.65rem;">
+                        ${q.a.map((opt, idx) => `
+                            <button onclick="handleAdventureAnswer(this, ${idx}, ${q.c})"
+                                    style="background:rgba(237,232,223,0.04); border:1px solid rgba(237,232,223,0.14); border-radius:12px; color:#ede8df; font-size:0.9rem; font-weight:700; padding:0.9rem 1.25rem; cursor:pointer; text-align:left; transition:all 0.2s;"
+                                    onmouseover="this.style.background='rgba(232,130,12,0.08)'; this.style.borderColor='#e8820c';"
+                                    onmouseout="this.style.background='rgba(237,232,223,0.04)'; this.style.borderColor='rgba(237,232,223,0.14)';">
+                                ${opt}
+                            </button>`).join('')}
+                    </div>
+                </div>`;
+        }
+
+        window.handleAdventureAnswer = function(btn, selectedIdx, correctIdx) {
+            const buttons = btn.parentElement.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            if (selectedIdx === correctIdx) {
+                window.playSynthSound('success');
+                adventureState.quizScore++;
+                btn.style.background = 'rgba(76,175,80,0.15)';
+                btn.style.borderColor = '#4caf50';
+            } else {
+                window.playSynthSound('error');
+                btn.style.background = 'rgba(239,83,80,0.15)';
+                btn.style.borderColor = '#ef5350';
+                buttons[correctIdx].style.background = 'rgba(76,175,80,0.15)';
+                buttons[correctIdx].style.borderColor = '#4caf50';
+            }
+
+            setTimeout(() => {
+                adventureState.quizIndex++;
+                if (adventureState.quizIndex < 3) renderAdventureQuestion();
+                else completeAdventure();
+            }, 1800);
+        };
+
+        // ─── CÉLÉBRATION FINALE ──────────────────────────────────
+        function completeAdventure() {
+            window.playSynthSound('victory');
+            launchAdventureConfetti();
+
+            const heroId = adventureState.currentHero;
+            adventureState.trophies[heroId] = true;
+            localStorage.setItem('bible_adventure_trophies', JSON.stringify(adventureState.trophies));
+
+            const awards = { david:'Couronne du Courage', noel:"Couronne de l'Obéissance", moise:'Couronne de la Foi' };
+
+            const content = document.getElementById('kids-tab-content');
+            if (!content) return;
+            content.innerHTML = `
+                <div style="animation:fadeIn 0.4s ease; max-width:580px; margin:0 auto; background:rgba(27,26,20,0.65); border:2px solid #e8820c; border-radius:24px; padding:2.5rem; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+                    <div style="font-size:4rem; margin-bottom:0.75rem;">👑🏆🎉</div>
+                    <h3 style="font-size:1.8rem; font-weight:900; color:#fff; margin-bottom:0.25rem; font-family:'Outfit',sans-serif;">Aventure Réussie !</h3>
+                    <div style="font-size:0.85rem; font-weight:800; color:#ff941a; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1.5rem;">Trophée Débloqué — ${awards[heroId]}</div>
+                    <div style="font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:1rem;">Quiz : <span style="color:#ff941a; font-size:1.4rem;">${adventureState.quizScore} / 3</span></div>
+                    <p style="font-size:0.9rem; color:rgba(237,232,223,0.75); line-height:1.7; margin-bottom:2rem; max-width:420px; margin-left:auto; margin-right:auto;">
+                        Fantastique ! Tu as relevé le défi avec bravoure et répondu aux questions de sagesse. Continue à grandir dans la foi et le courage !
+                    </p>
+                    <button onclick="window.playSynthSound('click'); startBibleAdventureGame()" style="background:#e8820c; border:none; border-radius:50px; color:#fff; font-size:0.9rem; font-weight:800; padding:0.75rem 2rem; cursor:pointer; box-shadow:0 4px 15px rgba(232,130,12,0.4);" onmouseover="this.style.background='#ff941a';" onmouseout="this.style.background='#e8820c';">
+                        Retour aux Aventures
+                    </button>
+                </div>`;
+        }
+
+        // ─────────────────────────────────────────────
         window.toggleMobileMoreMenu = function(event) {
             if (event) event.stopPropagation();
             const menu = document.getElementById('mobile-more-menu');
