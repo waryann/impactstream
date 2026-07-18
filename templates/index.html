@@ -3646,7 +3646,7 @@
             if (todayReadings.length === 0) {
                 if ('Notification' in window && Notification.permission === 'granted') {
                     new Notification("⚠️ Alerte de voyage !", {
-                        body: "Hey, ne sois pas celui qui a ralenti le voyage. Prends courage et remplis ton engagement ! 📖",
+                        body: "Hey, ne sois pas celui qui a ralenti le voyage du M.A.I. Prends courage et remplis ton engagement ! 📖",
                         icon: "/static/images/logo.png"
                     });
                     localStorage.setItem(`bible_plan_last_notify_date_${currentUserEmail}`, todayStr);
@@ -3883,7 +3883,7 @@
             };
             
             window.startReadingPlan = function(planId) {
-                if (confirm("Êtes-vous sûr de vouloir commencer ce plan ? Cela définira ce parcours comme votre plan de lecture actif.")) {
+                if (confirm("Êtes-vous sûr de vouloir commencer ce plan ? On ne prend pas un engagement sacré à la légère.")) {
                     const state = loadUserPlanState();
                     state.activePlanId = planId;
                     state.startDate = new Date().toISOString();
