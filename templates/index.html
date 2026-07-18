@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://meet.jit.si/external_api.js"></script>
+    <script src="https://meet.ffmuc.net/external_api.js"></script>
     <title>ImpactStream — Ministère Apostolique Impact</title>
     <meta name="description" content="Plateforme de streaming vidéo et audio du Ministère Apostolique Impact. Enseignements, musique, podcasts — tout en un seul endroit.">
     <link rel="icon" type="image/png" href="/static/images/logo.png">
@@ -8198,7 +8198,7 @@
                 `;
 
                 // Instantiate Jitsi Meet Iframe
-                const domain = "meet.jit.si";
+                const domain = "meet.ffmuc.net";
                 const userEmail = '{{ session.get("user_email") }}';
                 const displayName = userEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 
@@ -8218,7 +8218,17 @@
                         toolbarButtons: [], // Hide Jitsi footer toolbar buttons
                         settingsShareButton: false,
                         disableRemoteMute: true,
-                        disableDeepLinking: true // Prevent mobile app redirect overlay
+                        disableDeepLinking: true, // Prevent mobile app redirect overlay
+                        mobile: {
+                            preventAppLaunch: true,
+                            disablePremiumAppAdvertising: true
+                        },
+                        logoClickUrl: '',
+                        logoImageUrl: '',
+                        watermark: { disabled: true },
+                        showJitsiWatermark: false,
+                        dynamicBranding: { disabled: true },
+                        notifications: []
                     },
                     interfaceConfigOverwrite: {
                         SHOW_JITSI_WATERMARK: false,
