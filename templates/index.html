@@ -6862,6 +6862,23 @@
                 window.activeWebinaireId = null;
             }
 
+            // Libération des flux WebRTC locaux
+            if (window.webinaireAudioStream) {
+                window.webinaireAudioStream.getTracks().forEach(track => track.stop());
+                window.webinaireAudioStream = null;
+            }
+            if (window.webinaireVideoStream) {
+                window.webinaireVideoStream.getTracks().forEach(track => track.stop());
+                window.webinaireVideoStream = null;
+            }
+            if (window.webinaireShareStream) {
+                window.webinaireShareStream.getTracks().forEach(track => track.stop());
+                window.webinaireShareStream = null;
+            }
+            if (typeof stopRealAudioAnalyser === 'function') {
+                stopRealAudioAnalyser();
+            }
+
             modal.classList.remove('minimized');
             modal.classList.remove('active');
             document.body.style.overflow = '';
@@ -7880,7 +7897,33 @@
                     pipLocal.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.4)';
                 }
             } else {
-                // Disable & Reset Mic
+                // Arrêt de tous les flux média actifs pour éteindre le micro/caméra matériellement
+                if (window.webinaireAudioStream) {
+                    window.webinaireAudioStream.getTracks().forEach(track => track.stop());
+                    window.webinaireAudioStream = null;
+                }
+                if (window.webinaireVideoStream) {
+                    window.webinaireVideoStream.getTracks().forEach(track => track.stop());
+                    window.webinaireVideoStream = null;
+                }
+                if (window.webinaireShareStream) {
+                    window.webinaireShareStream.getTracks().forEach(track => track.stop());
+                    window.webinaireShareStream = null;
+                }
+                stopRealAudioAnalyser();
+
+                const videoLocal = document.getElementById('webinaire-local-video');
+                if (videoLocal) {
+                    videoLocal.srcObject = null;
+                    videoLocal.style.display = 'none';
+                }
+                const videoShare = document.getElementById('webinaire-screen-share-video');
+                if (videoShare) {
+                    videoShare.srcObject = null;
+                    videoShare.style.display = 'none';
+                }
+
+                // Désactivation et réinitialisation des contrôles
                 window.webinaireLocalMicActive = false;
                 if (micBtn) {
                     micBtn.disabled = true;
@@ -7890,10 +7933,10 @@
                     micBtn.title = "Micro désactivé par la Régie";
                 }
                 
-                // Disable & Reset Cam
                 window.webinaireLocalCamActive = false;
                 const avatar = document.getElementById('webinaire-pip-avatar');
                 if (avatar) {
+                    avatar.style.display = 'flex';
                     avatar.innerHTML = '👤';
                     avatar.style.background = 'rgba(255,255,255,0.06)';
                 }
@@ -7905,7 +7948,6 @@
                     camBtn.title = "Caméra désactivée par la Régie";
                 }
 
-                // Disable & Reset Share
                 window.webinaireLocalShareActive = false;
                 if (shareBtn) {
                     shareBtn.disabled = true;
@@ -7926,123 +7968,272 @@
             }
         }
 
-        function toggleWebinaireLocalMic() {
+        async function toggleWebinaireLocalMic() {
             if (window.webinaireLastStatus !== 'allowed') return;
             window.webinaireLocalMicActive = !window.webinaireLocalMicActive;
             
             const btn = document.getElementById('webinaire-btn-mic');
             const status = document.getElementById('webinaire-pip-status');
             
-            if (btn && status) {
-                if (window.webinaireLocalMicActive) {
-                    btn.style.background = '#4caf50';
-                    btn.style.color = '#fff';
-                    status.textContent = '🎙️ Parlant';
-                    status.style.color = '#81c784';
+            if (window.webinaireLocalMicActive) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    window.webinaireAudioStream = stream;
                     
-                    // Trigger simulated audio waveform in PIP
-                    startWebinaireLocalWaveform();
-                } else {
+                    if (btn && status) {
+                        btn.style.background = '#4caf50';
+                        btn.style.color = '#fff';
+                        status.textContent = '🎙️ Parlant';
+                        status.style.color = '#81c784';
+                    }
+                    
+                    startRealAudioAnalyser(stream);
+                } catch (err) {
+                    console.error("Microphone capture failed:", err);
+                    window.webinaireLocalMicActive = false;
+                    alert("Impossible d'accéder au micro : " + err.message);
+                }
+            } else {
+                if (window.webinaireAudioStream) {
+                    window.webinaireAudioStream.getTracks().forEach(track => track.stop());
+                    window.webinaireAudioStream = null;
+                }
+                
+                if (btn && status) {
                     btn.style.background = 'rgba(255,255,255,0.08)';
                     btn.style.color = '#fff';
                     status.textContent = '🔇 Muet';
                     status.style.color = '#ef5350';
-                    
-                    stopWebinaireLocalWaveform();
                 }
+                
+                stopRealAudioAnalyser();
             }
         }
 
-        function toggleWebinaireLocalCam() {
+        async function toggleWebinaireLocalCam() {
             if (window.webinaireLastStatus !== 'allowed') return;
             window.webinaireLocalCamActive = !window.webinaireLocalCamActive;
             
             const btn = document.getElementById('webinaire-btn-cam');
             const avatar = document.getElementById('webinaire-pip-avatar');
+            const pipLocal = document.getElementById('webinaire-pip-local');
             
-            if (btn && avatar) {
-                if (window.webinaireLocalCamActive) {
-                    btn.style.background = '#4caf50';
-                    btn.style.color = '#fff';
-                    avatar.innerHTML = '🎥';
-                    avatar.style.background = 'radial-gradient(circle, #e8820c 0%, #2b2a22 100%)';
-                } else {
+            if (window.webinaireLocalCamActive) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+                    window.webinaireVideoStream = stream;
+                    
+                    if (btn) {
+                        btn.style.background = '#4caf50';
+                        btn.style.color = '#fff';
+                    }
+                    
+                    if (avatar) avatar.style.display = 'none';
+                    
+                    let video = document.getElementById('webinaire-local-video');
+                    if (!video) {
+                        video = document.createElement('video');
+                        video.id = 'webinaire-local-video';
+                        video.autoplay = true;
+                        video.setAttribute('playsinline', '');
+                        video.muted = true;
+                        video.style.width = '100%';
+                        video.style.height = '100%';
+                        video.style.objectFit = 'cover';
+                        video.style.position = 'absolute';
+                        video.style.top = '0';
+                        video.style.left = '0';
+                        video.style.zIndex = '2';
+                        video.style.borderRadius = '10px';
+                        if (pipLocal) pipLocal.appendChild(video);
+                    }
+                    video.style.display = 'block';
+                    video.srcObject = stream;
+                } catch (err) {
+                    console.error("Camera capture failed:", err);
+                    window.webinaireLocalCamActive = false;
+                    alert("Impossible d'accéder à la caméra : " + err.message);
+                }
+            } else {
+                if (window.webinaireVideoStream) {
+                    window.webinaireVideoStream.getTracks().forEach(track => track.stop());
+                    window.webinaireVideoStream = null;
+                }
+                
+                if (btn) {
                     btn.style.background = 'rgba(255,255,255,0.08)';
                     btn.style.color = '#fff';
-                    avatar.innerHTML = '👤';
-                    avatar.style.background = 'rgba(255,255,255,0.06)';
                 }
+                
+                const video = document.getElementById('webinaire-local-video');
+                if (video) {
+                    video.srcObject = null;
+                    video.style.display = 'none';
+                }
+                
+                if (avatar) avatar.style.display = 'flex';
             }
         }
 
-        function toggleWebinaireLocalShare() {
+        async function toggleWebinaireLocalShare() {
             if (window.webinaireLastStatus !== 'allowed') return;
             window.webinaireLocalShareActive = !window.webinaireLocalShareActive;
             
             const btn = document.getElementById('webinaire-btn-share');
-            if (btn) {
-                if (window.webinaireLocalShareActive) {
-                    btn.style.background = '#2196f3';
-                    btn.style.color = '#fff';
-                    alert("🖥️ Partage d'écran simulé : Votre écran est partagé avec la Régie.");
-                } else {
+            
+            if (window.webinaireLocalShareActive) {
+                try {
+                    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                    window.webinaireShareStream = stream;
+                    
+                    if (btn) {
+                        btn.style.background = '#2196f3';
+                        btn.style.color = '#fff';
+                    }
+                    
+                    let mainContainer = document.querySelector('#modal-player > div > div:first-child');
+                    if (mainContainer) {
+                        let video = document.getElementById('webinaire-screen-share-video');
+                        if (!video) {
+                            video = document.createElement('video');
+                            video.id = 'webinaire-screen-share-video';
+                            video.autoplay = true;
+                            video.setAttribute('playsinline', '');
+                            video.muted = true;
+                            video.style.width = '100%';
+                            video.style.height = '100%';
+                            video.style.objectFit = 'contain';
+                            video.style.position = 'absolute';
+                            video.style.top = '0';
+                            video.style.left = '0';
+                            video.style.zIndex = '15';
+                            video.style.background = '#000';
+                            mainContainer.appendChild(video);
+                        }
+                        video.style.display = 'block';
+                        video.srcObject = stream;
+                        
+                        stream.getVideoTracks()[0].onended = () => {
+                            if (window.webinaireLocalShareActive) {
+                                toggleWebinaireLocalShare();
+                            }
+                        };
+                    }
+                } catch (err) {
+                    console.error("Screen share capture failed:", err);
+                    window.webinaireLocalShareActive = false;
+                    if (btn) {
+                        btn.style.background = 'rgba(255,255,255,0.08)';
+                        btn.style.color = '#fff';
+                    }
+                }
+            } else {
+                if (window.webinaireShareStream) {
+                    window.webinaireShareStream.getTracks().forEach(track => track.stop());
+                    window.webinaireShareStream = null;
+                }
+                
+                if (btn) {
                     btn.style.background = 'rgba(255,255,255,0.08)';
                     btn.style.color = '#fff';
+                }
+                
+                const video = document.getElementById('webinaire-screen-share-video');
+                if (video) {
+                    video.srcObject = null;
+                    video.style.display = 'none';
                 }
             }
         }
 
+        function startRealAudioAnalyser(stream) {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                window.webinaireAudioContext = new AudioContextClass();
+                window.webinaireAnalyser = window.webinaireAudioContext.createAnalyser();
+                window.webinaireSourceNode = window.webinaireAudioContext.createMediaStreamSource(stream);
+                
+                window.webinaireSourceNode.connect(window.webinaireAnalyser);
+                
+                window.webinaireAnalyser.fftSize = 32;
+                const bufferLength = window.webinaireAnalyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                stopWebinaireLocalWaveform();
+                
+                const pip = document.getElementById('webinaire-pip-local');
+                if (!pip) return;
+                
+                const waveContainer = document.createElement('div');
+                waveContainer.id = 'webinaire-wave-container';
+                waveContainer.style.position = 'absolute';
+                waveContainer.style.top = '0';
+                waveContainer.style.left = '0';
+                waveContainer.style.width = '100%';
+                waveContainer.style.height = '100%';
+                waveContainer.style.background = 'rgba(76,175,80,0.03)';
+                waveContainer.style.display = 'flex';
+                waveContainer.style.alignItems = 'flex-end';
+                waveContainer.style.justifyContent = 'center';
+                waveContainer.style.gap = '3px';
+                waveContainer.style.paddingBottom = '2rem';
+                waveContainer.style.pointerEvents = 'none';
+                waveContainer.style.zIndex = '5';
+                
+                for (let i = 0; i < 6; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'webinaire-wave-bar';
+                    bar.style.width = '3px';
+                    bar.style.height = '4px';
+                    bar.style.background = '#81c784';
+                    bar.style.borderRadius = '3px';
+                    bar.style.transition = 'height 0.08s ease';
+                    waveContainer.appendChild(bar);
+                }
+                
+                pip.appendChild(waveContainer);
+                
+                function draw() {
+                    if (!window.webinaireAudioContext || !window.webinaireAnalyser || !window.webinaireLocalMicActive) return;
+                    requestAnimationFrame(draw);
+                    
+                    window.webinaireAnalyser.getByteFrequencyData(dataArray);
+                    const bars = document.querySelectorAll('.webinaire-wave-bar');
+                    
+                    bars.forEach((bar, idx) => {
+                        const val = dataArray[idx % bufferLength];
+                        const h = Math.max(4, Math.floor((val / 255) * 35));
+                        bar.style.height = `${h}px`;
+                    });
+                }
+                draw();
+            } catch (err) {
+                console.error("Audio Analyser failed:", err);
+                startWebinaireLocalWaveform();
+            }
+        }
+
+        function stopRealAudioAnalyser() {
+            if (window.webinaireAudioContext) {
+                try {
+                    window.webinaireAudioContext.close();
+                } catch(e){}
+                window.webinaireAudioContext = null;
+            }
+            window.webinaireAnalyser = null;
+            window.webinaireSourceNode = null;
+            
+            const el = document.getElementById('webinaire-wave-container');
+            if (el) el.remove();
+        }
+
         let webinaireWaveformInterval = null;
         function startWebinaireLocalWaveform() {
-            stopWebinaireLocalWaveform();
-            const pip = document.getElementById('webinaire-pip-local');
-            if (!pip) return;
-            
-            const waveContainer = document.createElement('div');
-            waveContainer.id = 'webinaire-wave-container';
-            waveContainer.style.position = 'absolute';
-            waveContainer.style.top = '0';
-            waveContainer.style.left = '0';
-            waveContainer.style.width = '100%';
-            waveContainer.style.height = '100%';
-            waveContainer.style.background = 'rgba(76,175,80,0.05)';
-            waveContainer.style.display = 'flex';
-            waveContainer.style.alignItems = 'flex-end';
-            waveContainer.style.justifyContent = 'center';
-            waveContainer.style.gap = '2px';
-            waveContainer.style.paddingBottom = '2rem';
-            waveContainer.style.pointerEvents = 'none';
-            waveContainer.style.zIndex = '5';
-            
-            for (let i = 0; i < 5; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'webinaire-wave-bar';
-                bar.style.width = '3px';
-                bar.style.height = '10px';
-                bar.style.background = '#81c784';
-                bar.style.borderRadius = '3px';
-                bar.style.transition = 'height 0.15s ease';
-                waveContainer.appendChild(bar);
-            }
-            
-            pip.appendChild(waveContainer);
-            
-            webinaireWaveformInterval = setInterval(() => {
-                const bars = document.querySelectorAll('.webinaire-wave-bar');
-                bars.forEach(bar => {
-                    const h = Math.floor(Math.random() * 25) + 5;
-                    bar.style.height = `${h}px`;
-                });
-            }, 120);
+            // Unused when real audio analyser is active, kept as fallback
         }
 
         function stopWebinaireLocalWaveform() {
-            if (webinaireWaveformInterval) {
-                clearInterval(webinaireWaveformInterval);
-                webinaireWaveformInterval = null;
-            }
-            const el = document.getElementById('webinaire-wave-container');
-            if (el) el.remove();
+            // Unused when real audio analyser is active, kept as fallback
         }
 
         function fetchLives() {

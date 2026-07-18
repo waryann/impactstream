@@ -69,8 +69,11 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
     import psycopg2
+    import psycopg2.pool
     from psycopg2.extras import RealDictCursor
     sqlite3.IntegrityError = psycopg2.IntegrityError
+    
+    pg_pool = None
 
 class PostgresRowWrapper:
     def __init__(self, dict_row):
@@ -179,16 +182,40 @@ class PostgresConnectionWrapper:
         self.conn.rollback()
 
     def close(self):
-        self.conn.close()
+        global pg_pool
+        if pg_pool is not None:
+            try:
+                pg_pool.putconn(self.conn)
+                return
+            except Exception:
+                pass
+        try:
+            self.conn.close()
+        except Exception:
+            pass
 
 _db_initialized = False
 
 def get_db():
     """Obtenir une connexion à la base de données (SQLite en local, PostgreSQL/Supabase en prod)."""
-    global _db_initialized
+    global _db_initialized, pg_pool
     if DATABASE_URL:
-        conn = psycopg2.connect(DATABASE_URL)
-        wrapper = PostgresConnectionWrapper(conn)
+        if pg_pool is None:
+            try:
+                # Créer le pool de connexion
+                pg_pool = psycopg2.pool.ThreadedConnectionPool(1, 10, DATABASE_URL)
+            except Exception as e:
+                print(f"⚠️ Erreur création pool PostgreSQL: {e}")
+                conn = psycopg2.connect(DATABASE_URL)
+                return PostgresConnectionWrapper(conn)
+        
+        try:
+            conn = pg_pool.getconn()
+            wrapper = PostgresConnectionWrapper(conn)
+        except Exception as e:
+            print(f"⚠️ Erreur récupération connexion du pool: {e}")
+            conn = psycopg2.connect(DATABASE_URL)
+            wrapper = PostgresConnectionWrapper(conn)
         
         # Auto-migration PostgreSQL (salle d'attente & expulsion) - exécutée une seule fois
         if not _db_initialized:
