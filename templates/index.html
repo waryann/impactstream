@@ -3806,73 +3806,10 @@
             // Reset notification limits to allow testing immediately today
             localStorage.removeItem(`bible_plan_last_notify_date_${currentUserEmail}`);
 
-            // Download the .ics calendar file automatically to sync with phone calendar
-            downloadPlanCalendarEvent(planId, hourVal, minuteVal);
-
-            alert(`Rappel enregistré pour ${String(hourVal).padStart(2, '0')}h${String(minuteVal).padStart(2, '0')} ! Le fichier de calendrier (.ics) a été généré pour programmer cette alerte quotidienne sur votre téléphone.`);
+            alert(`Rappel enregistré pour ${String(hourVal).padStart(2, '0')}h${String(minuteVal).padStart(2, '0')} ! Si vous n'avez pas rempli votre objectif de lecture à cette heure, le rappel s'affichera.`);
             
             const container = document.getElementById('espaces-container');
             if (container) renderPlanDashboard(planId, container);
-        };
-
-        window.downloadPlanCalendarEvent = function(planId, hourVal, minuteVal) {
-            const state = loadUserPlanState();
-            const h = hourVal !== undefined ? hourVal : (state.reminderHour !== undefined ? state.reminderHour : 14);
-            const m = minuteVal !== undefined ? minuteVal : (state.reminderMinute !== undefined ? state.reminderMinute : 0);
-
-            // Generate daily recurring event at user's local hour and minute
-            const dateObj = new Date();
-            dateObj.setHours(h);
-            dateObj.setMinutes(m);
-            dateObj.setSeconds(0);
-
-            const formatICSDate = (date) => {
-                const year = date.getUTCFullYear();
-                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                const day = String(date.getUTCDate()).padStart(2, '0');
-                const hours = String(date.getUTCHours()).padStart(2, '0');
-                const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-                const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-                return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
-            };
-
-            const dtstamp = formatICSDate(new Date());
-            const dtstart = formatICSDate(dateObj);
-            const endDate = new Date(dateObj.getTime() + 15 * 60 * 1000); // 15 minutes duration
-            const dtend = formatICSDate(endDate);
-
-            const icsContent = [
-                'BEGIN:VCALENDAR',
-                'VERSION:2.0',
-                'PRODID:-//ImpactStream//Plan Reminders//FR',
-                'CALSCALE:GREGORIAN',
-                'METHOD:PUBLISH',
-                'BEGIN:VEVENT',
-                `UID:bible_plan_reminder_${currentUserEmail}@impactstream`,
-                `DTSTAMP:${dtstamp}`,
-                `DTSTART:${dtstart}`,
-                `DTEND:${dtend}`,
-                'RRULE:FREQ=DAILY',
-                'SUMMARY:📖 Voyage de lecture biblique M.A.I',
-                'DESCRIPTION:Hey, ne sois pas celui qui a ralenti le voyage du M.A.I. Prends courage et remplis ton engagement ! 📖',
-                'BEGIN:VALARM',
-                'TRIGGER:-PT0M',
-                'ACTION:DISPLAY',
-                'DESCRIPTION:Rappel de lecture',
-                'END:VALARM',
-                'END:VEVENT',
-                'END:VCALENDAR'
-            ].join('\r\n');
-
-            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `rappel_voyage_mai_${h}h${m}.ics`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         };
 
         window.checkPlanNotification = function() {
