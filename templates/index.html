@@ -6850,6 +6850,14 @@
             if (playerContainer) { playerContainer.innerHTML = ''; }
 
             // Nettoyage Webinaire Interactif
+            if (window.webinaireJitsiAPI) {
+                try {
+                    window.webinaireJitsiAPI.dispose();
+                } catch (e) {
+                    console.error("Error disposing Jitsi API:", e);
+                }
+                window.webinaireJitsiAPI = null;
+            }
             if (window.webinaireStatusInterval) {
                 clearInterval(window.webinaireStatusInterval);
                 window.webinaireStatusInterval = null;
