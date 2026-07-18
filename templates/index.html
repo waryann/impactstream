@@ -3790,40 +3790,89 @@
             }
         };
 
-        window.updateReminderTime = function(type, val) {
+        window.savePlanReminderTime = function(planId) {
+            const hSel = document.getElementById('plan-reminder-hour');
+            const mSel = document.getElementById('plan-reminder-minute');
+            if (!hSel || !mSel) return;
+
+            const hourVal = parseInt(hSel.value);
+            const minuteVal = parseInt(mSel.value);
+
             const state = loadUserPlanState();
-            if (type === 'hour') {
-                state.reminderHour = parseInt(val);
-            } else if (type === 'minute') {
-                state.reminderMinute = parseInt(val);
-            }
+            state.reminderHour = hourVal;
+            state.reminderMinute = minuteVal;
             saveUserPlanState(state);
-            // Clear last notify date to allow testing/triggering at the new configured time today
+
+            // Reset notification limits to allow testing immediately today
             localStorage.removeItem(`bible_plan_last_notify_date_${currentUserEmail}`);
+
+            // Download the .ics calendar file automatically to sync with phone calendar
+            downloadPlanCalendarEvent(planId, hourVal, minuteVal);
+
+            alert(`Rappel enregistré pour ${String(hourVal).padStart(2, '0')}h${String(minuteVal).padStart(2, '0')} ! Le fichier de calendrier (.ics) a été généré pour programmer cette alerte quotidienne sur votre téléphone.`);
+            
+            const container = document.getElementById('espaces-container');
+            if (container) renderPlanDashboard(planId, container);
         };
 
-        window.testPlanNotification = function() {
-            if ('Notification' in window) {
-                if (Notification.permission === 'granted') {
-                    new Notification("⚠️ Test d'Alerte de voyage !", {
-                        body: "Hey, ne sois pas celui qui a ralenti le voyage du M.A.I. Prends courage et remplis ton engagement ! 📖",
-                        icon: "/static/images/logo.png"
-                    });
-                } else {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === 'granted') {
-                            new Notification("⚠️ Test d'Alerte de voyage !", {
-                                body: "Hey, ne sois pas celui qui a ralenti le voyage du M.A.I. Prends courage et remplis ton engagement ! 📖",
-                                icon: "/static/images/logo.png"
-                            });
-                        } else {
-                            alert("Les notifications ne sont pas autorisées. Veuillez les activer dans les paramètres de votre navigateur.");
-                        }
-                    });
-                }
-            } else {
-                alert("Votre navigateur ne prend pas en charge les notifications.");
-            }
+        window.downloadPlanCalendarEvent = function(planId, hourVal, minuteVal) {
+            const state = loadUserPlanState();
+            const h = hourVal !== undefined ? hourVal : (state.reminderHour !== undefined ? state.reminderHour : 14);
+            const m = minuteVal !== undefined ? minuteVal : (state.reminderMinute !== undefined ? state.reminderMinute : 0);
+
+            // Generate daily recurring event at user's local hour and minute
+            const dateObj = new Date();
+            dateObj.setHours(h);
+            dateObj.setMinutes(m);
+            dateObj.setSeconds(0);
+
+            const formatICSDate = (date) => {
+                const year = date.getUTCFullYear();
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const hours = String(date.getUTCHours()).padStart(2, '0');
+                const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+                return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+            };
+
+            const dtstamp = formatICSDate(new Date());
+            const dtstart = formatICSDate(dateObj);
+            const endDate = new Date(dateObj.getTime() + 15 * 60 * 1000); // 15 minutes duration
+            const dtend = formatICSDate(endDate);
+
+            const icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//ImpactStream//Plan Reminders//FR',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH',
+                'BEGIN:VEVENT',
+                `UID:bible_plan_reminder_${currentUserEmail}@impactstream`,
+                `DTSTAMP:${dtstamp}`,
+                `DTSTART:${dtstart}`,
+                `DTEND:${dtend}`,
+                'RRULE:FREQ=DAILY',
+                'SUMMARY:📖 Voyage de lecture biblique M.A.I',
+                'DESCRIPTION:Hey, ne sois pas celui qui a ralenti le voyage du M.A.I. Prends courage et remplis ton engagement ! 📖',
+                'BEGIN:VALARM',
+                'TRIGGER:-PT0M',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Rappel de lecture',
+                'END:VALARM',
+                'END:VEVENT',
+                'END:VCALENDAR'
+            ].join('\r\n');
+
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `rappel_voyage_mai_${h}h${m}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
 
         window.checkPlanNotification = function() {
@@ -4144,8 +4193,8 @@
                                     
                                     <!-- Hour Select wrapper -->
                                     <div style="position: relative; display: inline-block;">
-                                        <select onchange="updateReminderTime('hour', this.value)" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
-                                            ${Array.from({length: 24}, (_, i) => `<option value="${i}" ${i === state.reminderHour ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(i).padStart(2, '0')}</option>`).join('')}
+                                        <select id="plan-reminder-hour" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
+                                            ${Array.from({length: 24}, (_, i) => `<option value="${i}" ${i === (state.reminderHour !== undefined ? state.reminderHour : 14) ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(i).padStart(2, '0')}</option>`).join('')}
                                         </select>
                                         <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
                                     </div>
@@ -4154,15 +4203,15 @@
                                     
                                     <!-- Minute Select wrapper -->
                                     <div style="position: relative; display: inline-block;">
-                                        <select onchange="updateReminderTime('minute', this.value)" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
+                                        <select id="plan-reminder-minute" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
                                             ${Array.from({length: 12}, (_, i) => {
                                                 const m = i * 5;
-                                                return `<option value="${m}" ${m === state.reminderMinute ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(m).padStart(2, '0')}</option>`;
+                                                return `<option value="${m}" ${m === (state.reminderMinute !== undefined ? state.reminderMinute : 0) ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(m).padStart(2, '0')}</option>`;
                                             }).join('')}
                                         </select>
                                         <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
                                     </div>
-                                    <button onclick="window.testPlanNotification()" style="background:none; border:none; color:rgba(237,232,223,0.35); font-size:0.68rem; text-decoration:underline; font-weight:700; cursor:pointer; padding:0; margin-left:0.5rem; transition:color 0.2s;" onmouseover="this.style.color='#e8820c'" onmouseout="this.style.color='rgba(237,232,223,0.35)'">🧪 Tester</button>
+                                    <button onclick="window.savePlanReminderTime(${planId})" style="background: #e8820c; border: none; border-radius: 6px; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.65rem; cursor: pointer; margin-left: 0.5rem; transition: background 0.2s;" onmouseover="this.style.background='#d4770a'" onmouseout="this.style.background='#e8820c'">OK</button>
                                 </div>
                             </div>
                         `;
