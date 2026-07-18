@@ -1282,6 +1282,127 @@
             color: #e8820c !important;
             background: rgba(232, 130, 12, 0.08);
         }
+        /* Communiqués Responsive Design */
+        .comm-timeline-container {
+            width: 30%;
+            position: sticky;
+            top: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-left: 2px solid rgba(237, 232, 223, 0.08);
+            padding-left: 1.5rem;
+        }
+        .comm-timeline-node {
+            cursor: pointer;
+            position: relative;
+            padding: 0.75rem 0;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .comm-timeline-node .dot {
+            position: absolute;
+            left: -29px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(237, 232, 223, 0.2);
+            border: 2px solid #090907;
+            transition: all 0.3s ease;
+        }
+        .comm-timeline-node.active .dot {
+            background: #e8820c;
+            border-color: #e8820c;
+            box-shadow: 0 0 10px #e8820c;
+        }
+        .comm-timeline-node.highlighted .dot {
+            background: rgba(232, 130, 12, 0.7);
+            border-color: #090907;
+        }
+
+        @media (max-width: 768px) {
+            #communiques-split-layout {
+                flex-direction: column !important;
+                gap: 1.5rem !important;
+            }
+            .comm-timeline-container {
+                width: 100% !important;
+                position: relative !important;
+                top: 0 !important;
+                flex-direction: row !important;
+                border-left: none !important;
+                padding-left: 0 !important;
+                overflow-x: auto !important;
+                white-space: nowrap !important;
+                gap: 0.65rem !important;
+                border-bottom: 1px solid rgba(237, 232, 223, 0.08);
+                padding-bottom: 1rem !important;
+                scrollbar-width: none;
+                -webkit-overflow-scrolling: touch;
+            }
+            .comm-timeline-container::-webkit-scrollbar {
+                display: none;
+            }
+            .comm-timeline-node {
+                padding: 0.5rem 1rem !important;
+                background: rgba(237, 232, 223, 0.05);
+                border: 1px solid rgba(237, 232, 223, 0.1);
+                border-radius: 100px;
+                flex-shrink: 0;
+                display: inline-flex !important;
+                align-items: center;
+                gap: 0.35rem;
+            }
+            .comm-timeline-node .dot {
+                position: static !important;
+                width: 8px !important;
+                height: 8px !important;
+                border: none !important;
+            }
+            .comm-timeline-node.active {
+                background: #e8820c !important;
+                border-color: #e8820c !important;
+            }
+            .comm-timeline-node.active span {
+                color: #fff !important;
+            }
+            #comm-card-wrapper {
+                width: 100% !important;
+            }
+            #active-comm-card {
+                padding: 1.5rem !important;
+            }
+            #active-comm-card h3 {
+                font-size: 1.35rem !important;
+            }
+            #active-comm-card > div:first-child {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 1rem !important;
+            }
+            #active-comm-card .card-actions-wrapper {
+                flex-direction: column !important;
+                width: 100% !important;
+                align-items: stretch !important;
+                gap: 0.8rem !important;
+            }
+            #active-comm-card .card-actions-wrapper button,
+            #active-comm-card .card-actions-wrapper .reminder-wrapper {
+                width: 100% !important;
+            }
+            #active-comm-card .card-actions-wrapper button {
+                justify-content: center !important;
+                padding: 0.8rem 1.5rem !important;
+                font-size: 0.9rem !important;
+            }
+            #reminder-popover {
+                width: 100% !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 110% !important;
+            }
+        }
         @media (max-width: 767px) {
             body {
                 padding-bottom: 80px !important;
@@ -6321,7 +6442,7 @@
             container.innerHTML = `
                 <div style="display: flex; gap: 3rem; align-items: flex-start; margin-top: 1.5rem;" id="communiques-split-layout">
                     <!-- Timeline (Left) -->
-                    <div style="width: 30%; position: sticky; top: 100px; display: flex; flex-direction: column; gap: 0.5rem; border-left: 2px solid rgba(237, 232, 223, 0.08); padding-left: 1.5rem;" id="comm-timeline-nav">
+                    <div class="comm-timeline-container" id="comm-timeline-nav">
                     </div>
                     
                     <!-- Content Card (Right) -->
@@ -6347,10 +6468,13 @@
                 const isHighlighted = highlights.includes(c.id);
                 const starHtml = isHighlighted ? `<span style="color: #e8820c; font-size: 0.85rem; margin-right: 0.25rem;">★</span>` : '';
 
+                const activeClass = isActive ? 'active' : '';
+                const highClass = isHighlighted ? 'highlighted' : '';
+
                 html += `
-                    <div onclick="selectCommunique(${idx})" style="cursor: pointer; position: relative; padding: 0.75rem 0; display: flex; align-items: center; transition: all 0.3s ease;" class="timeline-node">
+                    <div onclick="selectCommunique(${idx})" class="comm-timeline-node ${activeClass} ${highClass}">
                         <!-- Dot -->
-                        <div style="position: absolute; left: -29px; width: 10px; height: 10px; border-radius: 50%; background: ${isActive ? '#e8820c' : (isHighlighted ? 'rgba(232, 130, 12, 0.7)' : 'rgba(237,232,223,0.2)')}; border: 2px solid ${isActive ? '#e8820c' : '#090907'}; box-shadow: ${isActive ? '0 0 10px #e8820c' : 'none'}; transition: all 0.3s ease;"></div>
+                        <div class="dot"></div>
                         <!-- Date Text -->
                         <span style="font-size: 0.88rem; font-weight: ${isActive ? '800' : '500'}; color: ${isActive ? '#fff' : (isHighlighted ? 'rgba(232, 130, 12, 0.85)' : 'rgba(237,232,223,0.45)')}; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center;">
                             ${starHtml} ${dateStr}
@@ -6463,7 +6587,7 @@
                     </div>
 
                     <!-- Footer / Actions -->
-                    <div style="display: flex; gap: 0.75rem; align-items: center; border-top: 1px solid rgba(237,232,223,0.06); padding-top: 1.5rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                    <div class="card-actions-wrapper" style="display: flex; gap: 0.75rem; align-items: center; border-top: 1px solid rgba(237,232,223,0.06); padding-top: 1.5rem; margin-top: 1.5rem; flex-wrap: wrap;">
                         <button onclick="openCommuniqueReader()" style="background: linear-gradient(135deg, #e8820c, #d4770a); border: none; border-radius: 100px; color: #fff; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.25rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                             Lire en plein écran
@@ -6474,7 +6598,7 @@
                             <span>Important</span>
                         </button>
 
-                        <div style="position: relative; display: inline-block;">
+                        <div class="reminder-wrapper" style="position: relative; display: inline-block;">
                             <button onclick="toggleReminderPopover(event)" id="btn-comm-reminder" style="background: ${hasReminder ? 'rgba(232,130,12,0.15)' : 'rgba(237,232,223,0.06)'}; border: 1px solid ${hasReminder ? '#e8820c' : 'rgba(237,232,223,0.15)'}; border-radius: 100px; color: ${hasReminder ? '#fff' : '#ede8df'}; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.25rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(237,232,223,0.12)'" onmouseout="this.style.background='${hasReminder ? 'rgba(232,130,12,0.15)' : 'rgba(237,232,223,0.06)'}'">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="${hasReminder ? '#e8820c' : 'none'}" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                                 <span>${hasReminder ? 'Rappel programmé' : 'Planifier rappel'}</span>
