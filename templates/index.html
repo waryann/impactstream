@@ -3345,12 +3345,20 @@
                 completedChapters: [],
                 completionDates: {},
                 unlockedBadges: [],
-                activeDayIndex: 1
+                activeDayIndex: 1,
+                reminderHour: 14,
+                reminderMinute: 0
             };
             if (!currentUserEmail) return defaultState;
             try {
                 const raw = localStorage.getItem(`bible_plan_state_${currentUserEmail}`);
-                return raw ? JSON.parse(raw) : defaultState;
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.reminderHour === undefined) parsed.reminderHour = 14;
+                    if (parsed.reminderMinute === undefined) parsed.reminderMinute = 0;
+                    return parsed;
+                }
+                return defaultState;
             } catch(e) {
                 return defaultState;
             }
@@ -3585,23 +3593,36 @@
             }, 6000);
         }
 
-        window.requestPlanNotificationPermission = function() {
+        window.requestPlanNotificationPermission = function(planId) {
             if ('Notification' in window) {
                 Notification.requestPermission().then(permission => {
                     const btn = document.getElementById('btn-enable-notify');
-                    if (btn) {
-                        if (permission === 'granted') {
-                            btn.innerHTML = `🔔 Rappels de 14h actifs`;
+                    if (permission === 'granted') {
+                        const container = document.getElementById('espaces-container');
+                        if (container && planId) {
+                            renderPlanDashboard(planId, container);
+                        } else if (btn) {
+                            btn.innerHTML = `🔔 Rappels actifs`;
                             btn.style.background = 'rgba(76, 175, 80, 0.1)';
                             btn.style.borderColor = 'rgba(76, 175, 80, 0.25)';
                             btn.style.color = '#4caf50';
                             btn.disabled = true;
-                        } else {
-                            btn.innerHTML = `🔕 Rappels bloqués`;
                         }
+                    } else if (btn) {
+                        btn.innerHTML = `🔕 Rappels bloqués`;
                     }
                 });
             }
+        };
+
+        window.updateReminderTime = function(type, val) {
+            const state = loadUserPlanState();
+            if (type === 'hour') {
+                state.reminderHour = parseInt(val);
+            } else if (type === 'minute') {
+                state.reminderMinute = parseInt(val);
+            }
+            saveUserPlanState(state);
         };
 
         window.checkPlanNotification = function() {
@@ -3614,7 +3635,12 @@
             if (lastCheck === todayStr) return;
 
             const now = new Date();
-            if (now.getHours() < 14) return;
+            const targetHour = state.reminderHour !== undefined ? state.reminderHour : 14;
+            const targetMinute = state.reminderMinute !== undefined ? state.reminderMinute : 0;
+            
+            if (now.getHours() < targetHour || (now.getHours() === targetHour && now.getMinutes() < targetMinute)) {
+                return;
+            }
 
             const todayReadings = state.completionDates[todayStr] || [];
             if (todayReadings.length === 0) {
@@ -3905,9 +3931,39 @@
                 if ('Notification' in window) {
                     const perm = Notification.permission;
                     if (perm === 'default') {
-                        notifyBtnHtml = `<button id="btn-enable-notify" onclick="requestPlanNotificationPermission()" style="background: rgba(232, 130, 12, 0.08); border: 1.5px solid rgba(232, 130, 12, 0.35); border-radius: 10px; color: #e8820c; font-size: 0.75rem; font-weight: 700; padding: 0.5rem 0.9rem; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem; height: fit-content;" onmouseover="this.style.background='rgba(232,130,12,0.15)';" onmouseout="this.style.background='rgba(232,130,12,0.08)';">🔔 Activer les rappels</button>`;
+                        notifyBtnHtml = `<button id="btn-enable-notify" onclick="requestPlanNotificationPermission(${planId})" style="background: rgba(232, 130, 12, 0.08); border: 1.5px solid rgba(232, 130, 12, 0.35); border-radius: 10px; color: #e8820c; font-size: 0.75rem; font-weight: 700; padding: 0.5rem 0.9rem; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem; height: fit-content;" onmouseover="this.style.background='rgba(232,130,12,0.15)';" onmouseout="this.style.background='rgba(232,130,12,0.08)';">🔔 Activer les rappels</button>`;
                     } else if (perm === 'granted') {
-                        notifyBtnHtml = `<button id="btn-enable-notify" disabled style="background: rgba(76, 175, 80, 0.1); border: 1.5px solid rgba(76, 175, 80, 0.25); border-radius: 10px; color: #4caf50; font-size: 0.75rem; font-weight: 700; padding: 0.5rem 0.9rem; display: inline-flex; align-items: center; gap: 0.4rem; height: fit-content; opacity: 0.85;">🔔 Rappels de 14h actifs</button>`;
+                        notifyBtnHtml = `
+                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(76, 175, 80, 0.05); border: 1.5px solid rgba(76, 175, 80, 0.2); padding: 0.4rem 0.85rem; border-radius: 12px; height: fit-content;">
+                                <span style="font-size: 0.75rem; color: #4caf50; font-weight: 800; display: inline-flex; align-items: center; gap: 0.3rem; text-transform: uppercase;">
+                                    🔔 Rappels actifs
+                                </span>
+                                <div style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                                    <span style="font-size: 0.72rem; color: rgba(237,232,223,0.4); font-weight: 700; text-transform: uppercase; margin-left: 0.25rem;">À :</span>
+                                    
+                                    <!-- Hour Select wrapper -->
+                                    <div style="position: relative; display: inline-block;">
+                                        <select onchange="updateReminderTime('hour', this.value)" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
+                                            ${Array.from({length: 24}, (_, i) => `<option value="${i}" ${i === state.reminderHour ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(i).padStart(2, '0')}</option>`).join('')}
+                                        </select>
+                                        <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
+                                    </div>
+                                    
+                                    <span style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: bold;">h</span>
+                                    
+                                    <!-- Minute Select wrapper -->
+                                    <div style="position: relative; display: inline-block;">
+                                        <select onchange="updateReminderTime('minute', this.value)" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
+                                            ${Array.from({length: 12}, (_, i) => {
+                                                const m = i * 5;
+                                                return `<option value="${m}" ${m === state.reminderMinute ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(m).padStart(2, '0')}</option>`;
+                                            }).join('')}
+                                        </select>
+                                        <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     } else {
                         notifyBtnHtml = `<button id="btn-enable-notify" disabled style="background: rgba(237,232,223,0.03); border: 1.5px solid rgba(237,232,223,0.1); border-radius: 10px; color: rgba(237,232,223,0.4); font-size: 0.75rem; font-weight: 700; padding: 0.5rem 0.9rem; display: inline-flex; align-items: center; gap: 0.4rem; height: fit-content;">🔕 Rappels bloqués</button>`;
                     }
