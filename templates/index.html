@@ -1697,20 +1697,35 @@
 
     <!-- ─── Modal Plan Bible Reader ─── -->
     <div class="modal-backdrop" id="modal-plan-bible-reader" onclick="if(event.target===this)closePlanBibleReader()" style="z-index: 1200; display: none;">
-        <div class="modal-content" style="max-width: 800px; height: 85vh; padding: 2.5rem; background: linear-gradient(145deg, #12120e, #090907); border: 1px solid rgba(232, 130, 12, 0.25); border-radius: 28px; position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 30px 70px rgba(0,0,0,0.9);">
+        <div class="modal-content" id="plan-bible-modal-content" style="max-width: 800px; height: 85vh; padding: 2.5rem; background: linear-gradient(145deg, #12120e, #090907); border: 1px solid rgba(232, 130, 12, 0.25); border-radius: 28px; position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 30px 70px rgba(0,0,0,0.9);">
             <button class="modal-close" onclick="closePlanBibleReader()" style="position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(237,232,223,0.06); border: 1px solid rgba(237,232,223,0.1); border-radius: 50%; width: 40px; height: 40px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: all 0.3s; line-height: 1; border: none;">&times;</button>
             <div style="display: flex; flex-direction: column; height: 100%;">
-                <div style="margin-bottom: 1.5rem; flex-shrink: 0; padding-right: 3rem;">
-                    <span style="font-size: 0.72rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">LECTURE BIBLIQUE</span>
-                    <h2 id="plan-bible-title" style="font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0; font-family: 'Outfit', sans-serif;">—</h2>
+                <div style="margin-bottom: 1.5rem; flex-shrink: 0; padding-right: 3rem; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid rgba(237,232,223,0.08); padding-bottom: 1rem;">
+                    <div>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">LECTURE BIBLIQUE</span>
+                        <h2 id="plan-bible-title" style="font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0; font-family: 'Outfit', sans-serif;">—</h2>
+                    </div>
+                    <!-- Controls -->
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <!-- Font size buttons -->
+                        <div style="display: flex; background: rgba(237,232,223,0.05); border: 1px solid rgba(237,232,223,0.1); border-radius: 8px; overflow: hidden;">
+                            <button onclick="changePlanBibleFontSize(-0.1)" style="background: transparent; border: none; color: #fff; width: 32px; height: 32px; font-weight: bold; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.background='transparent';">A-</button>
+                            <button onclick="changePlanBibleFontSize(0.1)" style="background: transparent; border: none; color: #fff; width: 32px; height: 32px; font-weight: bold; border-left: 1px solid rgba(237,232,223,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.background='transparent';">A+</button>
+                        </div>
+                        <!-- Theme selector -->
+                        <div style="display: flex; background: rgba(237,232,223,0.05); border: 1px solid rgba(237,232,223,0.1); border-radius: 8px; overflow: hidden; padding: 2px; gap: 2px;">
+                            <button onclick="setPlanBibleTheme('dark')" id="btn-theme-dark" style="background: #e8820c; border: none; color: #fff; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;" title="Mode Sombre">🌑</button>
+                            <button onclick="setPlanBibleTheme('sepia')" id="btn-theme-sepia" style="background: transparent; border: none; color: #fff; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;" title="Mode Sépia">📖</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="plan-bible-spinner" style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
                     <div class="spinner-border text-primary" role="status" style="border-color: #e8820c; border-right-color: transparent;">
                         <span class="sr-only">Chargement...</span>
                     </div>
                 </div>
-                <div id="plan-text-container" style="flex: 1; overflow-y: auto; padding-right: 0.5rem; display: none;">
-                    <div id="plan-bible-text" style="font-size: 1.1rem; line-height: 1.9; color: rgba(237,232,223,0.85); font-family: 'Georgia', serif;">
+                <div id="plan-text-container" class="premium-scrollbar" style="flex: 1; overflow-y: auto; padding-right: 0.5rem; display: none;">
+                    <div id="plan-bible-text" style="font-size: 1.15rem; line-height: 1.95; color: rgba(237,232,223,0.9); font-family: 'Georgia', serif;">
                         <!-- Bible text populated dynamically -->
                     </div>
                 </div>
@@ -3274,6 +3289,55 @@
             }
         ];
 
+        let planBibleFontSize = 1.15;
+        let planBibleTheme = 'dark';
+
+        window.changePlanBibleFontSize = function(diff) {
+            planBibleFontSize = Math.min(1.6, Math.max(0.9, planBibleFontSize + diff));
+            const textEl = document.getElementById('plan-bible-text');
+            if (textEl) {
+                textEl.style.fontSize = `${planBibleFontSize}rem`;
+            }
+        };
+
+        window.setPlanBibleTheme = function(theme) {
+            planBibleTheme = theme;
+            const contentEl = document.getElementById('plan-bible-modal-content');
+            const textEl = document.getElementById('plan-bible-text');
+            const btnDark = document.getElementById('btn-theme-dark');
+            const btnSepia = document.getElementById('btn-theme-sepia');
+            
+            if (!contentEl || !textEl) return;
+            
+            if (theme === 'sepia') {
+                contentEl.style.background = 'linear-gradient(145deg, #1f1a13, #15110c)';
+                contentEl.style.borderColor = 'rgba(232, 130, 12, 0.4)';
+                textEl.style.color = '#ede3d5';
+                
+                if (btnSepia) {
+                    btnSepia.style.background = '#e8820c';
+                    btnSepia.style.color = '#fff';
+                }
+                if (btnDark) {
+                    btnDark.style.background = 'transparent';
+                    btnDark.style.color = 'rgba(237,232,223,0.5)';
+                }
+            } else {
+                contentEl.style.background = 'linear-gradient(145deg, #12120e, #090907)';
+                contentEl.style.borderColor = 'rgba(232, 130, 12, 0.25)';
+                textEl.style.color = 'rgba(237, 232, 223, 0.9)';
+                
+                if (btnDark) {
+                    btnDark.style.background = '#e8820c';
+                    btnDark.style.color = '#fff';
+                }
+                if (btnSepia) {
+                    btnSepia.style.background = 'transparent';
+                    btnSepia.style.color = 'rgba(237,232,223,0.5)';
+                }
+            }
+        };
+
         function loadUserPlanState() {
             const defaultState = {
                 activePlanId: null,
@@ -3577,14 +3641,90 @@
                         50% { transform: scale(1.08); filter: drop-shadow(0 0 15px rgba(232, 130, 12, 0.65)); }
                         100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(232, 130, 12, 0.3)); }
                     }
+                    @keyframes floatBadge {
+                        0% { transform: translateY(0px); }
+                        50% { transform: translateY(-5px); }
+                        100% { transform: translateY(0px); }
+                    }
+                    @keyframes fireGlow {
+                        0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(232,130,12,0.4)); }
+                        50% { transform: scale(1.1); filter: drop-shadow(0 0 15px rgba(232,130,12,0.8)); }
+                        100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(232,130,12,0.4)); }
+                    }
+                    .plan-select-card {
+                        position: relative;
+                        background: linear-gradient(135deg, rgba(27,26,20,0.5) 0%, rgba(14,14,10,0.85) 100%) !important;
+                        border: 1px solid rgba(232, 130, 12, 0.15) !important;
+                        border-radius: 24px !important;
+                        overflow: hidden;
+                        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+                    }
+                    .plan-select-card::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 4px;
+                        background: linear-gradient(90deg, #e8820c, #4caf50);
+                        opacity: 0;
+                        transition: opacity 0.4s ease;
+                    }
+                    .plan-select-card:hover::before {
+                        opacity: 1;
+                    }
                     .plan-select-card:hover {
-                        border-color: rgba(232, 130, 12, 0.5) !important;
-                        box-shadow: 0 15px 40px rgba(232, 130, 12, 0.12) !important;
+                        transform: translateY(-5px) !important;
+                        border-color: rgba(232, 130, 12, 0.45) !important;
+                        box-shadow: 0 20px 40px rgba(232, 130, 12, 0.15) !important;
+                    }
+                    .todo-item-card {
+                        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+                        background: rgba(0,0,0,0.2) !important;
+                        border: 1px solid rgba(237,232,223,0.06) !important;
                     }
                     .todo-item-card:hover {
-                        border-color: rgba(232, 130, 12, 0.3) !important;
+                        border-color: rgba(232, 130, 12, 0.35) !important;
                         transform: translateY(-2px);
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+                    }
+                    .todo-item-card.completed {
+                        background: linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(14, 14, 10, 0.6) 100%) !important;
+                        border-color: rgba(76, 175, 80, 0.3) !important;
+                        box-shadow: inset 0 0 12px rgba(76, 175, 80, 0.03) !important;
+                    }
+                    .premium-scrollbar::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    .premium-scrollbar::-webkit-scrollbar-track {
+                        background: rgba(237, 232, 223, 0.01);
+                        border-radius: 10px;
+                    }
+                    .premium-scrollbar::-webkit-scrollbar-thumb {
+                        background: rgba(232, 130, 12, 0.25);
+                        border-radius: 10px;
+                        transition: background 0.3s;
+                    }
+                    .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background: rgba(232, 130, 12, 0.55);
+                    }
+                    .premium-select {
+                        appearance: none;
+                        -webkit-appearance: none;
+                        background: rgba(232, 130, 12, 0.06);
+                        border: 1.5px solid rgba(232, 130, 12, 0.25);
+                        border-radius: 10px;
+                        color: #fff;
+                        padding: 0.5rem 2.2rem 0.5rem 0.8rem;
+                        font-size: 0.85rem;
+                        font-weight: 700;
+                        outline: none;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    }
+                    .premium-select:hover {
+                        border-color: rgba(232, 130, 12, 0.6);
+                        box-shadow: 0 0 10px rgba(232, 130, 12, 0.15);
                     }
                     @media (max-width: 768px) {
                         .grid-col-1-mobile {
@@ -3657,10 +3797,7 @@
                             ${filtered.map(p => {
                                 return `
                                     <div class="plan-select-card" 
-                                         style="background: linear-gradient(135deg, rgba(27,26,20,0.6) 0%, rgba(14,14,10,0.85) 100%); 
-                                                border: 1px solid rgba(232, 130, 12, 0.15); border-radius: 24px; padding: 2rem; 
-                                                display: flex; flex-direction: column; gap: 1.25rem; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-                                                box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative;">
+                                         style="box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 1.25rem; position: relative;">
                                         
                                         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem;">
                                             <div>
@@ -3829,7 +3966,7 @@
                             
                             <!-- Streak Counter Card -->
                             <div style="background: linear-gradient(135deg, rgba(27,26,20,0.6) 0%, rgba(14,14,10,0.85) 100%); border: 1px solid rgba(232, 130, 12, 0.15); border-radius: 20px; padding: 1.5rem; display: flex; align-items: center; gap: 1.25rem; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-                                <div style="font-size: 2.8rem; filter: drop-shadow(0 0 5px rgba(232, 130, 12, 0.3)); display: flex; align-items: center; justify-content: center; animation: pulse 2s infinite;">🔥</div>
+                                <div style="font-size: 2.8rem; display: flex; align-items: center; justify-content: center; animation: fireGlow 2.5s infinite;">🔥</div>
                                 <div style="text-align: left;">
                                     <div style="font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1.1; font-family: 'Outfit', sans-serif;">${streak}</div>
                                     <div style="font-size: 0.78rem; font-weight: 700; color: rgba(237,232,223,0.4); text-transform: uppercase; letter-spacing: 0.05em;">Jours de Série</div>
@@ -3848,13 +3985,16 @@
                                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
                                         <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0; font-family: 'Outfit', sans-serif;">Lectures de la Journée</h3>
                                         
-                                        <!-- Selector Dropdown -->
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <!-- Selector Wrapper -->
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; position: relative;">
                                             <label style="font-size: 0.75rem; color: rgba(237,232,223,0.4); font-weight: 700; text-transform: uppercase;">Jour :</label>
-                                            <select id="select-dashboard-day" onchange="setDashboardSelectedDay(this.value)" 
-                                                    style="background: #090907; border: 1px solid rgba(232, 130, 12, 0.25); border-radius: 8px; color: #fff; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 700; outline: none; cursor: pointer;">
-                                                ${planReadings.map(d => `<option value="${d.day}" ${d.day === selectedDay ? 'selected' : ''}>${d.label}</option>`).join('')}
-                                            </select>
+                                            <div style="position: relative; display: inline-block;">
+                                                <select id="select-dashboard-day" onchange="setDashboardSelectedDay(this.value)" class="premium-select" style="padding-right: 2.2rem;">
+                                                    ${planReadings.map(d => `<option value="${d.day}" ${d.day === selectedDay ? 'selected' : ''} style="background: #12120e; color: #fff;">${d.label}</option>`).join('')}
+                                                </select>
+                                                <!-- Custom dropdown arrow -->
+                                                <span style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: rgba(232, 130, 12, 0.75); pointer-events: none; font-size: 0.75rem;">▼</span>
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -3872,22 +4012,20 @@
                                             const key = `${r.bookNr}_${r.chapter}`;
                                             const isChapterDone = state.completedChapters.includes(key);
                                             return `
-                                                <div style="background: ${isChapterDone ? 'rgba(76, 175, 80, 0.04)' : 'rgba(0,0,0,0.15)'}; 
-                                                            border: 1px solid ${isChapterDone ? 'rgba(76,175,80,0.25)' : 'rgba(237,232,223,0.05)'}; 
-                                                            border-radius: 16px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between;
-                                                            transition: all 0.3s ease; position: relative;"
-                                                     class="todo-item-card">
+                                                <div style="padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; position: relative;"
+                                                     class="todo-item-card ${isChapterDone ? 'completed' : ''}">
                                                      
                                                     <div style="display: flex; align-items: center; gap: 1rem;">
                                                         <!-- Custom Interactive Checkbox -->
                                                         <button onclick="togglePlanChapterRead(${planId}, ${r.bookNr}, ${r.chapter}, this)" 
-                                                                style="background: ${isChapterDone ? '#4caf50' : 'rgba(237,232,223,0.05)'}; 
-                                                                       border: 1.5px solid ${isChapterDone ? '#4caf50' : 'rgba(237,232,223,0.2)'}; 
-                                                                       width: 24px; height: 24px; border-radius: 6px; cursor: pointer; 
+                                                                style="background: ${isChapterDone ? '#4caf50' : 'rgba(237,232,223,0.03)'}; 
+                                                                       border: 1.5px solid ${isChapterDone ? '#4caf50' : 'rgba(232, 130, 12, 0.25)'}; 
+                                                                       width: 24px; height: 24px; border-radius: 8px; cursor: pointer; 
                                                                        display: flex; align-items: center; justify-content: center; color: #fff; 
-                                                                       transition: all 0.2s;"
-                                                                onmouseover="this.style.borderColor='#4caf50'; this.style.background='${isChapterDone ? '#4caf50' : 'rgba(76,175,80,0.1)'}';"
-                                                                onmouseout="if(!${isChapterDone}) { this.style.borderColor='rgba(237,232,223,0.2)'; this.style.background='rgba(237,232,223,0.05)'; }">
+                                                                       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                                                                       box-shadow: ${isChapterDone ? '0 0 10px rgba(76, 175, 80, 0.4)' : 'none'};"
+                                                                onmouseover="this.style.borderColor='rgba(232, 130, 12, 0.7)'; this.style.transform='scale(1.08)';"
+                                                                onmouseout="this.style.borderColor='${isChapterDone ? '#4caf50' : 'rgba(232, 130, 12, 0.25)'}'; this.style.transform='none';">
                                                             ${isChapterDone ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                                                         </button>
                                                         
@@ -3921,17 +4059,38 @@
                                     <div style="display: flex; flex-direction: column; gap: 1rem;">
                                         ${BIBLE_PLAN_BADGES.map(b => {
                                             const isUnlocked = state.unlockedBadges.includes(b.id);
+                                            let badgeStyle = '';
+                                            let glowColor = '';
+                                            if (isUnlocked) {
+                                                if (b.id === 'premier_pas') {
+                                                    glowColor = 'rgba(76, 175, 80, 0.2)';
+                                                } else if (b.id === 'fidelite_7') {
+                                                    glowColor = 'rgba(232, 130, 12, 0.25)';
+                                                } else if (b.id === 'discipulat_30') {
+                                                    glowColor = 'rgba(33, 150, 243, 0.2)';
+                                                } else { // moisseur
+                                                    glowColor = 'rgba(255, 215, 0, 0.3)';
+                                                }
+                                                badgeStyle = `background: linear-gradient(135deg, rgba(232,130,12,0.08) 0%, rgba(27,26,20,0.4) 100%);
+                                                              border: 1px solid rgba(232, 130, 12, 0.35);
+                                                              box-shadow: 0 10px 20px ${glowColor};
+                                                              animation: floatBadge 3.5s ease-in-out infinite;`;
+                                            } else {
+                                                badgeStyle = `background: rgba(255,255,255,0.01);
+                                                              border: 1px dashed rgba(255,255,255,0.06);
+                                                              opacity: 0.45;`;
+                                            }
                                             return `
-                                                <div style="background: ${isUnlocked ? 'linear-gradient(135deg, rgba(232,130,12,0.08) 0%, rgba(27,26,20,0.4) 100%)' : 'rgba(0,0,0,0.1)'};
-                                                            border: 1px solid ${isUnlocked ? 'rgba(232, 130, 12, 0.3)' : 'rgba(237,232,223,0.03)'};
-                                                            border-radius: 16px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 1rem; transition: all 0.3s;">
+                                                <div style="border-radius: 18px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1.1rem; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); ${badgeStyle}"
+                                                     class="${isUnlocked ? 'badge-card-unlocked' : ''}">
                                                      
-                                                    <div style="font-size: 2.2rem; filter: grayscale(${isUnlocked ? '0' : '100%'}) opacity(${isUnlocked ? '1' : '0.25'}); transition: all 0.3s;">
+                                                    <div style="font-size: 2.2rem; filter: grayscale(${isUnlocked ? '0' : '100%'}); display: flex; align-items: center; justify-content: center; position: relative;">
                                                         ${b.icon}
+                                                        ${!isUnlocked ? `<span style="position: absolute; font-size: 0.75rem; bottom: -2px; right: -2px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5);">🔒</span>` : ''}
                                                     </div>
                                                     <div>
-                                                        <div style="font-size: 0.95rem; font-weight: 800; color: ${isUnlocked ? '#fff' : 'rgba(237,232,223,0.35)'};">${b.title}</div>
-                                                        <div style="font-size: 0.72rem; color: ${isUnlocked ? 'rgba(237,232,223,0.6)' : 'rgba(237,232,223,0.25)'};">${b.desc}</div>
+                                                        <div style="font-size: 0.95rem; font-weight: 800; color: ${isUnlocked ? '#fff' : 'rgba(237,232,223,0.35)'}; font-family: 'Outfit', sans-serif;">${b.title}</div>
+                                                        <div style="font-size: 0.72rem; color: ${isUnlocked ? 'rgba(237,232,223,0.6)' : 'rgba(237,232,223,0.25)'}; margin-top: 0.15rem;">${b.desc}</div>
                                                     </div>
                                                 </div>
                                             `;
@@ -4010,6 +4169,10 @@
             
             document.body.style.overflow = 'hidden';
             setTimeout(() => modal.classList.add('active'), 50);
+            
+            // Apply current reader settings
+            textContent.style.fontSize = `${planBibleFontSize}rem`;
+            setPlanBibleTheme(planBibleTheme);
             
             const translation = 'ls1910';
             const url = `https://api.getbible.net/v2/${translation}/${bookNr}/${chapterNum}.json`;
