@@ -7798,19 +7798,51 @@
         }
 
         async function toggleWebinaireSpeechRequest(liveId) {
+            const btn = document.getElementById('webinaire-btn-raise-hand');
             const currentStatus = window.webinaireLastStatus || 'spectator';
+
+            // Visual feedback immediately
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+                btn.innerHTML = `<span>Traitement en cours...</span> ⏳`;
+            }
+
             const endpoint = (currentStatus === 'spectator') ? '/api/webinaire/request-speech' : '/api/webinaire/cancel-speech';
-            
+
             try {
                 const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ live_id: liveId })
                 });
+
+                if (res.status === 401) {
+                    // Session expirée
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.innerHTML = `<span>⚠️ Session expirée — veuillez vous reconnecter</span>`;
+                    }
+                    return;
+                }
+
                 const data = await res.json();
-                updateWebinaireUI(data.status);
+                if (data && data.status) {
+                    updateWebinaireUI(data.status);
+                } else {
+                    throw new Error('Réponse invalide du serveur');
+                }
             } catch (err) {
-                console.error("Error toggling webinaire speech request:", err);
+                console.error("Erreur levée de main:", err);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.background = 'linear-gradient(135deg, #e8820c, #f5a623)';
+                    btn.innerHTML = `<span>Demander la parole (Lever la main)</span> ✋`;
+                }
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 

@@ -2306,9 +2306,8 @@ def api_webinaire_request_speech():
         return jsonify({'error': 'live_id manquant'}), 400
         
     conn = get_db()
-    # Récupérer le nom de l'utilisateur
-    user = conn.execute("SELECT name FROM users WHERE email = ?", (user_email,)).fetchone()
-    display_name = user['name'] if user and user['name'] else user_email.split('@')[0]
+    # La table users n'a pas de colonne name, on utilise l'email comme display_name
+    display_name = user_email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
     
     try:
         conn.execute(
