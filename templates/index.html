@@ -1149,7 +1149,6 @@
                 padding-top: 100px !important;
                 min-height: auto !important;
                 align-items: center !important;
-                display: flex !important;
             }
             .hero-content {
                 padding: 1.5rem !important;
@@ -3799,6 +3798,32 @@
                 state.reminderMinute = parseInt(val);
             }
             saveUserPlanState(state);
+            // Clear last notify date to allow testing/triggering at the new configured time today
+            localStorage.removeItem(`bible_plan_last_notify_date_${currentUserEmail}`);
+        };
+
+        window.testPlanNotification = function() {
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    new Notification("⚠️ Test d'Alerte de voyage !", {
+                        body: "Hey, ne sois pas celui qui a ralenti le voyage du M.A.I. Prends courage et remplis ton engagement ! 📖",
+                        icon: "/static/images/logo.png"
+                    });
+                } else {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            new Notification("⚠️ Test d'Alerte de voyage !", {
+                                body: "Hey, ne sois pas celui qui a ralenti le voyage du M.A.I. Prends courage et remplis ton engagement ! 📖",
+                                icon: "/static/images/logo.png"
+                            });
+                        } else {
+                            alert("Les notifications ne sont pas autorisées. Veuillez les activer dans les paramètres de votre navigateur.");
+                        }
+                    });
+                }
+            } else {
+                alert("Votre navigateur ne prend pas en charge les notifications.");
+            }
         };
 
         window.checkPlanNotification = function() {
@@ -4137,6 +4162,7 @@
                                         </select>
                                         <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
                                     </div>
+                                    <button onclick="window.testPlanNotification()" style="background:none; border:none; color:rgba(237,232,223,0.35); font-size:0.68rem; text-decoration:underline; font-weight:700; cursor:pointer; padding:0; margin-left:0.5rem; transition:color 0.2s;" onmouseover="this.style.color='#e8820c'" onmouseout="this.style.color='rgba(237,232,223,0.35)'">🧪 Tester</button>
                                 </div>
                             </div>
                         `;
