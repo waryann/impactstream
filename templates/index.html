@@ -4486,46 +4486,77 @@
                 const isDayCompleted = dayData.readings.every(r => state.completedChapters.includes(`${r.bookNr}_${r.chapter}`));
                 
                 let notifyBtnHtml = '';
-                if ('Notification' in window) {
-                    const perm = Notification.permission;
-                    if (perm === 'default') {
-                        notifyBtnHtml = `<button id="btn-enable-notify" onclick="requestPlanNotificationPermission(${planId})" style="background: rgba(232, 130, 12, 0.08); border: 1.5px solid rgba(232, 130, 12, 0.35); border-radius: 10px; color: #e8820c; font-size: 0.75rem; font-weight: 700; padding: 0.5rem 0.9rem; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem; height: fit-content;" onmouseover="this.style.background='rgba(232,130,12,0.15)';" onmouseout="this.style.background='rgba(232,130,12,0.08)';">🔔 Activer les rappels</button>`;
-                    } else if (perm === 'granted') {
-                        notifyBtnHtml = `
-                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(76, 175, 80, 0.05); border: 1.5px solid rgba(76, 175, 80, 0.2); padding: 0.4rem 0.85rem; border-radius: 12px; height: fit-content;">
-                                <span style="font-size: 0.75rem; color: #4caf50; font-weight: 800; display: inline-flex; align-items: center; gap: 0.3rem; text-transform: uppercase;">
-                                    🔔 Rappels actifs
-                                </span>
-                                <div style="display: inline-flex; align-items: center; gap: 0.35rem;">
-                                    <span style="font-size: 0.72rem; color: rgba(237,232,223,0.4); font-weight: 700; text-transform: uppercase; margin-left: 0.25rem;">À :</span>
-                                    
-                                    <!-- Hour Select wrapper -->
-                                    <div style="position: relative; display: inline-block;">
-                                        <select id="plan-reminder-hour" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
-                                            ${Array.from({length: 24}, (_, i) => `<option value="${i}" ${i === (state.reminderHour !== undefined ? state.reminderHour : 14) ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(i).padStart(2, '0')}</option>`).join('')}
-                                        </select>
-                                        <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
-                                    </div>
-                                    
-                                    <span style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: bold;">h</span>
-                                    
-                                    <!-- Minute Select wrapper -->
-                                    <div style="position: relative; display: inline-block;">
-                                        <select id="plan-reminder-minute" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
-                                            ${Array.from({length: 12}, (_, i) => {
-                                                const m = i * 5;
-                                                return `<option value="${m}" ${m === (state.reminderMinute !== undefined ? state.reminderMinute : 0) ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(m).padStart(2, '0')}</option>`;
-                                            }).join('')}
-                                        </select>
-                                        <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
-                                    </div>
-                                    <button onclick="window.savePlanReminderTime(${planId})" style="background: #e8820c; border: none; border-radius: 6px; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.65rem; cursor: pointer; margin-left: 0.5rem; transition: background 0.2s;" onmouseover="this.style.background='#d4770a'" onmouseout="this.style.background='#e8820c'">OK</button>
+                const hasNotificationAPI = ('Notification' in window);
+                const isPermissionGranted = (hasNotificationAPI && Notification.permission === 'granted');
+                const isPermissionDenied = (hasNotificationAPI && Notification.permission === 'denied');
+                
+                if (isPermissionGranted) {
+                    notifyBtnHtml = `
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(76, 175, 80, 0.05); border: 1.5px solid rgba(76, 175, 80, 0.2); padding: 0.4rem 0.85rem; border-radius: 12px; height: fit-content;">
+                            <span style="font-size: 0.75rem; color: #4caf50; font-weight: 800; display: inline-flex; align-items: center; gap: 0.3rem; text-transform: uppercase;">
+                                🔔 Rappels actifs
+                            </span>
+                            <div style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <span style="font-size: 0.72rem; color: rgba(237,232,223,0.4); font-weight: 700; text-transform: uppercase; margin-left: 0.25rem;">À :</span>
+                                
+                                <!-- Hour Select wrapper -->
+                                <div style="position: relative; display: inline-block;">
+                                    <select id="plan-reminder-hour" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
+                                        ${Array.from({length: 24}, (_, i) => `<option value="${i}" ${i === (state.reminderHour !== undefined ? state.reminderHour : 14) ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(i).padStart(2, '0')}</option>`).join('')}
+                                    </select>
+                                    <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
                                 </div>
+                                
+                                <span style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: bold;">h</span>
+                                
+                                <!-- Minute Select wrapper -->
+                                <div style="position: relative; display: inline-block;">
+                                    <select id="plan-reminder-minute" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
+                                        ${Array.from({length: 12}, (_, i) => {
+                                            const m = i * 5;
+                                            return `<option value="${m}" ${m === (state.reminderMinute !== undefined ? state.reminderMinute : 0) ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(m).padStart(2, '0')}</option>`;
+                                        }).join('')}
+                                    </select>
+                                    <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
+                                </div>
+                                <button onclick="window.savePlanReminderTime(${planId})" style="background: #e8820c; border: none; border-radius: 6px; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.65rem; cursor: pointer; margin-left: 0.5rem; transition: background 0.2s;" onmouseover="this.style.background='#d4770a'" onmouseout="this.style.background='#e8820c'">OK</button>
                             </div>
-                        `;
-                    } else {
-                        notifyBtnHtml = `<button id="btn-enable-notify" disabled style="background: rgba(237,232,223,0.03); border: 1.5px solid rgba(237,232,223,0.1); border-radius: 10px; color: rgba(237,232,223,0.4); font-size: 0.75rem; font-weight: 700; padding: 0.5rem 0.9rem; display: inline-flex; align-items: center; gap: 0.4rem; height: fit-content;">🔕 Rappels bloqués</button>`;
-                    }
+                        </div>
+                    `;
+                } else if (hasNotificationAPI && !isPermissionDenied) {
+                    notifyBtnHtml = `<button id="btn-enable-notify" onclick="requestPlanNotificationPermission(${planId})" style="background: rgba(232, 130, 12, 0.08); border: 1.5px solid rgba(232, 130, 12, 0.35); border-radius: 10px; color: #e8820c; font-size: 0.75rem; font-weight: 700; padding: 0.5rem 0.9rem; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem; height: fit-content;" onmouseover="this.style.background='rgba(232,130,12,0.15)';" onmouseout="this.style.background='rgba(232,130,12,0.08)';">🔔 Activer les rappels</button>`;
+                } else {
+                    // Fallback pour iOS Safari normal ou en cas de rappels bloqués : Rappel Agenda (téléchargement ICS)
+                    notifyBtnHtml = `
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(232, 130, 12, 0.05); border: 1.5px solid rgba(232, 130, 12, 0.15); padding: 0.4rem 0.85rem; border-radius: 12px; height: fit-content;">
+                            <span style="font-size: 0.75rem; color: #e8820c; font-weight: 800; display: inline-flex; align-items: center; gap: 0.3rem; text-transform: uppercase;" title="Planifier des rappels sur le calendrier de votre téléphone">
+                                📅 Rappel Agenda
+                            </span>
+                            <div style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <span style="font-size: 0.72rem; color: rgba(237,232,223,0.4); font-weight: 700; text-transform: uppercase; margin-left: 0.25rem;">À :</span>
+                                
+                                <div style="position: relative; display: inline-block;">
+                                    <select id="plan-reminder-hour" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
+                                        ${Array.from({length: 24}, (_, i) => `<option value="${i}" ${i === (state.reminderHour !== undefined ? state.reminderHour : 14) ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(i).padStart(2, '0')}</option>`).join('')}
+                                    </select>
+                                    <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
+                                </div>
+                                
+                                <span style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: bold;">h</span>
+                                
+                                <div style="position: relative; display: inline-block;">
+                                    <select id="plan-reminder-minute" class="premium-select" style="padding: 0.2rem 1.7rem 0.2rem 0.5rem; font-size: 0.78rem; border-radius: 6px; background: rgba(232, 130, 12, 0.08); border-color: rgba(232, 130, 12, 0.25); height: 26px; font-weight: bold;">
+                                        ${Array.from({length: 12}, (_, i) => {
+                                            const m = i * 5;
+                                            return `<option value="${m}" ${m === (state.reminderMinute !== undefined ? state.reminderMinute : 0) ? 'selected' : ''} style="background:#12120e; color:#fff;">${String(m).padStart(2, '0')}</option>`;
+                                        }).join('')}
+                                    </select>
+                                    <span style="position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: rgba(232,130,12,0.7); pointer-events:none;">▼</span>
+                                </div>
+                                <button onclick="window.savePlanReminderTime(${planId})" style="background: #e8820c; border: none; border-radius: 6px; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.65rem; cursor: pointer; margin-left: 0.5rem; transition: background 0.2s;" onmouseover="this.style.background='#d4770a'" onmouseout="this.style.background='#e8820c'">OK</button>
+                            </div>
+                        </div>
+                    `;
                 }
                 
                 let html = `
