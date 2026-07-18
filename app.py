@@ -2254,7 +2254,8 @@ def admin_delete_live(live_id):
 @user_login_required
 def api_webinaire_join():
     """Initialiser ou récupérer le statut du fidèle dans le webinaire."""
-    live_id = request.json.get('live_id')
+    data = request.get_json(force=True, silent=True) or {}
+    live_id = data.get('live_id')
     user_email = session.get('user_email')
     
     if not live_id:
@@ -2299,26 +2300,35 @@ def api_webinaire_status():
 @user_login_required
 def api_webinaire_request_speech():
     """Fidèle qui lève la main pour demander la parole."""
-    live_id = request.json.get('live_id')
+    data = request.get_json(force=True, silent=True) or {}
+    live_id = data.get('live_id')
     user_email = session.get('user_email')
-    
+
     if not live_id:
         return jsonify({'error': 'live_id manquant'}), 400
-        
-    conn = get_db()
-    # La table users n'a pas de colonne name, on utilise l'email comme display_name
+
+    # Dériver un nom lisible depuis l'email
     display_name = user_email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
-    
+
+    conn = get_db()
     try:
+        # Supprimer l'entrée existante si elle existe, puis ré-insérer
+        # (compatible SQLite ET PostgreSQL, évite INSERT OR REPLACE)
         conn.execute(
-            "INSERT OR REPLACE INTO webinaire_queue (live_id, user_email, display_name, status) VALUES (?, ?, ?, 'pending')",
+            "DELETE FROM webinaire_queue WHERE live_id = ? AND user_email = ?",
+            (live_id, user_email)
+        )
+        conn.execute(
+            "INSERT INTO webinaire_queue (live_id, user_email, display_name, status) VALUES (?, ?, ?, 'pending')",
             (live_id, user_email, display_name)
         )
         conn.commit()
     except Exception as e:
-        print(f"Error requesting speech: {e}")
+        print(f"[Webinaire] Erreur request-speech: {e}")
+        conn.close()
+        return jsonify({'error': str(e)}), 500
     conn.close()
-    
+
     return jsonify({'success': True, 'status': 'pending'})
 
 
@@ -2326,7 +2336,8 @@ def api_webinaire_request_speech():
 @user_login_required
 def api_webinaire_cancel_speech():
     """Fidèle qui baisse la main ou rend la parole."""
-    live_id = request.json.get('live_id')
+    data = request.get_json(force=True, silent=True) or {}
+    live_id = data.get('live_id')
     user_email = session.get('user_email')
     
     if not live_id:
@@ -2359,8 +2370,9 @@ def api_webinaire_admin_queue():
 @login_required
 def api_webinaire_admin_allow():
     """Régie technique : Donner la parole (activer le micro) à un fidèle."""
-    live_id = request.json.get('live_id')
-    user_email = request.json.get('user_email')
+    data = request.get_json(force=True, silent=True) or {}
+    live_id = data.get('live_id')
+    user_email = data.get('user_email')
     
     if not live_id or not user_email:
         return jsonify({'error': 'Paramètres manquants'}), 400
@@ -2377,8 +2389,9 @@ def api_webinaire_admin_allow():
 @login_required
 def api_webinaire_admin_mute():
     """Régie technique : Couper le micro (remettre en spectateur) ou révoquer la parole."""
-    live_id = request.json.get('live_id')
-    user_email = request.json.get('user_email')
+    data = request.get_json(force=True, silent=True) or {}
+    live_id = data.get('live_id')
+    user_email = data.get('user_email')
     
     if not live_id or not user_email:
         return jsonify({'error': 'Paramètres manquants'}), 400
@@ -2395,7 +2408,8 @@ def api_webinaire_admin_mute():
 @login_required
 def api_webinaire_admin_clear():
     """Régie technique : Réinitialiser la file complète du webinaire."""
-    live_id = request.json.get('live_id')
+    data = request.get_json(force=True, silent=True) or {}
+    live_id = data.get('live_id')
     if not live_id:
         return jsonify({'error': 'live_id manquant'}), 400
         
