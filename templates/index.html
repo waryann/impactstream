@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://meet.jit.si/external_api.js"></script>
     <title>ImpactStream — Ministère Apostolique Impact</title>
     <meta name="description" content="Plateforme de streaming vidéo et audio du Ministère Apostolique Impact. Enseignements, musique, podcasts — tout en un seul endroit.">
     <link rel="icon" type="image/png" href="/static/images/logo.png">
@@ -8146,36 +8147,8 @@
                 // Draw Webinaire Screen UI
                 player.innerHTML = `
                     <div style="position: relative; width: 100%; height: 100%; background: #000; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
-                        <!-- Main video area (Pastor/Speaker) -->
-                        <div style="position: relative; flex: 1; background: radial-gradient(circle, #2b2a22 0%, #0d0d0a 100%); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                            <div style="text-align: center; color: rgba(255,255,255,0.7); z-index: 10;">
-                                <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(232, 130, 12, 0.15); border: 2px solid #e8820c; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 2.2rem; animation: pulse-orange 2.5s infinite;">
-                                    ⛪
-                                </div>
-                                <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.25rem;">Culte Interactif Mondial</h3>
-                                <p style="font-size: 0.8rem; color: rgba(237,232,223,0.45); margin: 0;">Diffusion RTC Ultra-Basse Latence connectée</p>
-                            </div>
-                            
-                            <!-- Glowing indicators and speaker banner -->
-                            <div style="position: absolute; top: 1rem; left: 1rem; background: rgba(232, 130, 12, 0.95); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.3rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 20;">
-                                <span class="pulsing-dot" style="width: 6px; height: 6px; background: #fff; border-radius: 50%; display: inline-block;"></span>
-                                <span>Flux Principal (Webinaire RTC)</span>
-                            </div>
-
-                            <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.78rem; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 0.4rem; z-index: 20;">
-                                <span style="color: #4caf50;">●</span> Orateur : Régie Centrale Impact
-                            </div>
-
-                            <!-- Local PIP User Thumbnail -->
-                            <div id="webinaire-pip-local" style="position: absolute; bottom: 1rem; right: 1rem; width: 110px; height: 145px; background: #1a1914; border: 2px solid rgba(255,255,255,0.15); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 30; transition: all 0.3s;">
-                                <div id="webinaire-pip-avatar" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: rgba(255,255,255,0.3); margin-bottom: 0.4rem; transition: all 0.3s;">
-                                    👤
-                                </div>
-                                <div style="font-size: 0.65rem; font-weight: bold; color: rgba(237,232,223,0.5); text-align: center; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Vous</div>
-                                <div id="webinaire-pip-status" style="position: absolute; bottom: 0.3rem; left: 0.3rem; background: rgba(0,0,0,0.5); padding: 0.1rem 0.3rem; border-radius: 4px; font-size: 0.55rem; color: #ef5350; font-weight: bold; display: flex; align-items: center; gap: 0.15rem;">
-                                    🔇 Muet
-                                </div>
-                            </div>
+                        <!-- Jitsi Meet iframe parent container -->
+                        <div id="webinaire-jitsi-container" style="flex: 1; background: #000; width: 100%; height: 100%;">
                         </div>
 
                         <!-- Webinaire local devices control bar -->
@@ -8223,6 +8196,70 @@
                         </div>
                     </div>
                 `;
+
+                // Instantiate Jitsi Meet Iframe
+                const domain = "meet.jit.si";
+                const userEmail = '{{ session.get("user_email") }}';
+                const displayName = userEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                
+                const options = {
+                    roomName: "ImpactStream_Webinaire_Room_" + liveId,
+                    width: "100%",
+                    height: "100%",
+                    parentNode: document.getElementById('webinaire-jitsi-container'),
+                    configOverwrite: {
+                        startWithAudioMuted: true,
+                        startWithVideoMuted: true,
+                        prejoinPageEnabled: false,
+                        disableThirdPartyRequests: true,
+                        enableWelcomePage: false,
+                        enableNoisyMicDetection: false,
+                        chromeExtensionBanner: null,
+                        toolbarButtons: [], // Hide Jitsi footer toolbar buttons
+                        settingsShareButton: false,
+                        disableRemoteMute: true,
+                        disableDeepLinking: true // Prevent mobile app redirect overlay
+                    },
+                    interfaceConfigOverwrite: {
+                        SHOW_JITSI_WATERMARK: false,
+                        SHOW_BRAND_WATERMARK: false,
+                        SHOW_WATERMARK_FOR_GUEST: false,
+                        SHOW_POWERED_BY: false,
+                        GENERATE_ROOMNAMES_ON_WELCOME_PAGE: false,
+                        MOBILE_APP_PROMO: false
+                    },
+                    userInfo: {
+                        email: userEmail,
+                        displayName: displayName
+                    }
+                };
+
+                window.webinaireJitsiAPI = new JitsiMeetExternalAPI(domain, options);
+
+                // Event Listeners for sync state
+                window.webinaireJitsiAPI.addEventListener('audioMuteStatusChanged', event => {
+                    window.webinaireLocalMicActive = !event.muted;
+                    const btn = document.getElementById('webinaire-btn-mic');
+                    if (btn) {
+                        btn.style.background = window.webinaireLocalMicActive ? '#4caf50' : 'rgba(255,255,255,0.08)';
+                    }
+                });
+
+                window.webinaireJitsiAPI.addEventListener('videoMuteStatusChanged', event => {
+                    window.webinaireLocalCamActive = !event.muted;
+                    const btn = document.getElementById('webinaire-btn-cam');
+                    if (btn) {
+                        btn.style.background = window.webinaireLocalCamActive ? '#4caf50' : 'rgba(255,255,255,0.08)';
+                    }
+                });
+
+                window.webinaireJitsiAPI.addEventListener('screenSharingStatusChanged', event => {
+                    window.webinaireLocalShareActive = event.on;
+                    const btn = document.getElementById('webinaire-btn-share');
+                    if (btn) {
+                        btn.style.background = window.webinaireLocalShareActive ? '#2196f3' : 'rgba(255,255,255,0.08)';
+                    }
+                });
 
                 // Join the webinaire API
                 fetch('/api/webinaire/join', {
