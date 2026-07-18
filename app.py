@@ -2313,13 +2313,13 @@ def api_webinaire_status():
     row = conn.execute("SELECT status FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email)).fetchone()
     
     # Récupérer également tous les orateurs autorisés actifs pour l'affichage de l'audience
-    speakers = conn.execute("SELECT display_name FROM webinaire_queue WHERE live_id = ? AND status = 'allowed'", (live_id,)).fetchall()
+    speakers = conn.execute("SELECT display_name, user_email FROM webinaire_queue WHERE live_id = ? AND status = 'allowed'", (live_id,)).fetchall()
     conn.close()
     
     status = row['status'] if row else 'spectator'
     return jsonify({
         'status': status,
-        'speakers': [s['display_name'] for s in speakers]
+        'speakers': [dict(s) for s in speakers]
     })
 
 
