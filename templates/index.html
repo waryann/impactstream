@@ -6850,6 +6850,7 @@
             if (playerContainer) { playerContainer.innerHTML = ''; }
 
             // Nettoyage Webinaire Interactif
+            window.webinaireStandardPlayerLoaded = false;
             if (window.webinaireJitsiAPI) {
                 try {
                     window.webinaireJitsiAPI.dispose();
@@ -7788,17 +7789,161 @@
             }
         }
 
+        function initWebinaireJitsi() {
+            if (window.webinaireJitsiAPI) return; // Déjà initialisé
+            
+            const mediaContainer = document.getElementById('webinaire-media-container');
+            if (!mediaContainer) return;
+            
+            mediaContainer.innerHTML = '';
+            window.webinaireStandardPlayerLoaded = false;
+            
+            const domain = "meet.opensuse.org";
+            const userEmail = '{{ session.get("user_email") }}';
+            const displayName = userEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            
+            const options = {
+                roomName: "ImpactStream_Webinaire_Room_" + window.activeWebinaireId,
+                width: "100%",
+                height: "100%",
+                parentNode: mediaContainer,
+                configOverwrite: {
+                    startWithAudioMuted: false, // Débuter avec micro actif
+                    startWithVideoMuted: false, // Débuter avec caméra active
+                    prejoinPageEnabled: false,
+                    disableThirdPartyRequests: true,
+                    enableWelcomePage: false,
+                    enableNoisyMicDetection: false,
+                    chromeExtensionBanner: null,
+                    toolbarButtons: [], // Masquer les boutons par défaut de Jitsi
+                    settingsShareButton: false,
+                    disableRemoteMute: true,
+                    disableDeepLinking: true, // Éviter la redirection mobile
+                    mobile: {
+                        preventAppLaunch: true,
+                        disablePremiumAppAdvertising: true
+                    },
+                    logoClickUrl: '',
+                    logoImageUrl: '',
+                    watermark: { disabled: true },
+                    showJitsiWatermark: false,
+                    dynamicBranding: { disabled: true },
+                    notifications: []
+                },
+                interfaceConfigOverwrite: {
+                    SHOW_JITSI_WATERMARK: false,
+                    SHOW_BRAND_WATERMARK: false,
+                    SHOW_WATERMARK_FOR_GUEST: false,
+                    SHOW_POWERED_BY: false,
+                    GENERATE_ROOMNAMES_ON_WELCOME_PAGE: false,
+                    MOBILE_APP_PROMO: false
+                },
+                userInfo: {
+                    email: userEmail,
+                    displayName: displayName
+                }
+            };
+
+            try {
+                window.webinaireJitsiAPI = new JitsiMeetExternalAPI(domain, options);
+
+                // Écouteurs pour mettre à jour la couleur des boutons
+                window.webinaireJitsiAPI.addEventListener('audioMuteStatusChanged', event => {
+                    window.webinaireLocalMicActive = !event.muted;
+                    const btn = document.getElementById('webinaire-btn-mic');
+                    if (btn) {
+                        btn.style.background = window.webinaireLocalMicActive ? '#4caf50' : 'rgba(255,255,255,0.08)';
+                    }
+                });
+
+                window.webinaireJitsiAPI.addEventListener('videoMuteStatusChanged', event => {
+                    window.webinaireLocalCamActive = !event.muted;
+                    const btn = document.getElementById('webinaire-btn-cam');
+                    if (btn) {
+                        btn.style.background = window.webinaireLocalCamActive ? '#4caf50' : 'rgba(255,255,255,0.08)';
+                    }
+                });
+
+                window.webinaireJitsiAPI.addEventListener('screenSharingStatusChanged', event => {
+                    window.webinaireLocalShareActive = event.on;
+                    const btn = document.getElementById('webinaire-btn-share');
+                    if (btn) {
+                        btn.style.background = window.webinaireLocalShareActive ? '#2196f3' : 'rgba(255,255,255,0.08)';
+                    }
+                });
+            } catch (err) {
+                console.error("Erreur de création de l'Iframe Jitsi:", err);
+            }
+        }
+
+        function initWebinaireStandardPlayer() {
+            if (window.webinaireStandardPlayerLoaded) return; // Déjà chargé
+            
+            const mediaContainer = document.getElementById('webinaire-media-container');
+            if (!mediaContainer) return;
+            
+            // Nettoyage de l'instance Jitsi si existante
+            if (window.webinaireJitsiAPI) {
+                try {
+                    window.webinaireJitsiAPI.dispose();
+                } catch (e) {
+                    console.error("Error disposing Jitsi API:", e);
+                }
+                window.webinaireJitsiAPI = null;
+            }
+            
+            const url = window.webinaireLiveUrl;
+            const ytUrl = window.webinaireLiveYtUrl;
+            const vimeoUrl = window.webinaireLiveVimeoUrl;
+            
+            if (ytUrl) {
+                mediaContainer.innerHTML = `
+                    <iframe src="${ytUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%;height:100%;"></iframe>
+                `;
+            } else if (vimeoUrl) {
+                mediaContainer.innerHTML = `
+                    <iframe src="${vimeoUrl}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="width:100%;height:100%;"></iframe>
+                `;
+            } else if (url) {
+                mediaContainer.innerHTML = `
+                    <video class="w-full h-full" controls autoplay style="width:100%;height:100%;background:#000;">
+                        <source src="${url}" type="application/x-mpegURL">
+                        <source src="${url}" type="video/mp4">
+                        Votre navigateur ne supporte pas la lecture de cette vidéo.
+                    </video>
+                `;
+            } else {
+                mediaContainer.innerHTML = `
+                    <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #2b2a22 0%, #0d0d0a 100%); color: rgba(255,255,255,0.7); text-align: center; padding: 2rem;">
+                        <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(232, 130, 12, 0.15); border: 2px solid #e8820c; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 2.2rem; animation: pulse-orange 2.5s infinite;">
+                            ⛪
+                        </div>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.25rem;">Culte en Direct</h3>
+                        <p style="font-size: 0.8rem; color: rgba(237,232,223,0.45); margin: 0;">En attente de la diffusion de la régie...</p>
+                    </div>
+                `;
+            }
+            
+            window.webinaireStandardPlayerLoaded = true;
+        }
+
         function updateWebinaireUI(status) {
             const btn = document.getElementById('webinaire-btn-raise-hand');
             if (!btn) return;
             
             // Check for status changes
             if (status === 'allowed' && window.webinaireLastStatus !== 'allowed') {
-                // Play notification sound / vibre
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                alert("🔴 Régie Webinaire : La parole vous a été accordée ! Votre microphone est maintenant activé.");
+                alert("🔴 Régie Webinaire : La parole vous a été accordée ! Vous pouvez maintenant activer votre micro/caméra.");
             } else if (status !== 'allowed' && window.webinaireLastStatus === 'allowed') {
                 alert("🔇 Régie Webinaire : Votre micro a été coupé par l'administrateur.");
+            }
+            
+            // Alternance dynamique entre la diffusion et Jitsi
+            if (status === 'allowed') {
+                initWebinaireJitsi();
+            } else {
+                initWebinaireStandardPlayer();
             }
             
             // Always enforce controls activation depending on status
@@ -8150,12 +8295,18 @@
                 window.webinaireLocalCamActive = false;
                 window.webinaireLocalShareActive = false;
                 window.webinaireLastStatus = 'spectator';
+                window.webinaireStandardPlayerLoaded = false;
                 
-                // Draw Webinaire Screen UI
+                // Store URLs globally so they are accessible inside updateWebinaireUI
+                window.webinaireLiveUrl = url;
+                window.webinaireLiveYtUrl = ytUrl;
+                window.webinaireLiveVimeoUrl = vimeoUrl;
+
+                // Draw Webinaire Screen UI with the webinaire-media-container
                 player.innerHTML = `
                     <div style="position: relative; width: 100%; height: 100%; background: #000; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
-                        <!-- Jitsi Meet iframe parent container -->
-                        <div id="webinaire-jitsi-container" style="flex: 1; background: #000; width: 100%; height: 100%;">
+                        <!-- Media container: displays YouTube/Vimeo stream OR Jitsi videoconference call -->
+                        <div id="webinaire-media-container" style="flex: 1; background: #000; width: 100%; height: 100%; border-radius: 12px 12px 0 0; overflow: hidden;">
                         </div>
 
                         <!-- Webinaire local devices control bar -->
@@ -8203,80 +8354,6 @@
                         </div>
                     </div>
                 `;
-
-                // Instantiate Jitsi Meet Iframe
-                const domain = "meet.opensuse.org";
-                const userEmail = '{{ session.get("user_email") }}';
-                const displayName = userEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                
-                const options = {
-                    roomName: "ImpactStream_Webinaire_Room_" + liveId,
-                    width: "100%",
-                    height: "100%",
-                    parentNode: document.getElementById('webinaire-jitsi-container'),
-                    configOverwrite: {
-                        startWithAudioMuted: true,
-                        startWithVideoMuted: true,
-                        prejoinPageEnabled: false,
-                        disableThirdPartyRequests: true,
-                        enableWelcomePage: false,
-                        enableNoisyMicDetection: false,
-                        chromeExtensionBanner: null,
-                        toolbarButtons: [], // Hide Jitsi footer toolbar buttons
-                        settingsShareButton: false,
-                        disableRemoteMute: true,
-                        disableDeepLinking: true, // Prevent mobile app redirect overlay
-                        mobile: {
-                            preventAppLaunch: true,
-                            disablePremiumAppAdvertising: true
-                        },
-                        logoClickUrl: '',
-                        logoImageUrl: '',
-                        watermark: { disabled: true },
-                        showJitsiWatermark: false,
-                        dynamicBranding: { disabled: true },
-                        notifications: []
-                    },
-                    interfaceConfigOverwrite: {
-                        SHOW_JITSI_WATERMARK: false,
-                        SHOW_BRAND_WATERMARK: false,
-                        SHOW_WATERMARK_FOR_GUEST: false,
-                        SHOW_POWERED_BY: false,
-                        GENERATE_ROOMNAMES_ON_WELCOME_PAGE: false,
-                        MOBILE_APP_PROMO: false
-                    },
-                    userInfo: {
-                        email: userEmail,
-                        displayName: displayName
-                    }
-                };
-
-                window.webinaireJitsiAPI = new JitsiMeetExternalAPI(domain, options);
-
-                // Event Listeners for sync state
-                window.webinaireJitsiAPI.addEventListener('audioMuteStatusChanged', event => {
-                    window.webinaireLocalMicActive = !event.muted;
-                    const btn = document.getElementById('webinaire-btn-mic');
-                    if (btn) {
-                        btn.style.background = window.webinaireLocalMicActive ? '#4caf50' : 'rgba(255,255,255,0.08)';
-                    }
-                });
-
-                window.webinaireJitsiAPI.addEventListener('videoMuteStatusChanged', event => {
-                    window.webinaireLocalCamActive = !event.muted;
-                    const btn = document.getElementById('webinaire-btn-cam');
-                    if (btn) {
-                        btn.style.background = window.webinaireLocalCamActive ? '#4caf50' : 'rgba(255,255,255,0.08)';
-                    }
-                });
-
-                window.webinaireJitsiAPI.addEventListener('screenSharingStatusChanged', event => {
-                    window.webinaireLocalShareActive = event.on;
-                    const btn = document.getElementById('webinaire-btn-share');
-                    if (btn) {
-                        btn.style.background = window.webinaireLocalShareActive ? '#2196f3' : 'rgba(255,255,255,0.08)';
-                    }
-                });
 
                 // Join the webinaire API
                 fetch('/api/webinaire/join', {
