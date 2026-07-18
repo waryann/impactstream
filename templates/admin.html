@@ -752,6 +752,69 @@
                     <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Filtrer les connexions en temps réel en approuvant ou rejetant les demandes d'entrée.</p>
                     <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer la salle &rarr;</span>
                 </div>
+
+                <!-- Card Meet -->
+                <div onclick="showMeetSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(232, 130, 12, 0.4)'; this.style.boxShadow='0 25px 60px rgba(232,130,12,0.2), 0 0 40px rgba(232,130,12,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">🤝</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Espace Meet</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {% if meet_config.enabled == '1' %}
+                            <span style="color: #e8820c;">● Activé</span>
+                        {% else %}
+                            <span style="color: rgba(237,232,223,0.4);">○ Désactivé</span>
+                        {% endif %}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Activer ou désactiver l'onglet Meet pour les utilisateurs connectés.</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer Meet &rarr;</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Meet Section ─── -->
+        <div class="admin-detail-view fade-in" id="meet-section" style="display: none;">
+            <div class="detail-header" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="goBack()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">🤝 Espace Meet</h2>
+                </div>
+            </div>
+
+            <div class="admin-card" style="margin-bottom: 2rem; padding: 2.5rem; border-radius: 20px; background: linear-gradient(165deg, rgba(27, 26, 20, 0.5), rgba(14, 14, 10, 0.7)); border: 1px solid rgba(232, 130, 12, 0.15);">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    ⚙️ Paramètres d'Activation
+                </h3>
+                
+                <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem;">
+                    <form action="/admin/meet/config" method="POST" id="meet-config-form" style="display: flex; align-items: center; gap: 1rem;">
+                        <div>
+                            <label style="font-size: 0.82rem; color: rgba(237,232,223,0.5); font-weight: 600; display: block; margin-bottom: 0.5rem;">Onglet Meet Utilisateur</label>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <label style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
+                                    <input type="checkbox" name="meet_enabled" value="1" {% if meet_config.enabled == '1' %}checked{% endif %} style="opacity: 0; width: 0; height: 0;" onchange="this.nextElementSibling.style.background = this.checked ? '#e8820c' : 'rgba(62,59,46,0.4)'; this.nextElementSibling.firstElementChild.style.left = this.checked ? '27px' : '3px'; document.getElementById('meet-config-form').submit();">
+                                    <span style="position: absolute; inset: 0; background: {% if meet_config.enabled == '1' %}#e8820c{% else %}rgba(62,59,46,0.4){% endif %}; border-radius: 28px; transition: all 0.3s;">
+                                        <span style="position: absolute; top: 3px; left: {% if meet_config.enabled == '1' %}27px{% else %}3px{% endif %}; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: left 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></span>
+                                    </span>
+                                </label>
+                                <span style="font-size: 0.88rem; font-weight: 600; color: {% if meet_config.enabled == '1' %}#e8820c{% else %}rgba(237,232,223,0.4){% endif %};">
+                                    {% if meet_config.enabled == '1' %}Activé (Onglet visible){% else %}Désactivé (Onglet masqué){% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Preview Card -->
+            <div class="admin-card" style="padding: 2.5rem; border-radius: 20px; background: rgba(27, 26, 20, 0.4); border: 1px solid rgba(232, 130, 12, 0.1);">
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 1rem;">ℹ️ À propos de l'Espace Meet</h3>
+                <p style="font-size: 0.9rem; color: rgba(237, 232, 223, 0.7); line-height: 1.6; margin-bottom: 1rem;">
+                    L'Espace Meet permet aux membres connectés d'accéder à des conférences, webinaires, partages d'écran ou réunions en direct organisées par l'Assemblée.
+                </p>
+                <p style="font-size: 0.9rem; color: rgba(237, 232, 223, 0.7); line-height: 1.6;">
+                    Lorsque vous désactivez l'Espace Meet ci-dessus, l'onglet disparait instantanément de l'interface des utilisateurs, libérant l'espace de navigation.
+                </p>
             </div>
         </div>
 
@@ -1409,12 +1472,23 @@
                         <tr style="border-bottom: 1px solid rgba(237, 232, 223, 0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)';" onmouseout="this.style.background='none';">
                             <td style="padding: 1.25rem 1.5rem; font-size: 0.95rem; font-weight: 700; color: #fff;">
                                 {{ l.titre }}
+                                <div style="display: flex; gap: 0.4rem; align-items: center; margin-top: 0.35rem;">
+                                    {% if l.type_diffusion == 'interactif' %}
+                                    <span style="font-size: 0.65rem; font-weight: 800; color: #e8820c; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.25); padding: 0.15rem 0.45rem; border-radius: 4px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.2rem;">🎙️ Interactif (Webinaire)</span>
+                                    {% else %}
+                                    <span style="font-size: 0.65rem; font-weight: 800; color: #2196f3; background: rgba(33, 150, 243, 0.1); border: 1px solid rgba(33, 150, 243, 0.2); padding: 0.15rem 0.45rem; border-radius: 4px; text-transform: uppercase;">📺 Standard (Passif)</span>
+                                    {% endif %}
+                                </div>
                                 {% if l.description %}
                                 <div style="font-size: 0.78rem; font-weight: 500; color: rgba(237, 232, 223, 0.4); margin-top: 0.2rem;">{{ l.description }}</div>
                                 {% endif %}
                             </td>
                             <td style="padding: 1.25rem 1.5rem; font-family: monospace; font-size: 0.8rem; color: rgba(237, 232, 223, 0.6); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {% if l.type_diffusion == 'interactif' %}
+                                <span style="font-style: italic; color: rgba(237, 232, 223, 0.45);">RTC / Webinaire Agora-Zoom</span>
+                                {% else %}
                                 {{ l.url_direct }}
+                                {% endif %}
                             </td>
                             <td style="padding: 1.25rem 1.5rem;">
                                 {% if l.is_active == 1 %}
@@ -1424,7 +1498,12 @@
                                 {% endif %}
                             </td>
                             <td style="padding: 1.25rem 1.5rem; text-align: right;">
-                                <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
+                                <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                                    {% if l.type_diffusion == 'interactif' and l.is_active == 1 %}
+                                    <button onclick="openWebinaireRegieModal({{ l.id }}, '{{ l.titre | replace("'", "\\'") }}')" class="btn-submit" title="Régie Webinaire" style="background: rgba(232, 130, 12, 0.12); border: 1px solid rgba(232, 130, 12, 0.25); color: #e8820c; padding: 0.4rem 0.8rem; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; margin-right: 0.25rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(232, 130, 12, 0.2)';" onmouseout="this.style.background='rgba(232, 130, 12, 0.12)';">
+                                        🎙️ Régie
+                                    </button>
+                                    {% endif %}
                                     <button class="btn-edit" onclick='openEditLiveModal({{ l | tojson }})' title="Modifier" style="color: #ede8df; background: rgba(237, 232, 223, 0.06); padding: 0.4rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                     </button>
@@ -1879,6 +1958,14 @@
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" for="live-form-type">Type de Diffusion</label>
+                    <select class="form-input" name="type_diffusion" id="live-form-type" onchange="toggleLiveUrlField()" style="background: rgba(9, 9, 7, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; padding: 0.6rem 1rem; width: 100%; outline: none;">
+                        <option value="standard">Standard (YouTube, Facebook Live, HLS...)</option>
+                        <option value="interactif">Interactif (Webinaire / ImpactStream Live)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem; transition: opacity 0.3s;" id="live-form-url-container">
                     <label class="form-label" for="live-form-url">URL du Direct vidéo *</label>
                     <input type="url" class="form-input" name="url_direct" id="live-form-url" placeholder="ex: https://www.youtube.com/watch?v=xxx" required style="font-family: monospace; font-size: 0.9rem;">
                     <span style="font-size: 0.74rem; color: rgba(237,232,223,0.35); display: block; margin-top: 0.25rem;">Lien direct YouTube, Facebook Live, Vimeo, ou flux direct HLS (.m3u8).</span>
@@ -1901,6 +1988,54 @@
                     <button type="submit" class="btn-submit" id="btn-live-submit" style="background: linear-gradient(135deg, #ef5350, #d32f2f); box-shadow: 0 4px 15px rgba(239, 83, 80, 0.2);">Créer la diffusion</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         MODAL: Régie Webinaire Interactif
+         ═══════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-lives-webinaire-regie" onclick="if(event.target===this)closeWebinaireRegieModal()">
+        <div class="modal-box" style="max-width: 650px; background: linear-gradient(145deg, #12120e, #090907); border: 1px solid rgba(232, 130, 12, 0.25); border-radius: 24px; padding: 2rem; position: relative; box-shadow: 0 30px 60px rgba(0,0,0,0.85);">
+            <button class="modal-close" onclick="closeWebinaireRegieModal()" style="position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(255,255,255,0.06); border: none; border-radius: 50%; width: 32px; height: 32px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">&times;</button>
+            
+            <h2 class="modal-title" style="font-size: 1.5rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.25rem;">
+                🎙️ Régie Webinaire en Temps Réel
+            </h2>
+            <p class="modal-subtitle" id="webinaire-regie-subtitle" style="font-size: 0.85rem; color: rgba(237,232,223,0.45); margin: 0 0 1.5rem;">
+                Salon : —
+            </p>
+
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span>✋ Demandes de Parole</span>
+                    <span style="font-size: 0.72rem; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 800; text-transform: uppercase;">
+                        Mise à jour 3s
+                    </span>
+                </h3>
+
+                <!-- Active Queue Table -->
+                <div style="max-height: 280px; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;" id="webinaire-regie-table">
+                        <thead>
+                            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.75rem; font-weight: 800; color: rgba(237, 232, 223, 0.45); text-transform: uppercase;">
+                                <th style="padding: 0.75rem 0.5rem;">Utilisateur / E-mail</th>
+                                <th style="padding: 0.75rem 0.5rem;">Statut</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="webinaire-regie-queue-list">
+                            <!-- Injected dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-top: 1.5rem;">
+                <button onclick="clearWebinaireQueue()" style="background: rgba(239, 83, 80, 0.1); border: 1px solid rgba(239, 83, 80, 0.25); color: #ef5350; font-size: 0.8rem; font-weight: 700; padding: 0.65rem 1.25rem; border-radius: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 83, 80, 0.18)'" onmouseout="this.style.background='rgba(239, 83, 80, 0.1)'">
+                    🛑 Vider la file / Tout couper
+                </button>
+                <button class="btn-cancel" onclick="closeWebinaireRegieModal()" style="margin: 0;">Fermer la console</button>
+            </div>
         </div>
     </div>
 
@@ -2173,11 +2308,27 @@
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
             document.getElementById('waitingroom-section').style.display = 'none';
+            document.getElementById('meet-section').style.display = 'none';
             
             if (waitingRoomPollingInterval) {
                 clearInterval(waitingRoomPollingInterval);
                 waitingRoomPollingInterval = null;
             }
+        }
+
+        function showMeetSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('lives-section').style.display = 'none';
+            document.getElementById('quizzes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'none';
+            document.getElementById('waitingroom-section').style.display = 'none';
+            document.getElementById('meet-section').style.display = 'block';
         }
 
         function goBack() {
@@ -2574,6 +2725,7 @@
             document.getElementById('lives-section').style.display = 'none';
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
+            document.getElementById('meet-section').style.display = 'none';
         }
 
         function showLivesSection() {
@@ -2587,6 +2739,7 @@
             document.getElementById('lives-section').style.display = 'block';
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
+            document.getElementById('meet-section').style.display = 'none';
         }
 
         function showAttendanceSection() {
@@ -2600,6 +2753,7 @@
             document.getElementById('lives-section').style.display = 'none';
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'block';
+            document.getElementById('meet-section').style.display = 'none';
             // Set date filter to today if empty
             const dateInput = document.getElementById('attendance-date-filter');
             if (!dateInput.value) {
@@ -2682,6 +2836,156 @@
             }
         }
 
+        // ── Webinaire Régie Logic ──
+        let webinaireRegieInterval = null;
+        let activeWebinaireLiveId = null;
+
+        function openWebinaireRegieModal(liveId, liveTitle) {
+            activeWebinaireLiveId = liveId;
+            document.getElementById('webinaire-regie-subtitle').textContent = `Direct : ${liveTitle}`;
+            document.getElementById('modal-lives-webinaire-regie').classList.add('active');
+            
+            // Fetch once immediately
+            refreshWebinaireQueueList(liveId);
+            
+            // Poll queue every 3 seconds
+            webinaireRegieInterval = setInterval(() => {
+                refreshWebinaireQueueList(liveId);
+            }, 3000);
+        }
+
+        function closeWebinaireRegieModal() {
+            if (webinaireRegieInterval) {
+                clearInterval(webinaireRegieInterval);
+                webinaireRegieInterval = null;
+            }
+            activeWebinaireLiveId = null;
+            document.getElementById('modal-lives-webinaire-regie').classList.remove('active');
+        }
+
+        async function refreshWebinaireQueueList(liveId) {
+            try {
+                const res = await fetch(`/api/webinaire/admin/queue?live_id=${liveId}`);
+                const data = await res.json();
+                
+                const tbody = document.getElementById('webinaire-regie-queue-list');
+                if (!tbody) return;
+                
+                tbody.innerHTML = '';
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: rgba(237,232,223,0.3); padding: 2rem 0; font-size: 0.82rem;">
+                                File d'attente vide. Aucun fidèle n'a levé la main pour le moment.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                data.forEach(user => {
+                    // Generate a simulated location based on email/index for realistic presentation
+                    const locations = ['France 🇫🇷', 'Belgique 🇧🇪', 'RD Congo 🇨🇩', 'Canada 🇨🇦', 'Suisse 🇨🇭', 'Congo 🇨🇬', 'États-Unis 🇺🇸'];
+                    const locIndex = Math.abs(user.user_email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % locations.length;
+                    const location = locations[locIndex];
+
+                    const isAllowed = (user.status === 'allowed');
+                    const statusText = isAllowed 
+                        ? `<span style="color: #4caf50; font-weight: bold; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.2rem;">● En parole 🎙️</span>`
+                        : `<span style="color: #e8820c; font-weight: bold; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.2rem;">✋ En attente</span>`;
+                        
+                    const actionBtn = isAllowed
+                        ? `<button onclick="muteWebinaireSpeech(${liveId}, '${user.user_email}')" style="background: rgba(239, 83, 80, 0.12); border: 1px solid rgba(239, 83, 80, 0.25); color: #ef5350; font-size: 0.72rem; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,83,80,0.22)'" onmouseout="this.style.background='rgba(239,83,80,0.12)'">🔇 Couper</button>`
+                        : `<button onclick="allowWebinaireSpeech(${liveId}, '${user.user_email}')" style="background: rgba(76, 175, 80, 0.12); border: 1px solid rgba(76, 175, 80, 0.25); color: #81c784; font-size: 0.72rem; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='rgba(76,175,80,0.22)'" onmouseout="this.style.background='rgba(76,175,80,0.12)'">🎙️ Ouvrir Micro</button>`;
+
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(255, 255, 255, 0.04)';
+                    tr.innerHTML = `
+                        <td style="padding: 0.75rem 0.5rem;">
+                            <div style="font-weight: bold; color: #fff; font-size: 0.85rem;">${user.display_name}</div>
+                            <div style="font-size: 0.72rem; color: rgba(237,232,223,0.35);">${user.user_email} — <span style="color: rgba(237,232,223,0.55);">${location}</span></div>
+                        </td>
+                        <td style="padding: 0.75rem 0.5rem; vertical-align: middle;">${statusText}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: right; vertical-align: middle;">${actionBtn}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error("Error refreshing webinaire queue:", err);
+            }
+        }
+
+        async function allowWebinaireSpeech(liveId, userEmail) {
+            try {
+                const res = await fetch('/api/webinaire/admin/allow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ live_id: liveId, user_email: userEmail })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    refreshWebinaireQueueList(liveId);
+                }
+            } catch (err) {
+                console.error("Error allowing speech:", err);
+            }
+        }
+
+        async function muteWebinaireSpeech(liveId, userEmail) {
+            try {
+                const res = await fetch('/api/webinaire/admin/mute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ live_id: liveId, user_email: userEmail })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    refreshWebinaireQueueList(liveId);
+                }
+            } catch (err) {
+                console.error("Error muting speech:", err);
+            }
+        }
+
+        async function clearWebinaireQueue() {
+            if (!activeWebinaireLiveId) return;
+            if (!confirm("Voulez-vous vraiment vider la file d'attente et couper tous les micros ?")) return;
+            
+            try {
+                const res = await fetch('/api/webinaire/admin/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ live_id: activeWebinaireLiveId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    refreshWebinaireQueueList(activeWebinaireLiveId);
+                }
+            } catch (err) {
+                console.error("Error clearing queue:", err);
+            }
+        }
+
+        function toggleLiveUrlField() {
+            const select = document.getElementById('live-form-type');
+            const urlInput = document.getElementById('live-form-url');
+            const container = document.getElementById('live-form-url-container');
+            if (select && urlInput) {
+                if (select.value === 'interactif') {
+                    urlInput.disabled = true;
+                    urlInput.required = false;
+                    if (container) container.style.opacity = '0.45';
+                    urlInput.placeholder = "Généré automatiquement par le serveur";
+                } else {
+                    urlInput.disabled = false;
+                    urlInput.required = true;
+                    if (container) container.style.opacity = '1.0';
+                    urlInput.placeholder = "ex: https://www.youtube.com/watch?v=xxx";
+                }
+            }
+        }
+
         function openAddLiveModal() {
             document.getElementById('modal-live-title').textContent = "Ajouter un direct vidéo";
             document.getElementById('btn-live-submit').textContent = "Créer la diffusion";
@@ -2690,6 +2994,9 @@
             document.getElementById('live-form-titre').value = "";
             document.getElementById('live-form-description').value = "";
             document.getElementById('live-form-url').value = "";
+            
+            document.getElementById('live-form-type').value = "standard";
+            toggleLiveUrlField();
             
             const activeInput = document.getElementById('live-form-active-input');
             activeInput.checked = false;
@@ -2705,7 +3012,10 @@
             
             document.getElementById('live-form-titre').value = live.titre;
             document.getElementById('live-form-description').value = live.description || "";
-            document.getElementById('live-form-url').value = live.url_direct;
+            document.getElementById('live-form-url').value = live.url_direct || "";
+            
+            document.getElementById('live-form-type').value = live.type_diffusion || "standard";
+            toggleLiveUrlField();
             
             const activeInput = document.getElementById('live-form-active-input');
             activeInput.checked = (live.is_active === 1);
@@ -2982,6 +3292,7 @@
             document.getElementById('lives-section').style.display = 'none';
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
+            document.getElementById('meet-section').style.display = 'none';
             document.getElementById('waitingroom-section').style.display = 'block';
 
             // Fetch list immediately

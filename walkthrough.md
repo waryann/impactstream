@@ -175,4 +175,76 @@ graph TD
 3. Sélectionnez une couleur pour surligner le paragraphe. L'état est stocké dans le stockage local et réactivé automatiquement.
 4. Cliquez de nouveau sur le paragraphe (ou utilisez la gomme ✕) pour effacer le surlignage.
 
+### 🤝 12. Espace Meet & Gestion Administrateur
+- **Côté Administrateur** :
+  - Un nouveau bouton et carte d'outil **"Espace Meet"** a été ajoutée à la grille principale de l'administration.
+  - En cliquant dessus, l'administrateur accède à une page dédiée (`#meet-section`) avec un Switch Toggle à glissière qui permet d'activer ou désactiver globalement l'Espace Meet.
+  - La modification est transmise instantanément au serveur via une requête POST sur `/admin/meet/config` et enregistrée de manière persistante en base de données SQLite/PostgreSQL (dans la table `settings` sous la clé `meet_enabled`).
+- **Côté Utilisateur** :
+  - Si l'administrateur active l'Espace Meet, un onglet **"Meet"** apparaît dynamiquement à côté de "Espaces" dans le menu de navigation principal sur ordinateur (Navbar) ainsi que dans le popover mobile "Plus".
+  - Si l'administrateur le désactive, l'onglet disparaît instantanément de l'interface des utilisateurs ("il n'y a juste rien").
+  - L'Espace Meet (`#meet-container`) présente une grille de salons de discussion avec des cartes aux effets de verre (glassmorphism) haut de gamme.
+  - En cliquant sur "Rejoindre la réunion" du Salon Principal, un modal de simulation de visioconférence (`modal-meet-room`) ultra-immersif s'ouvre, montrant :
+    - Un flux vidéo en direct simulé du pasteur Yann et un PIP (caméra locale) de l'utilisateur.
+    - Un panneau de contrôles fonctionnels permettant de simuler l'activation/désactivation du microphone (🎙️), de la caméra (📹) et du partage d'écran (🖥️).
+    - Un salon de clavardage (Chat en direct) interactif où les messages envoyés s'affichent instantanément et reçoivent une réponse automatique réaliste du modérateur Yann après 1,5 seconde.
 
+---
+
+## Comment tester en local
+
+### 1. Gestion des Médias
+1. Ouvrez l'administration : [http://127.0.0.1:5000/admin](http://127.0.0.1:5000/admin) (code `Bungudi128`).
+2. Vous arrivez sur les 4 grands blocs : *Enseignements*, *Musique*, *Podcasts*, *Communiqués*.
+3. Cliquez sur **Enseignements** ➔ Vous voyez la liste des commissions.
+4. Cliquez sur **Couples** ➔ Vous voyez la table contenant les enseignements de la commission *Couples*.
+5. Cliquez sur **"Ajouter dans Couples"** ➔ Remplissez les champs et ajoutez votre vidéo. Elle s'insère automatiquement dans la bonne section.
+
+### 2. Invitations & Inscriptions
+1. Allez dans l'administration ➔ Cliquez sur **Membres / Accès** 👥.
+2. Saisissez une adresse e-mail (ex: `saint.test@ministereimpact.org`) dans la section **Générer des Liens d'Inscription** et validez.
+3. Cliquez sur le bouton **Copier** à côté du lien généré dans la table des invitations.
+4. Ouvrez ce lien dans un onglet (ou déconnectez-vous pour le tester). L'onglet Inscription s'ouvre, l'e-mail est pré-rempli et verrouillée.
+5. Saisissez un mot de passe (ex: `password123`) et validez.
+6. Cliquez sur le lien d'activation simulé dans l'alerte de confirmation verte pour activer le compte.
+7. Connectez-vous avec `saint.test@ministereimpact.org` and `password123` ➔ Vous accédez à la plateforme !
+8. Allez dans l'administration ➔ Le compte apparaît maintenant sous le statut **Actif** et vous pouvez lui attribuer l'accès à *Nayoth* ou *Intercession*.
+
+### 3. Communiqués Dominicales
+1. Allez dans l'administration ➔ Cliquez sur **Communiqués** 📢.
+2. Cliquez sur **Créer un communiqué** ➔ Remplissez le titre et collez le contenu dans les onglets de langues (ex: Français, Lingala).
+3. Connectez-vous sur l'espace public ➔ Cliquez sur **Communiqués** dans la barre de navigation.
+4. Vous voyez la timeline des dimanches à gauche. Sélectionnez le dimanche pour charger l'annonce.
+5. Cliquez sur les pilules de langues sous le titre pour alterner de version, et cliquez sur **Lire en plein écran** pour l'ouvrir dans la liseuse immersive.
+
+### 4. Résolution du Gel des Confettis
+1. Lancez un jeu (ex: *Morpion (OXO)* ou *Jeu de Mémoire Biblique*).
+2. Complétez le jeu pour remporter la victoire.
+3. Les confettis tombent de manière fluide pendant 6 secondes.
+4. À la fin de l'animation (ou si vous relancez le jeu immédiatement via le bouton **Recommencer**), le canevas est vidé programmatiquement (`ctx.clearRect`).
+5. Les confettis disparaissent instantanément, libérant totalement l'écran sans nécessiter de recharger la page.
+
+### 5. Résolution du Chevauchement Séries/Espaces
+1. Naviguez sur l'onglet **Enseignements** ➔ Le carrousel de playlists (séries) s'affiche correctement en haut de l'écran.
+2. Cliquez sur l'onglet **Espaces** (ou d'autres rubriques comme *Communiqués*, *Bible*, *Radio*, *Directs*) ➔ Le carrousel des séries de l'onglet précédent est masqué instantanément.
+3. Seuls la grille des espaces ministériels ou les outils associés s'affichent à l'écran, supprimant tout chevauchement ou bruit visuel.
+
+### 6. Palette de Surlignage Multi-Couleurs de la Bible
+1. Naviguez sur l'onglet **Bible** ➔ Sélectionnez un livre et un chapitre.
+2. Cliquez sur un verset ➔ Une palette flottante avec 5 couleurs de surlignage (Orange, Jaune, Vert, Bleu, Rose) et une gomme s'affiche au-dessus du verset.
+3. Sélectionnez une couleur pour surligner instantanément le verset. La couleur choisie est enregistrée et conservée d'une session à l'autre.
+4. Cliquez de nouveau sur le verset (ou sélectionnez la gomme 🗑️) pour supprimer le surlignage.
+
+### 7. Surlignage Multi-Couleurs des Communiqués
+1. Naviguez sur l'onglet **Communiqués** ➔ Cliquez sur un communiqué pour l'ouvrir.
+2. Cliquez sur un paragraphe du communiqué ➔ Une palette flottante avec les 5 couleurs de surlignage et la gomme s'affiche au-dessus du paragraphe.
+3. Sélectionnez une couleur pour surligner le paragraphe. L'état est stocké dans le stockage local et réactivé automatiquement.
+4. Cliquez de nouveau sur le paragraphe (ou utilisez la gomme ✕) pour effacer le surlignage.
+
+### 8. Espace Meet & Toggles Admin
+1. Ouvrez l'administration et accédez à **Espace Meet** 🤝.
+2. Activez le commutateur "Onglet Meet Utilisateur".
+3. Allez sur la page d'accueil de l'espace utilisateur. Vous verrez l'onglet **Meet** dans le menu de navigation (près de Espaces).
+4. Cliquez sur **Meet**, puis cliquez sur **Rejoindre la réunion** sur la carte du Salon Principal.
+5. Essayez d'activer/désactiver la caméra et le micro, et envoyez un message dans le chat pour voir la réponse automatique du modérateur Yann.
+6. Retournez dans l'administration, désactivez le commutateur. L'onglet Meet a maintenant disparu de l'espace utilisateur.

@@ -1495,6 +1495,9 @@
                 <a href="#" class="nav-link" data-category="Communique" id="nav-communiques">Communiqués</a>
                 <a href="#" class="nav-link" data-category="Bible" id="nav-bible">Bible</a>
                 <a href="#" class="nav-link" data-category="Espaces" id="nav-espaces">Espaces</a>
+                {% if meet_enabled %}
+                <a href="#" class="nav-link" data-category="Meet" id="nav-meet">Meet</a>
+                {% endif %}
                 <a href="#" class="nav-link" data-category="Radio" id="nav-radio" style="display: none;">Radio Live</a>
                 <a href="#" class="nav-link" data-category="Lives" id="nav-lives" style="display: none; color: #ef5350; font-weight: 700;">● Directs Vidéo</a>
             </div>
@@ -1684,6 +1687,85 @@
         <!-- Espace Ministériels (Commissions) -->
         <div id="espaces-container" style="display: none; max-width: 900px; margin: 0 auto 5rem; padding: 0 1.5rem;">
             <!-- Rendered dynamically by JavaScript -->
+        </div>
+
+        <!-- Espace Meet -->
+        <div id="meet-container" style="display: none; max-width: 950px; margin: 0 auto 5rem; padding: 0 1.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">
+            <div style="text-align: center; margin-bottom: 2.5rem;">
+                <h2 style="font-size: clamp(1.6rem, 3.5vw, 2.2rem); font-weight: 800; color: #fff; background: linear-gradient(135deg, #fff 0%, #f5a623 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">🤝 Espace Réunions & Partages (Meet)</h2>
+                <p style="font-size: 0.95rem; color: rgba(237,232,223,0.55); max-width: 550px; margin: 0 auto;">Connectez-vous avec la communauté pour échanger en direct, assister aux webinaires et participer aux cellules d'étude.</p>
+            </div>
+
+            <!-- Meet Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                <!-- Main Room -->
+                <div style="background: linear-gradient(165deg, rgba(27, 26, 20, 0.75), rgba(14, 14, 10, 0.95)); border: 1px solid rgba(232, 130, 12, 0.25); border-radius: 24px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.55); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div style="position: absolute; top: 1.25rem; right: 1.25rem; display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(76, 175, 80, 0.15); border: 1px solid rgba(76, 175, 80, 0.3); color: #81c784; padding: 0.25rem 0.65rem; border-radius: 100px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">
+                        <span class="pulsing-dot" style="width: 6px; height: 6px; background: #4caf50; border-radius: 50%; display: inline-block;"></span>
+                        <span>En cours</span>
+                    </div>
+                    
+                    <div>
+                        <div style="font-size: 2.2rem; margin-bottom: 1.25rem;">🏠</div>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Salon Principal de l'Assemblée</h3>
+                        <p style="font-size: 0.85rem; color: rgba(237,232,223,0.5); line-height: 1.5; margin-bottom: 1.5rem;">Rejoignez la discussion communautaire et les temps de prière libres. Ouvert à tous les membres connectés.</p>
+                    </div>
+
+                    <div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem;">
+                            <span style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: 700;">MEMBRES EN LIGNE</span>
+                            <span style="font-size: 0.82rem; color: #4caf50; font-weight: 800; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                👥 18 actifs
+                            </span>
+                        </div>
+                        <button onclick="openMeetRoomModal('Salon Principal')" style="width: 100%; padding: 0.8rem; background: linear-gradient(135deg, #e8820c, #f5a623); border: none; border-radius: 14px; color: #fff; font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(232, 130, 12, 0.25);" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='none';">
+                            Rejoindre la réunion
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Study Room -->
+                <div style="background: linear-gradient(165deg, rgba(27, 26, 20, 0.75), rgba(14, 14, 10, 0.95)); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.45); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 2.2rem; margin-bottom: 1.25rem;">📖</div>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Partage & Étude Biblique</h3>
+                        <p style="font-size: 0.85rem; color: rgba(237,232,223,0.5); line-height: 1.5; margin-bottom: 1.5rem;">Session d'approfondissement de la Parole de Dieu et questions-réponses interactives suite au culte de dimanche.</p>
+                    </div>
+
+                    <div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem;">
+                            <span style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: 700;">PROCHAINE SÉANCE</span>
+                            <span style="font-size: 0.8rem; color: #e8820c; font-weight: 700;">
+                                Mercredi 20h00
+                            </span>
+                        </div>
+                        <button disabled style="width: 100%; padding: 0.8rem; background: rgba(237,232,223,0.05); border: 1px solid rgba(237,232,223,0.1); border-radius: 14px; color: rgba(237,232,223,0.3); font-size: 0.85rem; font-weight: 800; cursor: not-allowed;">
+                            Planifiée
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pastoral Care -->
+                <div style="background: linear-gradient(165deg, rgba(27, 26, 20, 0.75), rgba(14, 14, 10, 0.95)); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.45); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 2.2rem; margin-bottom: 1.25rem;">🕊️</div>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Entretien Pastoral Privé</h3>
+                        <p style="font-size: 0.85rem; color: rgba(237,232,223,0.5); line-height: 1.5; margin-bottom: 1.5rem;">Prenez rendez-vous pour un échange confidentiel, une prière ou des conseils pastoraux personnalisés.</p>
+                    </div>
+
+                    <div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem;">
+                            <span style="font-size: 0.78rem; color: rgba(237,232,223,0.4); font-weight: 700;">ACCÈS</span>
+                            <span style="font-size: 0.8rem; color: rgba(237,232,223,0.5); font-weight: 700;">
+                                Sur rendez-vous
+                            </span>
+                        </div>
+                        <button onclick="alert('Pour planifier un entretien pastoral, veuillez contacter le secrétariat de l\'église.')" style="width: 100%; padding: 0.8rem; background: rgba(237,232,223,0.08); border: 1px solid rgba(237,232,223,0.15); border-radius: 14px; color: #ede8df; font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.background='rgba(237,232,223,0.15)';" onmouseout="this.style.background='rgba(237,232,223,0.08)';">
+                            Demander un entretien
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Espace Bible en Ligne -->
@@ -1933,6 +2015,102 @@
         </div>
     </div>
 
+    <!-- ─── Modal Salon Meet ─── -->
+    <div class="modal-backdrop" id="modal-meet-room" onclick="if(event.target===this)closeMeetRoom()" style="z-index: 1060; font-family: 'Plus Jakarta Sans', sans-serif;">
+        <div class="modal-content" style="max-width: 950px; height: 85vh; padding: 0; background: #0c0c08; border: 1px solid rgba(232, 130, 12, 0.2); border-radius: 28px; position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 30px 70px rgba(0,0,0,0.95);">
+            
+            <!-- Modal Header -->
+            <div style="padding: 1.25rem 2rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.4rem;">🤝</span>
+                    <div>
+                        <h2 id="meet-room-title" style="font-size: 1.1rem; font-weight: 800; color: #fff; line-height: 1.2;">Salon Principal</h2>
+                        <span style="font-size: 0.72rem; color: #81c784; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">
+                            <span style="width: 5px; height: 5px; background: #4caf50; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite;"></span>
+                            Connexion sécurisée active
+                        </span>
+                    </div>
+                </div>
+                <button onclick="closeMeetRoom()" style="background: rgba(239, 83, 80, 0.1); border: 1px solid rgba(239, 83, 80, 0.25); color: #ef5350; font-size: 0.75rem; padding: 0.45rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 83, 80, 0.2)';" onmouseout="this.style.background='rgba(239, 83, 80, 0.1)';">
+                    ❌ Quitter le salon
+                </button>
+            </div>
+
+            <!-- Modal Body (Split screen on desktop) -->
+            <div style="flex: 1; display: flex; flex-direction: row; overflow: hidden; background: #070705;">
+                <!-- Left: Video Area -->
+                <div style="flex: 1; display: flex; flex-direction: column; position: relative; border-right: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; justify-content: space-between;">
+                    <!-- Video Grid (Pastor + Russell) -->
+                    <div style="flex: 1; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; gap: 1rem; position: relative; border-radius: 16px; overflow: hidden; background: #000; box-shadow: inset 0 0 30px rgba(0,0,0,0.85);">
+                        
+                        <!-- Pastor Video Stream Mock -->
+                        <div id="meet-pastor-feed" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: url('/static/images/intro.webp') center/cover no-repeat; filter: brightness(0.6);">
+                        </div>
+                        <div style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 5; text-align: center; padding: 2rem;">
+                            <div style="font-size: 3rem; animation: floatBadge 3s ease-in-out infinite;">🎥</div>
+                            <h4 style="color: #fff; font-size: 1.3rem; font-weight: 800; text-shadow: 0 2px 10px rgba(0,0,0,0.8); margin-top: 1rem;">Conférence Pastorale en Direct</h4>
+                            <p style="color: rgba(237,232,223,0.7); font-size: 0.8rem; font-weight: 600; text-shadow: 0 1px 5px rgba(0,0,0,0.8); margin-top: 0.25rem;">En attente de prise de parole du modérateur...</p>
+                        </div>
+
+                        <!-- User Local Video (PIP Corner overlay) -->
+                        <div style="position: absolute; bottom: 1rem; right: 1rem; width: 140px; height: 95px; background: rgba(14,14,10,0.85); border: 2px solid rgba(232, 130, 12, 0.45); border-radius: 12px; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.6);">
+                            <div id="user-video-placeholder" style="font-size: 1.25rem;">👤</div>
+                            <span style="font-size: 0.65rem; color: rgba(237,232,223,0.6); font-weight: 700; margin-top: 0.25rem;" id="user-pip-label">Moi (Russell)</span>
+                        </div>
+                    </div>
+
+                    <!-- Call Controls -->
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.25rem; flex-shrink: 0;">
+                        <!-- Toggle Mic -->
+                        <button onclick="toggleMeetMic()" id="btn-meet-mic" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Couper le micro">
+                            🎙️
+                        </button>
+                        <!-- Toggle Video -->
+                        <button onclick="toggleMeetCam()" id="btn-meet-cam" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Couper la caméra">
+                            📹
+                        </button>
+                        <!-- Share Screen -->
+                        <button onclick="toggleMeetShare()" id="btn-meet-share" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Partager l'écran">
+                            🖥️
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Chat Area -->
+                <div style="width: 300px; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; padding: 1.25rem; background: rgba(255,255,255,0.01);">
+                    <!-- Chat Messages Header -->
+                    <div style="font-size: 0.8rem; font-weight: 800; color: rgba(237,232,223,0.45); letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 0.75rem; text-transform: uppercase;">
+                        💬 Clavardage en Direct
+                    </div>
+                    
+                    <!-- Scroll Messages -->
+                    <div id="meet-chat-messages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.85rem; padding-right: 0.25rem; font-size: 0.82rem; margin-bottom: 1rem; scrollbar-width: thin;">
+                        <div>
+                            <span style="font-weight: 800; color: #e8820c;">Modérateur (Yann) :</span>
+                            <span style="color: rgba(237,232,223,0.85); display: block; margin-top: 0.15rem;">Bienvenue à tous dans l'espace d'échange. Que Dieu vous bénisse ! 🙏</span>
+                        </div>
+                        <div>
+                            <span style="font-weight: 800; color: #ede8df;">Marc :</span>
+                            <span style="color: rgba(237,232,223,0.85); display: block; margin-top: 0.15rem;">Amen ! Ravi d'être connecté ce matin.</span>
+                        </div>
+                        <div>
+                            <span style="font-weight: 800; color: #ede8df;">Sarah :</span>
+                            <span style="color: rgba(237,232,223,0.85); display: block; margin-top: 0.15rem;">Bonjour l'église, excellent moment d'échange à tous. 🙌</span>
+                        </div>
+                    </div>
+
+                    <!-- Input Box -->
+                    <form onsubmit="sendMeetChatMessage(event)" style="display: flex; gap: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.75rem; flex-shrink: 0;">
+                        <input type="text" id="meet-chat-input" placeholder="Écrire un message..." style="flex: 1; padding: 0.5rem 0.75rem; font-size: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(232, 130, 12, 0.4)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                        <button type="submit" style="background: #e8820c; border: none; border-radius: 8px; color: #fff; padding: 0.5rem 0.8rem; font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#d4770a'" onmouseout="this.style.background='#e8820c'">
+                            Envoyer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ─── Footer ─── -->
     <footer class="footer" id="footer">
         <p>&copy; 2026 <span class="footer-brand">ImpactStream</span> — Ministère Apostolique Impact</p>
@@ -1984,6 +2162,12 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                     <span>Espaces</span>
                 </a>
+                {% if meet_enabled %}
+                <a href="#" onclick="switchCategory('Meet', this); toggleMobileMoreMenu();" data-category="Meet" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Meet</span>
+                </a>
+                {% endif %}
                 <a href="#" onclick="switchCategory('Musique', this); toggleMobileMoreMenu();" data-category="Musique" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
                     <span>Musique</span>
@@ -2263,6 +2447,129 @@
             { nr: 65, name: 'Jude', chapters: 1 },
             { nr: 66, name: 'Apocalypse', chapters: 22 }
         ];
+
+        // ── Meet Room Logic ──
+        let isMeetMicActive = true;
+        let isMeetCamActive = true;
+        let isMeetSharing = false;
+
+        window.openMeetRoomModal = function(roomName) {
+            const modal = document.getElementById('modal-meet-room');
+            if (modal) {
+                document.getElementById('meet-room-title').textContent = roomName;
+                modal.classList.add('active');
+                
+                // Preload welcome message or auto scroll chat
+                const chatContainer = document.getElementById('meet-chat-messages');
+                if (chatContainer) {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }
+        };
+
+        window.closeMeetRoom = function() {
+            const modal = document.getElementById('modal-meet-room');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        };
+
+        window.toggleMeetMic = function() {
+            isMeetMicActive = !isMeetMicActive;
+            const btn = document.getElementById('btn-meet-mic');
+            if (btn) {
+                if (isMeetMicActive) {
+                    btn.innerHTML = '🎙️';
+                    btn.style.background = 'rgba(255,255,255,0.06)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                    btn.title = "Couper le micro";
+                } else {
+                    btn.innerHTML = '🔇';
+                    btn.style.background = 'rgba(239, 83, 80, 0.2)';
+                    btn.style.borderColor = 'rgba(239, 83, 80, 0.4)';
+                    btn.title = "Activer le micro";
+                }
+            }
+        };
+
+        window.toggleMeetCam = function() {
+            isMeetCamActive = !isMeetCamActive;
+            const btn = document.getElementById('btn-meet-cam');
+            const placeholder = document.getElementById('user-video-placeholder');
+            if (btn) {
+                if (isMeetCamActive) {
+                    btn.innerHTML = '📹';
+                    btn.style.background = 'rgba(255,255,255,0.06)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                    btn.title = "Couper la caméra";
+                    if (placeholder) {
+                        placeholder.innerHTML = '👤';
+                        placeholder.style.fontSize = '1.25rem';
+                    }
+                } else {
+                    btn.innerHTML = '📷❌';
+                    btn.style.background = 'rgba(239, 83, 80, 0.2)';
+                    btn.style.borderColor = 'rgba(239, 83, 80, 0.4)';
+                    btn.title = "Activer la caméra";
+                    if (placeholder) {
+                        placeholder.innerHTML = '🚫';
+                        placeholder.style.fontSize = '1rem';
+                    }
+                }
+            }
+        };
+
+        window.toggleMeetShare = function() {
+            isMeetSharing = !isMeetSharing;
+            const btn = document.getElementById('btn-meet-share');
+            if (btn) {
+                if (isMeetSharing) {
+                    btn.style.background = 'rgba(76, 175, 80, 0.2)';
+                    btn.style.borderColor = 'rgba(76, 175, 80, 0.4)';
+                    btn.title = "Arrêter le partage";
+                    alert("Partage d'écran simulé démarré !");
+                } else {
+                    btn.style.background = 'rgba(255,255,255,0.06)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                    btn.title = "Partager l'écran";
+                }
+            }
+        };
+
+        window.sendMeetChatMessage = function(event) {
+            if (event) event.preventDefault();
+            const input = document.getElementById('meet-chat-input');
+            const chatContainer = document.getElementById('meet-chat-messages');
+            if (!input || !chatContainer) return;
+
+            const text = input.value.trim();
+            if (!text) return;
+
+            const userEmailPrefix = typeof currentUserEmail !== 'undefined' && currentUserEmail ? currentUserEmail.split('@')[0] : 'Russell';
+            const name = userEmailPrefix.charAt(0).toUpperCase() + userEmailPrefix.slice(1);
+
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <span style="font-weight: 800; color: #81c784;">${name} :</span>
+                <span style="color: rgba(237,232,223,0.85); display: block; margin-top: 0.15rem;">${text.replace(/</g, '&lt;')}</span>
+            `;
+            chatContainer.appendChild(div);
+            
+            // Auto scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            input.value = '';
+
+            // Add auto-reply from moderator for simulation fun!
+            setTimeout(() => {
+                const replyDiv = document.createElement('div');
+                replyDiv.innerHTML = `
+                    <span style="font-weight: 800; color: #e8820c;">Modérateur (Yann) :</span>
+                    <span style="color: rgba(237,232,223,0.85); display: block; margin-top: 0.15rem;">Merci pour votre message ${name}. Gloire à Dieu !</span>
+                `;
+                chatContainer.appendChild(replyDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 1500);
+        };
 
         function initBibleReader() {
             if (isBibleInitialized) return;
@@ -5988,6 +6295,8 @@
 
                 if (espacesContainer) espacesContainer.style.display = 'none';
                 if (seriesSection) seriesSection.style.display = 'none';
+                const meetContainer = document.getElementById('meet-container');
+                if (meetContainer) meetContainer.style.display = 'none';
 
                 if (currentCategory === 'Communique') {
                     if (heroSection) heroSection.style.display = 'none';
@@ -6077,6 +6386,27 @@
                     heading.textContent = "Espaces Ministériels";
                     
                     renderEspacesGrid();
+                } else if (currentCategory === 'Meet') {
+                    if (heroSection) heroSection.style.display = 'none';
+                    if (filtersSection) filtersSection.style.display = 'none';
+                    mediaGrid.style.display = 'none';
+                    noResults.style.display = 'none';
+                    pillsContainer.style.display = 'none';
+                    communiquesContainer.style.display = 'none';
+                    if (radioContainer) radioContainer.style.display = 'none';
+                    if (livesContainer) livesContainer.style.display = 'none';
+                    if (bibleContainer) bibleContainer.style.display = 'none';
+                    if (radioAudio) {
+                        radioAudio.pause();
+                        radioAudio = null;
+                        isRadioPlaying = false;
+                        document.getElementById('radio-play-icon').style.display = 'block';
+                        document.getElementById('radio-pause-icon').style.display = 'none';
+                        document.getElementById('radio-visualizer').classList.remove('playing');
+                    }
+                    const meetContainer = document.getElementById('meet-container');
+                    if (meetContainer) meetContainer.style.display = 'block';
+                    heading.textContent = "Espace Réunions Meet";
                 } else {
                     if (heroSection && !currentCategory) heroSection.style.display = 'block';
                     else if (heroSection) heroSection.style.display = 'none';
@@ -6517,6 +6847,20 @@
             
             const playerContainer = document.getElementById('modal-player');
             if (playerContainer) { playerContainer.innerHTML = ''; }
+
+            // Nettoyage Webinaire Interactif
+            if (window.webinaireStatusInterval) {
+                clearInterval(window.webinaireStatusInterval);
+                window.webinaireStatusInterval = null;
+            }
+            if (window.activeWebinaireId) {
+                fetch('/api/webinaire/cancel-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ live_id: window.activeWebinaireId })
+                }).catch(err => console.error("Error cancelling speech on close:", err));
+                window.activeWebinaireId = null;
+            }
 
             modal.classList.remove('minimized');
             modal.classList.remove('active');
@@ -7388,6 +7732,287 @@
             }
         }
 
+        // ── Webinaire Client RTC Interactive Logic ──
+        async function pollWebinaireStatus(liveId) {
+            if (!window.activeWebinaireId || window.activeWebinaireId !== liveId) return;
+            try {
+                const res = await fetch(`/api/webinaire/status?live_id=${liveId}`);
+                const data = await res.json();
+                
+                updateWebinaireUI(data.status);
+                
+                // Update Speakers list
+                const countSpan = document.getElementById('webinaire-speakers-count');
+                const listDiv = document.getElementById('webinaire-speakers-list');
+                
+                if (countSpan && listDiv) {
+                    countSpan.textContent = data.speakers.length;
+                    if (data.speakers.length === 0) {
+                        listDiv.innerHTML = 'Aucun membre n\'a la parole actuellement.';
+                    } else {
+                        listDiv.innerHTML = data.speakers.map(s => `
+                            <div style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(76,175,80,0.1); border:1px solid rgba(76,175,80,0.25); color:#81c784; padding:0.2rem 0.5rem; border-radius:6px; font-size:0.72rem; font-weight:bold; margin-right:0.3rem; margin-bottom:0.3rem;">
+                                🎙️ ${s}
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (err) {
+                console.error("Error polling webinaire status:", err);
+            }
+        }
+
+        function updateWebinaireUI(status) {
+            const btn = document.getElementById('webinaire-btn-raise-hand');
+            if (!btn) return;
+            
+            // Check for status changes
+            if (status === 'allowed' && window.webinaireLastStatus !== 'allowed') {
+                // Play notification sound / vibre
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                alert("🔴 Régie Webinaire : La parole vous a été accordée ! Votre microphone est maintenant activé.");
+                
+                // Enable devices
+                enableWebinaireControls(true);
+            } else if (status !== 'allowed' && window.webinaireLastStatus === 'allowed') {
+                alert("🔇 Régie Webinaire : Votre micro a été coupé par l'administrateur.");
+                enableWebinaireControls(false);
+            }
+            
+            window.webinaireLastStatus = status;
+            
+            // Render Button State
+            if (status === 'allowed') {
+                btn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
+                btn.style.boxShadow = '0 4px 15px rgba(76,175,80,0.3)';
+                btn.innerHTML = `<span>Rendre la parole (Couper mon micro)</span> 🔇`;
+            } else if (status === 'pending') {
+                btn.style.background = 'linear-gradient(135deg, #e65100, #ff8f00)';
+                btn.style.boxShadow = '0 4px 15px rgba(230,81,0,0.3)';
+                btn.innerHTML = `<span>Demande envoyée... (Annuler)</span> ⏳`;
+            } else {
+                btn.style.background = 'linear-gradient(135deg, #e8820c, #f5a623)';
+                btn.style.boxShadow = '0 4px 15px rgba(232,130,12,0.25)';
+                btn.innerHTML = `<span>Demander la parole (Lever la main)</span> ✋`;
+            }
+        }
+
+        async function toggleWebinaireSpeechRequest(liveId) {
+            const currentStatus = window.webinaireLastStatus || 'spectator';
+            const endpoint = (currentStatus === 'spectator') ? '/api/webinaire/request-speech' : '/api/webinaire/cancel-speech';
+            
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ live_id: liveId })
+                });
+                const data = await res.json();
+                updateWebinaireUI(data.status);
+            } catch (err) {
+                console.error("Error toggling webinaire speech request:", err);
+            }
+        }
+
+        function enableWebinaireControls(enable) {
+            const micBtn = document.getElementById('webinaire-btn-mic');
+            const camBtn = document.getElementById('webinaire-btn-cam');
+            const shareBtn = document.getElementById('webinaire-btn-share');
+            const pipLocal = document.getElementById('webinaire-pip-local');
+            const pipStatus = document.getElementById('webinaire-pip-status');
+            
+            if (enable) {
+                if (micBtn) {
+                    micBtn.disabled = false;
+                    micBtn.style.cursor = 'pointer';
+                    micBtn.style.color = '#fff';
+                    micBtn.style.background = 'rgba(255,255,255,0.08)';
+                    micBtn.title = "Activer le Micro";
+                }
+                if (camBtn) {
+                    camBtn.disabled = false;
+                    camBtn.style.cursor = 'pointer';
+                    camBtn.style.color = '#fff';
+                    camBtn.style.background = 'rgba(255,255,255,0.08)';
+                    camBtn.title = "Activer la Caméra";
+                }
+                if (shareBtn) {
+                    shareBtn.disabled = false;
+                    shareBtn.style.cursor = 'pointer';
+                    shareBtn.style.color = '#fff';
+                    shareBtn.style.background = 'rgba(255,255,255,0.08)';
+                    shareBtn.title = "Partager l'écran";
+                }
+                if (pipLocal) {
+                    pipLocal.style.borderColor = '#81c784';
+                    pipLocal.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.4)';
+                }
+            } else {
+                // Disable & Reset Mic
+                window.webinaireLocalMicActive = false;
+                if (micBtn) {
+                    micBtn.disabled = true;
+                    micBtn.style.cursor = 'not-allowed';
+                    micBtn.style.color = 'rgba(255,255,255,0.25)';
+                    micBtn.style.background = 'rgba(255,255,255,0.04)';
+                    micBtn.title = "Micro désactivé par la Régie";
+                }
+                
+                // Disable & Reset Cam
+                window.webinaireLocalCamActive = false;
+                const avatar = document.getElementById('webinaire-pip-avatar');
+                if (avatar) {
+                    avatar.innerHTML = '👤';
+                    avatar.style.background = 'rgba(255,255,255,0.06)';
+                }
+                if (camBtn) {
+                    camBtn.disabled = true;
+                    camBtn.style.cursor = 'not-allowed';
+                    camBtn.style.color = 'rgba(255,255,255,0.25)';
+                    camBtn.style.background = 'rgba(255,255,255,0.04)';
+                    camBtn.title = "Caméra désactivée par la Régie";
+                }
+
+                // Disable & Reset Share
+                window.webinaireLocalShareActive = false;
+                if (shareBtn) {
+                    shareBtn.disabled = true;
+                    shareBtn.style.cursor = 'not-allowed';
+                    shareBtn.style.color = 'rgba(255,255,255,0.25)';
+                    shareBtn.style.background = 'rgba(255,255,255,0.04)';
+                    shareBtn.title = "Partage d'écran désactivé par la Régie";
+                }
+                
+                if (pipLocal) {
+                    pipLocal.style.borderColor = 'rgba(255,255,255,0.15)';
+                    pipLocal.style.boxShadow = '0 10px 25px rgba(0,0,0,0.6)';
+                }
+                if (pipStatus) {
+                    pipStatus.textContent = '🔇 Muet';
+                    pipStatus.style.color = '#ef5350';
+                }
+            }
+        }
+
+        function toggleWebinaireLocalMic() {
+            if (window.webinaireLastStatus !== 'allowed') return;
+            window.webinaireLocalMicActive = !window.webinaireLocalMicActive;
+            
+            const btn = document.getElementById('webinaire-btn-mic');
+            const status = document.getElementById('webinaire-pip-status');
+            
+            if (btn && status) {
+                if (window.webinaireLocalMicActive) {
+                    btn.style.background = '#4caf50';
+                    btn.style.color = '#fff';
+                    status.textContent = '🎙️ Parlant';
+                    status.style.color = '#81c784';
+                    
+                    // Trigger simulated audio waveform in PIP
+                    startWebinaireLocalWaveform();
+                } else {
+                    btn.style.background = 'rgba(255,255,255,0.08)';
+                    btn.style.color = '#fff';
+                    status.textContent = '🔇 Muet';
+                    status.style.color = '#ef5350';
+                    
+                    stopWebinaireLocalWaveform();
+                }
+            }
+        }
+
+        function toggleWebinaireLocalCam() {
+            if (window.webinaireLastStatus !== 'allowed') return;
+            window.webinaireLocalCamActive = !window.webinaireLocalCamActive;
+            
+            const btn = document.getElementById('webinaire-btn-cam');
+            const avatar = document.getElementById('webinaire-pip-avatar');
+            
+            if (btn && avatar) {
+                if (window.webinaireLocalCamActive) {
+                    btn.style.background = '#4caf50';
+                    btn.style.color = '#fff';
+                    avatar.innerHTML = '🎥';
+                    avatar.style.background = 'radial-gradient(circle, #e8820c 0%, #2b2a22 100%)';
+                } else {
+                    btn.style.background = 'rgba(255,255,255,0.08)';
+                    btn.style.color = '#fff';
+                    avatar.innerHTML = '👤';
+                    avatar.style.background = 'rgba(255,255,255,0.06)';
+                }
+            }
+        }
+
+        function toggleWebinaireLocalShare() {
+            if (window.webinaireLastStatus !== 'allowed') return;
+            window.webinaireLocalShareActive = !window.webinaireLocalShareActive;
+            
+            const btn = document.getElementById('webinaire-btn-share');
+            if (btn) {
+                if (window.webinaireLocalShareActive) {
+                    btn.style.background = '#2196f3';
+                    btn.style.color = '#fff';
+                    alert("🖥️ Partage d'écran simulé : Votre écran est partagé avec la Régie.");
+                } else {
+                    btn.style.background = 'rgba(255,255,255,0.08)';
+                    btn.style.color = '#fff';
+                }
+            }
+        }
+
+        let webinaireWaveformInterval = null;
+        function startWebinaireLocalWaveform() {
+            stopWebinaireLocalWaveform();
+            const pip = document.getElementById('webinaire-pip-local');
+            if (!pip) return;
+            
+            const waveContainer = document.createElement('div');
+            waveContainer.id = 'webinaire-wave-container';
+            waveContainer.style.position = 'absolute';
+            waveContainer.style.top = '0';
+            waveContainer.style.left = '0';
+            waveContainer.style.width = '100%';
+            waveContainer.style.height = '100%';
+            waveContainer.style.background = 'rgba(76,175,80,0.05)';
+            waveContainer.style.display = 'flex';
+            waveContainer.style.alignItems = 'flex-end';
+            waveContainer.style.justifyContent = 'center';
+            waveContainer.style.gap = '2px';
+            waveContainer.style.paddingBottom = '2rem';
+            waveContainer.style.pointerEvents = 'none';
+            waveContainer.style.zIndex = '5';
+            
+            for (let i = 0; i < 5; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'webinaire-wave-bar';
+                bar.style.width = '3px';
+                bar.style.height = '10px';
+                bar.style.background = '#81c784';
+                bar.style.borderRadius = '3px';
+                bar.style.transition = 'height 0.15s ease';
+                waveContainer.appendChild(bar);
+            }
+            
+            pip.appendChild(waveContainer);
+            
+            webinaireWaveformInterval = setInterval(() => {
+                const bars = document.querySelectorAll('.webinaire-wave-bar');
+                bars.forEach(bar => {
+                    const h = Math.floor(Math.random() * 25) + 5;
+                    bar.style.height = `${h}px`;
+                });
+            }, 120);
+        }
+
+        function stopWebinaireLocalWaveform() {
+            if (webinaireWaveformInterval) {
+                clearInterval(webinaireWaveformInterval);
+                webinaireWaveformInterval = null;
+            }
+            const el = document.getElementById('webinaire-wave-container');
+            if (el) el.remove();
+        }
+
         function fetchLives() {
             const grid = document.getElementById('lives-grid');
             if (!grid) return;
@@ -7399,25 +8024,40 @@
             }
 
             activeLives.forEach(live => {
+                const isInteractif = (live.type_diffusion === 'interactif');
+                
                 // Determine poster or video thumbnail (we can use a nice glowing card style!)
-                const ytId = getYouTubeVideoId(live.url_direct);
-                const thumbUrl = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/static/images/logo.png';
+                let thumbUrl = '/static/images/logo.png';
+                if (!isInteractif) {
+                    const ytId = getYouTubeVideoId(live.url_direct);
+                    thumbUrl = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/static/images/logo.png';
+                } else {
+                    // For Webinaire, show a premium interactive layout poster
+                    thumbUrl = '/static/images/intro.webp';
+                }
+
+                const cardBorder = isInteractif ? 'rgba(232, 130, 12, 0.4)' : 'rgba(239, 83, 80, 0.2)';
+                const hoverBorder = isInteractif ? 'rgba(232, 130, 12, 0.8)' : 'rgba(239, 83, 80, 0.5)';
+                const badgeColor = isInteractif ? '#e8820c' : '#ef5350';
+                const badgeText = isInteractif ? '🎙️ Interactif' : 'En direct';
+                const btnBg = isInteractif ? 'linear-gradient(135deg, #e8820c, #f5a623)' : 'linear-gradient(135deg, #ef5350, #d32f2f)';
+                const btnText = isInteractif ? 'Participer au Live' : 'Rejoindre le Direct';
 
                 const cardHtml = `
-                    <div style="background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(239, 83, 80, 0.2); border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.5); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-8px)'; this.style.borderColor='rgba(239,83,80,0.5)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(239,83,80,0.2)';">
+                    <div style="background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid ${cardBorder}; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.5); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-8px)'; this.style.borderColor='${hoverBorder}';" onmouseout="this.style.transform='none'; this.style.borderColor='${cardBorder}';">
                         <div style="position: relative; height: 180px; overflow: hidden; background: #000;">
                             <img src="${thumbUrl}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6;" onerror="this.src='/static/images/logo.png'; this.style.objectFit='contain'; this.style.padding='1rem';">
-                            <div style="position: absolute; top: 1rem; left: 1rem; background: rgba(239, 83, 80, 0.95); color: #fff; font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.3rem; box-shadow: 0 4px 10px rgba(239,83,80,0.3);">
+                            <div style="position: absolute; top: 1rem; left: 1rem; background: ${badgeColor}; color: #fff; font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.3rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
                                 <span class="pulsing-dot" style="width: 6px; height: 6px; background: #fff; border-radius: 50%; display: inline-block;"></span>
-                                <span>En direct</span>
+                                <span>${badgeText}</span>
                             </div>
                         </div>
                         <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
                             <h4 style="font-size: 1.15rem; font-weight: 800; color: #fff; line-height: 1.4; margin: 0;">${live.titre}</h4>
                             <p style="font-size: 0.8rem; color: rgba(237,232,223,0.45); margin: 0; line-height: 1.6; min-height: 40px;">${live.description || 'Suivez la diffusion en direct sur ImpactStream.'}</p>
-                            <button onclick="openLivePlayer(${live.id})" style="background: linear-gradient(135deg, #ef5350, #d32f2f); border: none; color: #fff; font-weight: 800; font-size: 0.8rem; padding: 0.65rem 1rem; border-radius: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.4rem;" onmouseover="this.style.filter='brightness(1.1)';" onmouseout="this.style.filter='none';">
+                            <button onclick="openLivePlayer(${live.id})" style="background: ${btnBg}; border: none; color: #fff; font-weight: 800; font-size: 0.8rem; padding: 0.65rem 1rem; border-radius: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.4rem;" onmouseover="this.style.filter='brightness(1.1)';" onmouseout="this.style.filter='none';">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                                <span>Rejoindre le Direct</span>
+                                <span>${btnText}</span>
                             </button>
                         </div>
                     </div>
@@ -7453,35 +8093,145 @@
             const ytUrl = getYouTubeEmbedUrl(url);
             const vimeoUrl = getVimeoEmbedUrl(url);
 
-            if (ytUrl) {
+            const isInteractif = (live.type_diffusion === 'interactif');
+
+            if (isInteractif) {
+                // Initialize global state for webinaire tracking
+                window.activeWebinaireId = liveId;
+                window.webinaireLocalMicActive = false;
+                window.webinaireLocalCamActive = false;
+                window.webinaireLocalShareActive = false;
+                window.webinaireLastStatus = 'spectator';
+                
+                // Draw Webinaire Screen UI
                 player.innerHTML = `
-                    <iframe src="${ytUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%;height:100%;border-radius:12px;"></iframe>
+                    <div style="position: relative; width: 100%; height: 100%; background: #000; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                        <!-- Main video area (Pastor/Speaker) -->
+                        <div style="position: relative; flex: 1; background: radial-gradient(circle, #2b2a22 0%, #0d0d0a 100%); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <div style="text-align: center; color: rgba(255,255,255,0.7); z-index: 10;">
+                                <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(232, 130, 12, 0.15); border: 2px solid #e8820c; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 2.2rem; animation: pulse-orange 2.5s infinite;">
+                                    ⛪
+                                </div>
+                                <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.25rem;">Culte Interactif Mondial</h3>
+                                <p style="font-size: 0.8rem; color: rgba(237,232,223,0.45); margin: 0;">Diffusion RTC Ultra-Basse Latence connectée</p>
+                            </div>
+                            
+                            <!-- Glowing indicators and speaker banner -->
+                            <div style="position: absolute; top: 1rem; left: 1rem; background: rgba(232, 130, 12, 0.95); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.3rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 20;">
+                                <span class="pulsing-dot" style="width: 6px; height: 6px; background: #fff; border-radius: 50%; display: inline-block;"></span>
+                                <span>Flux Principal (Webinaire RTC)</span>
+                            </div>
+
+                            <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.78rem; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 0.4rem; z-index: 20;">
+                                <span style="color: #4caf50;">●</span> Orateur : Régie Centrale Impact
+                            </div>
+
+                            <!-- Local PIP User Thumbnail -->
+                            <div id="webinaire-pip-local" style="position: absolute; bottom: 1rem; right: 1rem; width: 110px; height: 145px; background: #1a1914; border: 2px solid rgba(255,255,255,0.15); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 30; transition: all 0.3s;">
+                                <div id="webinaire-pip-avatar" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: rgba(255,255,255,0.3); margin-bottom: 0.4rem; transition: all 0.3s;">
+                                    👤
+                                </div>
+                                <div style="font-size: 0.65rem; font-weight: bold; color: rgba(237,232,223,0.5); text-align: center; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Vous</div>
+                                <div id="webinaire-pip-status" style="position: absolute; bottom: 0.3rem; left: 0.3rem; background: rgba(0,0,0,0.5); padding: 0.1rem 0.3rem; border-radius: 4px; font-size: 0.55rem; color: #ef5350; font-weight: bold; display: flex; align-items: center; gap: 0.15rem;">
+                                    🔇 Muet
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Webinaire local devices control bar -->
+                        <div id="webinaire-local-controls" style="background: #11100c; border-top: 1px solid rgba(255,255,255,0.06); padding: 0.75rem; display: flex; justify-content: center; gap: 0.75rem; align-items: center; z-index: 20;">
+                            <button id="webinaire-btn-mic" onclick="toggleWebinaireLocalMic()" disabled style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; width: 38px; height: 38px; color: rgba(255,255,255,0.25); cursor: not-allowed; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; outline: none;" title="Micro désactivé par la Régie">
+                                🎙️
+                            </button>
+                            <button id="webinaire-btn-cam" onclick="toggleWebinaireLocalCam()" disabled style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; width: 38px; height: 38px; color: rgba(255,255,255,0.25); cursor: not-allowed; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; outline: none;" title="Caméra désactivée par la Régie">
+                                📹
+                            </button>
+                            <button id="webinaire-btn-share" onclick="toggleWebinaireLocalShare()" disabled style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; width: 38px; height: 38px; color: rgba(255,255,255,0.25); cursor: not-allowed; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; outline: none;" title="Partage d'écran désactivé par la Régie">
+                                🖥️
+                            </button>
+                            <button onclick="closePlayer()" style="background: #ef5350; border: none; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: 800; font-size: 0.78rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;" onmouseover="this.style.background='#d32f2f';" onmouseout="this.style.background='#ef5350';">
+                                🚪 Quitter
+                            </button>
+                        </div>
+                    </div>
                 `;
-            } else if (vimeoUrl) {
-                player.innerHTML = `
-                    <iframe src="${vimeoUrl}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="width:100%;height:100%;border-radius:12px;"></iframe>
+
+                info.innerHTML = `
+                    <div class="flex flex-col gap-2">
+                        <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(232, 130, 12, 0.12); border: 1px solid rgba(232, 130, 12, 0.25); color: #e8820c; font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; width: fit-content; margin-bottom: 0.5rem;">
+                            <span class="pulsing-dot" style="width: 6px; height: 6px; background: #e8820c; border-radius: 50%; display: inline-block;"></span>
+                            <span>Direct Interactif (Ultra-Basse Latence)</span>
+                        </div>
+                        <h2 class="text-2xl font-extrabold text-white" style="margin: 0; font-size: 1.5rem; font-family: 'Outfit', sans-serif;">${title}</h2>
+                        <p class="text-sm leading-relaxed text-zinc-400" style="margin: 0.5rem 0 0; color: rgba(237,232,223,0.45); font-size: 0.85rem;">${description || 'Visioconférence interactive avec la régie.'}</p>
+                        
+                        <!-- Webinaire Raise Hand Button and Speakers -->
+                        <div style="margin-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1.25rem;">
+                            <button id="webinaire-btn-raise-hand" onclick="toggleWebinaireSpeechRequest(${liveId})" style="width: 100%; padding: 0.8rem 1.5rem; background: linear-gradient(135deg, #e8820c, #f5a623); border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 0.9rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(232,130,12,0.25); outline: none;" onmouseover="this.style.filter='brightness(1.1)';" onmouseout="this.style.filter='none';">
+                                <span>Demander la parole (Lever la main)</span> ✋
+                            </button>
+                            
+                            <div style="margin-top: 1rem; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; padding: 0.75rem 1rem;">
+                                <h4 style="font-size: 0.8rem; font-weight: 800; color: #fff; margin: 0 0 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.3rem;">
+                                    <span>🎤 Fidèles en parole :</span>
+                                    <span id="webinaire-speakers-count" style="font-size: 0.7rem; color: #81c784; background: rgba(76,175,80,0.1); padding: 0.05rem 0.35rem; border-radius: 4px; font-weight: 800;">0</span>
+                                </h4>
+                                <div id="webinaire-speakers-list" style="font-size: 0.8rem; color: rgba(237,232,223,0.45); font-style: italic; line-height: 1.4;">
+                                    Aucun membre n'a la parole actuellement.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 `;
+
+                // Join the webinaire API
+                fetch('/api/webinaire/join', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ live_id: liveId })
+                }).then(res => res.json())
+                  .then(data => {
+                      updateWebinaireUI(data.status);
+                  }).catch(err => console.error("Error joining webinaire:", err));
+
+                // Start polling status
+                window.webinaireStatusInterval = setInterval(() => {
+                    pollWebinaireStatus(liveId);
+                }, 3000);
+
             } else {
-                // If it's a direct stream link like HLS or regular video stream
-                player.innerHTML = `
-                    <video class="w-full h-full rounded-xl" controls autoplay style="width:100%;height:100%;border-radius:12px;background:#000;">
-                        <source src="${url}" type="application/x-mpegURL">
-                        <source src="${url}" type="video/mp4">
-                        Votre navigateur ne supporte pas la lecture de cette vidéo.
-                    </video>
+                const ytUrl = getYouTubeEmbedUrl(url);
+                const vimeoUrl = getVimeoEmbedUrl(url);
+
+                if (ytUrl) {
+                    player.innerHTML = `
+                        <iframe src="${ytUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%;height:100%;border-radius:12px;"></iframe>
+                    `;
+                } else if (vimeoUrl) {
+                    player.innerHTML = `
+                        <iframe src="${vimeoUrl}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="width:100%;height:100%;border-radius:12px;"></iframe>
+                    `;
+                } else {
+                    player.innerHTML = `
+                        <video class="w-full h-full rounded-xl" controls autoplay style="width:100%;height:100%;border-radius:12px;background:#000;">
+                            <source src="${url}" type="application/x-mpegURL">
+                            <source src="${url}" type="video/mp4">
+                            Votre navigateur ne supporte pas la lecture de cette vidéo.
+                        </video>
+                    `;
+                }
+
+                info.innerHTML = `
+                    <div class="flex flex-col gap-2">
+                        <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(239, 83, 80, 0.12); border: 1px solid rgba(239, 83, 80, 0.25); color: #ef5350; font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; width: fit-content; margin-bottom: 0.5rem;">
+                            <span class="pulsing-dot" style="width: 6px; height: 6px; background: #ef5350; border-radius: 50%; display: inline-block;"></span>
+                            <span>Diffusion en Direct</span>
+                        </div>
+                        <h2 class="text-2xl font-extrabold text-white" style="margin: 0; font-size: 1.5rem; font-family: 'Outfit', sans-serif;">${title}</h2>
+                        <p class="text-sm leading-relaxed text-zinc-400" style="margin: 0.5rem 0 0; color: rgba(237,232,223,0.45); font-size: 0.85rem;">${description || 'Diffusion en direct.'}</p>
+                    </div>
                 `;
             }
-
-            info.innerHTML = `
-                <div class="flex flex-col gap-2">
-                    <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(239, 83, 80, 0.12); border: 1px solid rgba(239, 83, 80, 0.25); color: #ef5350; font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; width: fit-content; margin-bottom: 0.5rem;">
-                        <span class="pulsing-dot" style="width: 6px; height: 6px; background: #ef5350; border-radius: 50%; display: inline-block;"></span>
-                        <span>Diffusion en Direct</span>
-                    </div>
-                    <h2 class="text-2xl font-extrabold text-white" style="margin: 0; font-size: 1.5rem; font-family: 'Outfit', sans-serif;">${title}</h2>
-                    <p class="text-sm leading-relaxed text-zinc-400" style="margin: 0.5rem 0 0; color: rgba(237,232,223,0.45); font-size: 0.85rem;">${description || 'Diffusion en direct.'}</p>
-                </div>
-            `;
 
             // Display modal
             modal.classList.remove('minimized');

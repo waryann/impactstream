@@ -204,8 +204,25 @@ def get_db():
                 ''')
                 # Garantir la présence de la configuration de la salle d'attente
                 cur.execute("INSERT INTO settings (key, value) VALUES ('waiting_room_enabled', '0') ON CONFLICT (key) DO NOTHING")
+                cur.execute("INSERT INTO settings (key, value) VALUES ('meet_enabled', '0') ON CONFLICT (key) DO NOTHING")
                 # Ajouter la colonne is_evicted à la table attendance si elle n'existe pas
                 cur.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS is_evicted INTEGER DEFAULT 0")
+                # Auto-migration live_streams & webinaire_queue pour PostgreSQL
+                try:
+                    cur.execute("ALTER TABLE live_streams ADD COLUMN IF NOT EXISTS type_diffusion VARCHAR(50) DEFAULT 'standard'")
+                except Exception:
+                    pass
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS webinaire_queue (
+                        id SERIAL PRIMARY KEY,
+                        live_id INTEGER NOT NULL,
+                        user_email VARCHAR(255) NOT NULL,
+                        display_name VARCHAR(255) NOT NULL,
+                        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(live_id, user_email)
+                    )
+                ''')
                 wrapper.commit()
                 _db_initialized = True
             except Exception as e:
@@ -316,9 +333,23 @@ def get_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             titre TEXT NOT NULL,
             description TEXT,
-            url_direct TEXT NOT NULL,
+            url_direct TEXT,
+            type_diffusion TEXT DEFAULT 'standard',
             is_active INTEGER DEFAULT 0,
             date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Création table webinaire_queue
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS webinaire_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            live_id INTEGER NOT NULL,
+            user_email TEXT NOT NULL,
+            display_name TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(live_id, user_email)
         )
     ''')
 
@@ -375,6 +406,9 @@ def get_db():
 
     # Settings pour la salle d'attente
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('waiting_room_enabled', '0'))
+    
+    # Settings pour Meet
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('meet_enabled', '0'))
 
     # Auto-migration SQLite pour attendance (is_evicted)
     try:
@@ -442,6 +476,17 @@ def get_db():
     if user_migrated:
         conn.commit()
         print("⚙️ Migration SQLite : Colonnes de permissions d'accès et de vérification utilisateur ajoutées.")
+
+    # Auto-migration live_streams type_diffusion
+    cursor.execute('PRAGMA table_info(live_streams)')
+    live_columns = [row[1] for row in cursor.fetchall()]
+    live_migrated = False
+    if 'type_diffusion' not in live_columns:
+        cursor.execute("ALTER TABLE live_streams ADD COLUMN type_diffusion TEXT DEFAULT 'standard'")
+        live_migrated = True
+    if live_migrated:
+        conn.commit()
+        print("⚙️ Migration SQLite : Colonne type_diffusion ajoutée à la table live_streams.")
 
     # Créer un compte utilisateur par défaut si vide
     cursor.execute('SELECT COUNT(*) FROM users')
@@ -819,6 +864,11 @@ def index():
     featured = medias[0] if medias else None
 
     langues = conn.execute('SELECT DISTINCT langue FROM medias ORDER BY langue').fetchall()
+    
+    # Récupérer la configuration Meet
+    meet_row = conn.execute("SELECT value FROM settings WHERE key = 'meet_enabled'").fetchone()
+    meet_enabled = int(meet_row['value']) if meet_row else 0
+    
     conn.close()
 
     # Filtrer dynamiquement la liste des sous-sections d'enseignements visibles
@@ -838,7 +888,8 @@ def index():
         commissions_musique=COMMISSIONS_MUSIQUE,
         langues=[l['langue'] for l in langues],
         has_nayoth=has_nayoth,
-        has_intercession=has_intercession
+        has_intercession=has_intercession,
+        meet_enabled=meet_enabled
     )
 
 
@@ -1018,6 +1069,12 @@ def admin_dashboard():
     wr_pending_row = conn.execute("SELECT COUNT(*) FROM waiting_room WHERE status = 'pending'").fetchone()
     waiting_room_pending_count = wr_pending_row[0] if wr_pending_row else 0
 
+    # Configuration Meet
+    meet_enabled_row = conn.execute("SELECT value FROM settings WHERE key = 'meet_enabled'").fetchone()
+    meet_config = {
+        'enabled': meet_enabled_row['value'] if meet_enabled_row else '0'
+    }
+
     conn.close()
 
     return render_template(
@@ -1034,6 +1091,7 @@ def admin_dashboard():
         attendance_count=attendance_count,
         waiting_room_config=waiting_room_config,
         waiting_room_pending_count=waiting_room_pending_count,
+        meet_config=meet_config,
         stats=stats,
         commissions_enseignement=COMMISSIONS_ENSEIGNEMENT,
         commissions_musique=COMMISSIONS_MUSIQUE,
@@ -1105,6 +1163,19 @@ def admin_waiting_room_clear():
     conn.commit()
     conn.close()
     flash('🗑️ Salle d\'attente réinitialisée.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/meet/config', methods=['POST'])
+@login_required
+def admin_meet_config():
+    """Activer/Désactiver le salon Meet."""
+    enabled = request.form.get('meet_enabled', '0')
+    conn = get_db()
+    conn.execute("UPDATE settings SET value = ? WHERE key = 'meet_enabled'", (enabled,))
+    conn.commit()
+    conn.close()
+    flash('✅ Configuration du Meet mise à jour.', 'success')
     return redirect(url_for('admin_dashboard'))
 
 
@@ -2113,17 +2184,21 @@ def admin_add_live():
     """Ajouter un nouveau direct vidéo."""
     titre = request.form.get('titre', '').strip()
     description = request.form.get('description', '').strip()
+    type_diffusion = request.form.get('type_diffusion', 'standard').strip()
     url_direct = request.form.get('url_direct', '').strip()
     is_active = int(request.form.get('is_active', '0'))
     
+    if type_diffusion == 'interactif' and not url_direct:
+        url_direct = 'https://meet.impactstream.live/webrtc'
+        
     if not titre or not url_direct:
         flash("Le titre et l'URL du direct sont obligatoires.", "error")
         return redirect(url_for('admin_dashboard', tab='lives'))
     
     conn = get_db()
     conn.execute(
-        "INSERT INTO live_streams (titre, description, url_direct, is_active) VALUES (?, ?, ?, ?)",
-        (titre, description, url_direct, is_active)
+        "INSERT INTO live_streams (titre, description, url_direct, type_diffusion, is_active) VALUES (?, ?, ?, ?, ?)",
+        (titre, description, url_direct, type_diffusion, is_active)
     )
     conn.commit()
     conn.close()
@@ -2137,17 +2212,21 @@ def admin_edit_live(live_id):
     """Modifier un direct vidéo existant."""
     titre = request.form.get('titre', '').strip()
     description = request.form.get('description', '').strip()
+    type_diffusion = request.form.get('type_diffusion', 'standard').strip()
     url_direct = request.form.get('url_direct', '').strip()
     is_active = int(request.form.get('is_active', '0'))
     
+    if type_diffusion == 'interactif' and not url_direct:
+        url_direct = 'https://meet.impactstream.live/webrtc'
+        
     if not titre or not url_direct:
         flash("Le titre et l'URL du direct sont obligatoires.", "error")
         return redirect(url_for('admin_dashboard', tab='lives'))
     
     conn = get_db()
     conn.execute(
-        "UPDATE live_streams SET titre = ?, description = ?, url_direct = ?, is_active = ? WHERE id = ?",
-        (titre, description, url_direct, is_active, live_id)
+        "UPDATE live_streams SET titre = ?, description = ?, url_direct = ?, type_diffusion = ?, is_active = ? WHERE id = ?",
+        (titre, description, url_direct, type_diffusion, is_active, live_id)
     )
     conn.commit()
     conn.close()
@@ -2165,6 +2244,168 @@ def admin_delete_live(live_id):
     conn.close()
     flash("✅ Direct vidéo supprimé.", "success")
     return redirect(url_for('admin_dashboard', tab='lives'))
+
+
+# ─────────────────────────────────────────────
+# API Webinaire Interactif (ImpactStream Live)
+# ─────────────────────────────────────────────
+
+@app.route('/api/webinaire/join', methods=['POST'])
+@user_login_required
+def api_webinaire_join():
+    """Initialiser ou récupérer le statut du fidèle dans le webinaire."""
+    live_id = request.json.get('live_id')
+    user_email = session.get('user_email')
+    
+    if not live_id:
+        return jsonify({'error': 'live_id manquant'}), 400
+        
+    conn = get_db()
+    # On regarde si l'utilisateur est déjà dans la file
+    row = conn.execute("SELECT status FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email)).fetchone()
+    conn.close()
+    
+    if row:
+        return jsonify({'status': row['status']})
+    else:
+        return jsonify({'status': 'spectator'})
+
+
+@app.route('/api/webinaire/status', methods=['GET'])
+@user_login_required
+def api_webinaire_status():
+    """Vérifier le statut actuel du fidèle (spectateur, en attente, ou parole accordée)."""
+    live_id = request.args.get('live_id')
+    user_email = session.get('user_email')
+    
+    if not live_id:
+        return jsonify({'error': 'live_id manquant'}), 400
+        
+    conn = get_db()
+    row = conn.execute("SELECT status FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email)).fetchone()
+    
+    # Récupérer également tous les orateurs autorisés actifs pour l'affichage de l'audience
+    speakers = conn.execute("SELECT display_name FROM webinaire_queue WHERE live_id = ? AND status = 'allowed'", (live_id,)).fetchall()
+    conn.close()
+    
+    status = row['status'] if row else 'spectator'
+    return jsonify({
+        'status': status,
+        'speakers': [s['display_name'] for s in speakers]
+    })
+
+
+@app.route('/api/webinaire/request-speech', methods=['POST'])
+@user_login_required
+def api_webinaire_request_speech():
+    """Fidèle qui lève la main pour demander la parole."""
+    live_id = request.json.get('live_id')
+    user_email = session.get('user_email')
+    
+    if not live_id:
+        return jsonify({'error': 'live_id manquant'}), 400
+        
+    conn = get_db()
+    # Récupérer le nom de l'utilisateur
+    user = conn.execute("SELECT name FROM users WHERE email = ?", (user_email,)).fetchone()
+    display_name = user['name'] if user and user['name'] else user_email.split('@')[0]
+    
+    try:
+        conn.execute(
+            "INSERT OR REPLACE INTO webinaire_queue (live_id, user_email, display_name, status) VALUES (?, ?, ?, 'pending')",
+            (live_id, user_email, display_name)
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"Error requesting speech: {e}")
+    conn.close()
+    
+    return jsonify({'success': True, 'status': 'pending'})
+
+
+@app.route('/api/webinaire/cancel-speech', methods=['POST'])
+@user_login_required
+def api_webinaire_cancel_speech():
+    """Fidèle qui baisse la main ou rend la parole."""
+    live_id = request.json.get('live_id')
+    user_email = session.get('user_email')
+    
+    if not live_id:
+        return jsonify({'error': 'live_id manquant'}), 400
+        
+    conn = get_db()
+    conn.execute("DELETE FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'status': 'spectator'})
+
+
+@app.route('/api/webinaire/admin/queue', methods=['GET'])
+@login_required
+def api_webinaire_admin_queue():
+    """Régie technique : Liste complète des demandes de parole pour un direct."""
+    live_id = request.args.get('live_id')
+    if not live_id:
+        return jsonify({'error': 'live_id manquant'}), 400
+        
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM webinaire_queue WHERE live_id = ? ORDER BY created_at ASC", (live_id,)).fetchall()
+    conn.close()
+    
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route('/api/webinaire/admin/allow', methods=['POST'])
+@login_required
+def api_webinaire_admin_allow():
+    """Régie technique : Donner la parole (activer le micro) à un fidèle."""
+    live_id = request.json.get('live_id')
+    user_email = request.json.get('user_email')
+    
+    if not live_id or not user_email:
+        return jsonify({'error': 'Paramètres manquants'}), 400
+        
+    conn = get_db()
+    conn.execute("UPDATE webinaire_queue SET status = 'allowed' WHERE live_id = ? AND user_email = ?", (live_id, user_email))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
+
+@app.route('/api/webinaire/admin/mute', methods=['POST'])
+@login_required
+def api_webinaire_admin_mute():
+    """Régie technique : Couper le micro (remettre en spectateur) ou révoquer la parole."""
+    live_id = request.json.get('live_id')
+    user_email = request.json.get('user_email')
+    
+    if not live_id or not user_email:
+        return jsonify({'error': 'Paramètres manquants'}), 400
+        
+    conn = get_db()
+    conn.execute("DELETE FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
+
+@app.route('/api/webinaire/admin/clear', methods=['POST'])
+@login_required
+def api_webinaire_admin_clear():
+    """Régie technique : Réinitialiser la file complète du webinaire."""
+    live_id = request.json.get('live_id')
+    if not live_id:
+        return jsonify({'error': 'live_id manquant'}), 400
+        
+    conn = get_db()
+    conn.execute("DELETE FROM webinaire_queue WHERE live_id = ?", (live_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
 
 
 # ─────────────────────────────────────────────
