@@ -7810,6 +7810,7 @@
                 configOverwrite: {
                     startWithAudioMuted: false, // Débuter avec micro actif
                     startWithVideoMuted: false, // Débuter avec caméra active
+                    startWithTileView: true,    // Démarrer en mode mosaïque (grid)
                     prejoinPageEnabled: false,
                     disableThirdPartyRequests: true,
                     enableWelcomePage: false,
@@ -7925,6 +7926,28 @@
             }
             
             window.webinaireStandardPlayerLoaded = true;
+        }
+
+        function toggleWebinaireFullscreen() {
+            const container = document.getElementById('webinaire-media-container');
+            if (!container) return;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) { /* Safari */
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) { /* IE11 */
+                    container.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
         }
 
         function updateWebinaireUI(status) {
@@ -8319,6 +8342,9 @@
                             </button>
                             <button id="webinaire-btn-share" onclick="toggleWebinaireLocalShare()" disabled style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; width: 38px; height: 38px; color: rgba(255,255,255,0.25); cursor: not-allowed; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; outline: none;" title="Partage d'écran désactivé par la Régie">
                                 🖥️
+                            </button>
+                            <button id="webinaire-btn-fullscreen" onclick="toggleWebinaireFullscreen()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 50%; width: 38px; height: 38px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; outline: none;" title="Plein Écran">
+                                ⛶
                             </button>
                             <button onclick="closePlayer()" style="background: #ef5350; border: none; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: 800; font-size: 0.78rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;" onmouseover="this.style.background='#d32f2f';" onmouseout="this.style.background='#ef5350';">
                                 🚪 Quitter

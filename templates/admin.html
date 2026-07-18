@@ -2973,10 +2973,10 @@
             const container = document.getElementById('live-form-url-container');
             if (select && urlInput) {
                 if (select.value === 'interactif') {
-                    urlInput.disabled = true;
+                    urlInput.disabled = false;
                     urlInput.required = false;
-                    if (container) container.style.opacity = '0.45';
-                    urlInput.placeholder = "Généré automatiquement par le serveur";
+                    if (container) container.style.opacity = '1.0';
+                    urlInput.placeholder = "URL du Live (ex: YouTube Live) [Optionnel]";
                 } else {
                     urlInput.disabled = false;
                     urlInput.required = true;
