@@ -2287,6 +2287,10 @@ def api_webinaire_join():
     
     if not live_id:
         return jsonify({'error': 'live_id manquant'}), 400
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
     # On regarde si l'utilisateur est déjà dans la file
@@ -2308,6 +2312,10 @@ def api_webinaire_status():
     
     if not live_id:
         return jsonify({'error': 'live_id manquant'}), 400
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
     row = conn.execute("SELECT status FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email)).fetchone()
@@ -2333,6 +2341,10 @@ def api_webinaire_request_speech():
 
     if not live_id:
         return jsonify({'error': 'live_id manquant'}), 400
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
 
     # Dériver un nom lisible depuis l'email
     display_name = user_email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
@@ -2369,6 +2381,10 @@ def api_webinaire_cancel_speech():
     
     if not live_id:
         return jsonify({'error': 'live_id manquant'}), 400
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
     conn.execute("DELETE FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email))
@@ -2385,6 +2401,10 @@ def api_webinaire_admin_queue():
     live_id = request.args.get('live_id')
     if not live_id:
         return jsonify({'error': 'live_id manquant'}), 400
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
     rows = conn.execute("SELECT * FROM webinaire_queue WHERE live_id = ? ORDER BY created_at ASC", (live_id,)).fetchall()
@@ -2403,6 +2423,10 @@ def api_webinaire_admin_allow():
     
     if not live_id or not user_email:
         return jsonify({'error': 'Paramètres manquants'}), 400
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
     conn.execute("UPDATE webinaire_queue SET status = 'allowed' WHERE live_id = ? AND user_email = ?", (live_id, user_email))
@@ -2422,6 +2446,10 @@ def api_webinaire_admin_mute():
     
     if not live_id or not user_email:
         return jsonify({'error': 'Paramètres manquants'}), 400
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
     conn.execute("DELETE FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email))
@@ -2439,6 +2467,10 @@ def api_webinaire_admin_clear():
     live_id = data.get('live_id')
     if not live_id:
         return jsonify({'error': 'live_id manquant'}), 400
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
     conn.execute("DELETE FROM webinaire_queue WHERE live_id = ?", (live_id,))
