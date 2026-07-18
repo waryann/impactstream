@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://meet.ffmuc.net/external_api.js"></script>
+    <script src="https://meet.opensuse.org/external_api.js"></script>
     <title>ImpactStream — Ministère Apostolique Impact</title>
     <meta name="description" content="Plateforme de streaming vidéo et audio du Ministère Apostolique Impact. Enseignements, musique, podcasts — tout en un seul endroit.">
     <link rel="icon" type="image/png" href="/static/images/logo.png">
@@ -7789,13 +7789,12 @@
                 // Play notification sound / vibre
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                 alert("🔴 Régie Webinaire : La parole vous a été accordée ! Votre microphone est maintenant activé.");
-                
-                // Enable devices
-                enableWebinaireControls(true);
             } else if (status !== 'allowed' && window.webinaireLastStatus === 'allowed') {
                 alert("🔇 Régie Webinaire : Votre micro a été coupé par l'administrateur.");
-                enableWebinaireControls(false);
             }
+            
+            // Always enforce controls activation depending on status
+            enableWebinaireControls(status === 'allowed');
             
             window.webinaireLastStatus = status;
             
@@ -8198,7 +8197,7 @@
                 `;
 
                 // Instantiate Jitsi Meet Iframe
-                const domain = "meet.ffmuc.net";
+                const domain = "meet.opensuse.org";
                 const userEmail = '{{ session.get("user_email") }}';
                 const displayName = userEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 
