@@ -1838,7 +1838,7 @@
             </div>
 
             <!-- Hidden Audio Element -->
-            <audio id="bible-native-audio" style="display: none;" preload="metadata" playsinline></audio>
+            <audio id="bible-native-audio" style="display: none;" playsinline></audio>
 
             <!-- Bible Audio Player Card -->
             <div id="bible-audio-player-card" style="display: none; background: linear-gradient(165deg, rgba(27, 26, 20, 0.75), rgba(14, 14, 10, 0.95)); border: 1px solid rgba(232, 130, 12, 0.25); border-radius: 16px; padding: 1rem 1.5rem; margin-bottom: 1.75rem; align-items: center; justify-content: space-between; gap: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.4); animation: fadeIn 0.4s ease; flex-wrap: wrap;">
@@ -2895,9 +2895,10 @@
             }
 
             // Charger uniquement si la source a changé
+            // NOTE: Sur iOS Safari, on ne doit PAS appeler load() avant play()
+            // — assigner src suffit, play() déclenche le chargement automatiquement
             if (_lastLoadedSrc !== expectedSrc) {
                 nativeAudio.src = expectedSrc;
-                nativeAudio.load();
                 _lastLoadedSrc = expectedSrc;
             }
 
@@ -3051,9 +3052,9 @@
             initNativeAudio();
             if (nativeAudio) {
                 const newSrc = getStudioAudioUrl();
+                // Sur iOS : src + play() directement, sans load()
                 nativeAudio.src = newSrc;
                 _lastLoadedSrc = newSrc;
-                nativeAudio.load();
                 nativeAudio.play().then(() => {
                     isStudioPlaying = true;
                     updateStudioPlayerUI(true);
@@ -3097,9 +3098,9 @@
             initNativeAudio();
             if (nativeAudio) {
                 const newSrc = getStudioAudioUrl();
+                // Sur iOS : src + play() directement, sans load()
                 nativeAudio.src = newSrc;
                 _lastLoadedSrc = newSrc;
-                nativeAudio.load();
                 nativeAudio.play().then(() => {
                     isStudioPlaying = true;
                     updateStudioPlayerUI(true);
