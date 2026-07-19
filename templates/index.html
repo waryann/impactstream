@@ -2845,6 +2845,7 @@
                     isStudioPlaying = true;
                     updateStudioPlayerUI(true);
                     updateBibleMediaSession();
+                    prefetchNextBibleChapter();
                 }).catch(err => {
                     console.error("Error playing studio audio:", err);
                     alert("Le fichier audio studio n'a pas pu être chargé. Passage à la voix synthétique.");
@@ -2858,6 +2859,36 @@
             const bookPrefix = bibleAudioPrefixes[currentBibleBook];
             const chapterPad = String(currentBibleChapter).padStart(3, '0');
             return `https://archive.org/download/french_audiobible/${bookPrefix}_${chapterPad}.mp3`;
+        }
+
+        function prefetchNextBibleChapter() {
+            const isLastChapterOfBible = (currentBibleBook === 66 && currentBibleChapter === 22);
+            if (!isLastChapterOfBible) {
+                const book = BIBLE_BOOKS.find(b => b.nr === currentBibleBook);
+                if (!book) return;
+                
+                let nextChapter = currentBibleChapter + 1;
+                let nextBook = currentBibleBook;
+                if (nextChapter > book.chapters) {
+                    nextBook = currentBibleBook + 1;
+                    nextChapter = 1;
+                }
+                
+                const nextBookPrefix = bibleAudioPrefixes[nextBook];
+                const nextChapterPad = String(nextChapter).padStart(3, '0');
+                const nextUrl = `https://archive.org/download/french_audiobible/${nextBookPrefix}_${nextChapterPad}.mp3`;
+                
+                let prefetchAudio = document.getElementById('bible-native-audio-prefetch');
+                if (!prefetchAudio) {
+                    prefetchAudio = document.createElement('audio');
+                    prefetchAudio.id = 'bible-native-audio-prefetch';
+                    prefetchAudio.style.display = 'none';
+                    prefetchAudio.preload = 'auto';
+                    document.body.appendChild(prefetchAudio);
+                }
+                prefetchAudio.src = nextUrl;
+                prefetchAudio.load();
+            }
         }
 
         window.stopStudioAudio = function() {
@@ -2953,6 +2984,7 @@
                         isStudioPlaying = true;
                         updateStudioPlayerUI(true);
                         updateBibleMediaSession();
+                        prefetchNextBibleChapter();
                     }).catch(err => {
                         console.error("Background next chapter failed:", err);
                     });
@@ -2998,6 +3030,7 @@
                         isStudioPlaying = true;
                         updateStudioPlayerUI(true);
                         updateBibleMediaSession();
+                        prefetchNextBibleChapter();
                     }).catch(err => {
                         console.error("Background previous chapter failed:", err);
                     });
