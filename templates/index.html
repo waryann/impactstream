@@ -9031,7 +9031,7 @@
                 })
                 .on(LivekitClient.RoomEvent.ActiveSpeakersChanged, speakers => {
                     window.lkActiveSpeakers = new Set(speakers.map(s => s.identity));
-                    lkRenderMosaic();
+                    updateLkSpeakerHighlights();
                 })
                 .on(LivekitClient.RoomEvent.ConnectionQualityChanged, (q, p) => handleLkQuality(q, p))
                 .on(LivekitClient.RoomEvent.DataReceived, (data, p) => {
@@ -9065,7 +9065,24 @@
         function attachLkParticipantEvents(p) {
             p.on(LivekitClient.ParticipantEvent.TrackMuted, () => lkRenderMosaic())
              .on(LivekitClient.ParticipantEvent.TrackUnmuted, () => lkRenderMosaic())
-             .on(LivekitClient.ParticipantEvent.IsSpeakingChanged, () => lkRenderMosaic());
+             .on(LivekitClient.ParticipantEvent.IsSpeakingChanged, () => updateLkSpeakerHighlights());
+        }
+
+        // —— Mise à jour fluide des surbrillances orateurs (Sans détruire le DOM/vidéo = zéro tremblement) ——
+        function updateLkSpeakerHighlights() {
+            const grid = document.getElementById('lk-participants-grid');
+            if (grid) {
+                for (const tile of grid.children) {
+                    const id = tile.getAttribute('data-identity');
+                    if (!id) continue;
+                    const isSpeaking = window.lkActiveSpeakers.has(id);
+                    const isPinned = window.lkPinnedSet.has(id);
+                    tile.style.borderColor = isSpeaking ? '#4caf50' : isPinned ? '#e8820c' : 'rgba(255,255,255,0.07)';
+                    tile.style.boxShadow = isSpeaking ? '0 0 16px rgba(76,175,80,0.22)' : 'none';
+                    tile.style.background = isSpeaking ? 'rgba(76,175,80,0.07)' : 'rgba(13,13,10,0.95)';
+                }
+            }
+            lkUpdatePanelParticipants(Array.from(window.lkParticipants.values()));
         }
 
         // —— Mosaic Renderer ——
@@ -9445,6 +9462,8 @@
             window.lkShareEnabled = false;
             window.lkActiveSpeakers = new Set();
         }
+
+        window.addEventListener('beforeunload', lkCleanup);
 
     </script>
 </body>

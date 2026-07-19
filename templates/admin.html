@@ -2895,9 +2895,15 @@
                         ? `<span style="color: #4caf50; font-weight: bold; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.2rem;">● En parole 🎙️</span>`
                         : `<span style="color: #e8820c; font-weight: bold; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.2rem;">✋ En attente</span>`;
                         
-                    const actionBtn = isAllowed
-                        ? `<button onclick="muteWebinaireSpeech(${liveId}, '${user.user_email}')" style="background: rgba(239, 83, 80, 0.12); border: 1px solid rgba(239, 83, 80, 0.25); color: #ef5350; font-size: 0.72rem; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,83,80,0.22)'" onmouseout="this.style.background='rgba(239,83,80,0.12)'">🔇 Couper</button>`
-                        : `<button onclick="allowWebinaireSpeech(${liveId}, '${user.user_email}')" style="background: rgba(76, 175, 80, 0.12); border: 1px solid rgba(76, 175, 80, 0.25); color: #81c784; font-size: 0.72rem; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='rgba(76,175,80,0.22)'" onmouseout="this.style.background='rgba(76,175,80,0.12)'">🎙️ Ouvrir Micro</button>`;
+                    const actionBtns = `
+                        <div style="display:flex;gap:0.35rem;justify-content:flex-end;align-items:center;">
+                            ${isAllowed 
+                                ? `<button onclick="muteWebinaireSpeech(${liveId}, '${user.user_email}')" style="background: rgba(239, 83, 80, 0.12); border: 1px solid rgba(239, 83, 80, 0.25); color: #ef5350; font-size: 0.72rem; padding: 0.35rem 0.65rem; border-radius: 6px; cursor: pointer; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,83,80,0.25)'" onmouseout="this.style.background='rgba(239,83,80,0.12)'">🔇 Couper</button>`
+                                : `<button onclick="allowWebinaireSpeech(${liveId}, '${user.user_email}')" style="background: rgba(76, 175, 80, 0.12); border: 1px solid rgba(76, 175, 80, 0.25); color: #81c784; font-size: 0.72rem; padding: 0.35rem 0.65rem; border-radius: 6px; cursor: pointer; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='rgba(76,175,80,0.25)'" onmouseout="this.style.background='rgba(76,175,80,0.12)'">🎙️ Ouvrir Micro</button>`
+                            }
+                            <button onclick="muteWebinaireSpeech(${liveId}, '${user.user_email}')" title="Retirer de la régie" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.5); font-size: 0.72rem; padding: 0.35rem 0.5rem; border-radius: 6px; cursor: pointer; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,83,80,0.3)';this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.color='rgba(255,255,255,0.5)';">🗑️ Retirer</button>
+                        </div>
+                    `;
 
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid rgba(255, 255, 255, 0.04)';
@@ -2907,7 +2913,7 @@
                             <div style="font-size: 0.72rem; color: rgba(237,232,223,0.35);">${user.user_email} — <span style="color: rgba(237,232,223,0.55);">${location}</span></div>
                         </td>
                         <td style="padding: 0.75rem 0.5rem; vertical-align: middle;">${statusText}</td>
-                        <td style="padding: 0.75rem 0.5rem; text-align: right; vertical-align: middle;">${actionBtn}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: right; vertical-align: middle;">${actionBtns}</td>
                     `;
                     tbody.appendChild(tr);
                 });
