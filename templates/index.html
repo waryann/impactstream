@@ -6994,7 +6994,8 @@
             const playerContainer = document.getElementById('modal-player');
             if (playerContainer) { playerContainer.innerHTML = ''; }
 
-            // Nettoyage Webinaire Interactif
+            // Nettoyage LiveKit & Webinaire Interactif
+            lkCleanup();
             window.webinaireStandardPlayerLoaded = false;
             if (window.webinaireJitsiAPI) {
                 try {
@@ -8457,89 +8458,8 @@
             const isInteractif = (live.type_diffusion === 'interactif');
 
             if (isInteractif) {
-                // Initialize global state for webinaire tracking
-                window.activeWebinaireId = liveId;
-                window.webinaireLocalMicActive = false;
-                window.webinaireLocalCamActive = false;
-                window.webinaireLocalShareActive = false;
-                window.webinaireLastStatus = 'spectator';
-                window.webinaireStandardPlayerLoaded = false;
-                
-                // Store URLs globally so they are accessible inside updateWebinaireUI
-                window.webinaireLiveUrl = url;
-                window.webinaireLiveYtUrl = ytUrl;
-                window.webinaireLiveVimeoUrl = vimeoUrl;
-
-                // Draw Webinaire Screen UI with the webinaire-media-container
-                player.innerHTML = `
-                    <div style="position: relative; width: 100%; height: 100%; background: #000; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
-                        <!-- Media container: displays YouTube/Vimeo stream OR Jitsi videoconference call -->
-                        <div id="webinaire-media-container" style="flex: 1; background: #000; width: 100%; height: 100%; border-radius: 12px 12px 0 0; overflow: hidden;">
-                        </div>
-
-                        <!-- Webinaire local devices control bar -->
-                        <div id="webinaire-local-controls" style="background: #11100c; border-top: 1px solid rgba(255,255,255,0.06); padding: 0.75rem; display: flex; justify-content: center; gap: 0.75rem; align-items: center; z-index: 20;">
-                            <button id="webinaire-btn-mic" onclick="toggleWebinaireLocalMic()" disabled style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; width: 38px; height: 38px; color: rgba(255,255,255,0.25); cursor: not-allowed; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; outline: none;" title="Micro désactivé par la Régie">
-                                🎙️
-                            </button>
-                            <button id="webinaire-btn-cam" onclick="toggleWebinaireLocalCam()" disabled style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; width: 38px; height: 38px; color: rgba(255,255,255,0.25); cursor: not-allowed; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; outline: none;" title="Caméra désactivée par la Régie">
-                                📹
-                            </button>
-                            <button id="webinaire-btn-share" onclick="toggleWebinaireLocalShare()" disabled style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; width: 38px; height: 38px; color: rgba(255,255,255,0.25); cursor: not-allowed; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; outline: none;" title="Partage d'écran désactivé par la Régie">
-                                🖥️
-                            </button>
-                            <button id="webinaire-btn-fullscreen" onclick="toggleWebinaireFullscreen()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 50%; width: 38px; height: 38px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; outline: none;" title="Plein Écran">
-                                ⛶
-                            </button>
-                            <button onclick="closePlayer()" style="background: #ef5350; border: none; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: 800; font-size: 0.78rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;" onmouseover="this.style.background='#d32f2f';" onmouseout="this.style.background='#ef5350';">
-                                🚪 Quitter
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                info.innerHTML = `
-                    <div class="flex flex-col gap-2">
-                        <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(232, 130, 12, 0.12); border: 1px solid rgba(232, 130, 12, 0.25); color: #e8820c; font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; width: fit-content; margin-bottom: 0.5rem;">
-                            <span class="pulsing-dot" style="width: 6px; height: 6px; background: #e8820c; border-radius: 50%; display: inline-block;"></span>
-                            <span>Direct Interactif (Ultra-Basse Latence)</span>
-                        </div>
-                        <h2 class="text-2xl font-extrabold text-white" style="margin: 0; font-size: 1.5rem; font-family: 'Outfit', sans-serif;">${title}</h2>
-                        <p class="text-sm leading-relaxed text-zinc-400" style="margin: 0.5rem 0 0; color: rgba(237,232,223,0.45); font-size: 0.85rem;">${description || 'Visioconférence interactive avec la régie.'}</p>
-                        
-                        <!-- Webinaire Raise Hand Button and Speakers -->
-                        <div style="margin-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1.25rem;">
-                            <button id="webinaire-btn-raise-hand" onclick="toggleWebinaireSpeechRequest(${liveId})" style="width: 100%; padding: 0.8rem 1.5rem; background: linear-gradient(135deg, #e8820c, #f5a623); border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 0.9rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(232,130,12,0.25); outline: none;" onmouseover="this.style.filter='brightness(1.1)';" onmouseout="this.style.filter='none';">
-                                <span>Demander la parole (Lever la main)</span> ✋
-                            </button>
-                            
-                            <div style="margin-top: 1rem; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; padding: 0.75rem 1rem;">
-                                <h4 style="font-size: 0.8rem; font-weight: 800; color: #fff; margin: 0 0 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.3rem;">
-                                    <span>🎤 Fidèles en parole :</span>
-                                    <span id="webinaire-speakers-count" style="font-size: 0.7rem; color: #81c784; background: rgba(76,175,80,0.1); padding: 0.05rem 0.35rem; border-radius: 4px; font-weight: 800;">0</span>
-                                </h4>
-                                <div id="webinaire-speakers-list" style="font-size: 0.8rem; color: rgba(237,232,223,0.45); font-style: italic; line-height: 1.4;">
-                                    Aucun membre n'a la parole actuellement.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                // Join the webinaire API
-                fetch('/api/webinaire/join', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ live_id: liveId })
-                }).then(res => res.json())
-                  .then(data => {
-                      updateWebinaireUI(data.status);
-                  }).catch(err => console.error("Error joining webinaire:", err));
-
-                // Start polling status
-                window.webinaireStatusInterval = setInterval(() => {
-                    pollWebinaireStatus(liveId);
-                }, 3000);
+                // ── Nouveau système LiveKit Ultra-Basse Latence ──
+                initLiveKitPlayer(liveId, title, description, player, info);
 
             } else {
                 const ytUrl = getYouTubeEmbedUrl(url);
@@ -8809,6 +8729,676 @@
         setInterval(() => {
             fetch('/api/session-status').catch(err => console.error('Session check error:', err));
         }, 8000);
+
+
+        // ═══════════════════════════════════════════════
+        // LiveKit Interactive Webinar — ImpactStream v2.0
+        // ═══════════════════════════════════════════════
+
+        // —— Global LiveKit State ——
+        window.lkRoom = null;
+        window.lkParticipants = new Map();
+        window.lkPinnedSet = new Set();
+        window.lkCurrentPage = 0;
+        window.lkPageSize = 12;
+        window.lkActiveLiveId = null;
+        window.lkSpeechStatus = 'spectator';
+        window.lkMicEnabled = false;
+        window.lkCamEnabled = false;
+        window.lkShareEnabled = false;
+        window.lkStatusInterval = null;
+        window.lkActiveSpeakers = new Set();
+        window.lkPanelVisible = true;
+
+        // —— Entry Point ——
+        async function initLiveKitPlayer(liveId, title, description, playerEl, infoEl) {
+            window.lkActiveLiveId = liveId;
+            window.lkSpeechStatus = 'spectator';
+            window.lkParticipants = new Map();
+            window.lkPinnedSet = new Set();
+            window.lkCurrentPage = 0;
+            window.lkMicEnabled = false;
+            window.lkCamEnabled = false;
+            window.lkShareEnabled = false;
+
+            // Vérifier la configuration LiveKit
+            let config;
+            try { config = await fetch('/api/livekit/config').then(r => r.json()); }
+            catch(e) { config = { configured: false }; }
+
+            if (!config.configured) {
+                playerEl.innerHTML = `
+                    <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#1b1a14 0%,#090907 100%);border-radius:12px;padding:2rem;text-align:center;gap:1.5rem;">
+                        <div style="width:80px;height:80px;border-radius:50%;background:rgba(232,130,12,0.08);border:2px solid rgba(232,130,12,0.25);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">⚙️</div>
+                        <div>
+                            <h3 style="font-size:1.3rem;font-weight:800;color:#fff;margin:0 0 0.5rem;">LiveKit non configuré</h3>
+                            <p style="font-size:0.85rem;color:rgba(237,232,223,0.5);max-width:320px;line-height:1.6;margin:0 auto 1rem;">Pour activer le webinaire interactif ultra-basse latence, configurez les clés LiveKit dans un fichier <code style="background:rgba(255,255,255,0.08);padding:0.1rem 0.4rem;border-radius:4px;color:#e8820c;">.env</code></p>
+                            <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(76,175,80,0.2);border-radius:10px;padding:0.75rem 1rem;text-align:left;font-family:monospace;font-size:0.73rem;color:#81c784;line-height:1.9;display:inline-block;">
+                                LIVEKIT_URL=wss://myproject.livekit.cloud<br>
+                                LIVEKIT_API_KEY=APIxxxxxxxx<br>
+                                LIVEKIT_API_SECRET=xxxxxxxxxx
+                            </div>
+                            <p style="font-size:0.75rem;color:rgba(237,232,223,0.3);margin:0.75rem 0 0;">Compte gratuit sur <strong style="color:#e8820c;">cloud.livekit.io</strong> — 10 000 min/mois incluses</p>
+                        </div>
+                    </div>
+                `;
+                infoEl.innerHTML = `
+                    <div style="display:flex;flex-direction:column;gap:1rem;">
+                        <div style="display:inline-flex;align-items:center;gap:0.4rem;background:rgba(232,130,12,0.12);border:1px solid rgba(232,130,12,0.25);color:#e8820c;font-size:0.68rem;font-weight:800;padding:0.25rem 0.65rem;border-radius:100px;text-transform:uppercase;letter-spacing:0.05em;width:fit-content;">
+                            <span class="pulsing-dot" style="width:6px;height:6px;background:#e8820c;border-radius:50%;display:inline-block;"></span> Configuration Requise
+                        </div>
+                        <h2 style="margin:0;font-size:1.4rem;font-weight:800;color:#fff;">${title}</h2>
+                        <p style="margin:0;color:rgba(237,232,223,0.45);font-size:0.82rem;line-height:1.5;">${description || 'Webinaire interactif ultra-basse latence.'}</p>
+                        <div style="background:rgba(232,130,12,0.05);border:1px solid rgba(232,130,12,0.15);border-radius:12px;padding:1rem;">
+                            <h4 style="color:#e8820c;font-size:0.78rem;font-weight:800;margin:0 0 0.5rem;text-transform:uppercase;letter-spacing:0.05em;">Pour activer ce module</h4>
+                            <ol style="color:rgba(237,232,223,0.6);font-size:0.82rem;line-height:2;margin:0;padding-left:1.2rem;">
+                                <li>Créer un compte sur <strong>cloud.livekit.io</strong></li>
+                                <li>Créer un projet → copier les 3 clés</li>
+                                <li>Les coller dans le fichier <code>.env</code></li>
+                                <li>Redémarrer le serveur Flask</li>
+                            </ol>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Rendu du squelette UI
+            playerEl.innerHTML = `
+                <div id="lk-wrapper" style="position:relative;width:100%;height:100%;background:#090907;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">
+                    <div id="lk-status-bar" style="background:rgba(0,0,0,0.55);padding:0.35rem 1rem;display:flex;align-items:center;justify-content:space-between;font-size:0.72rem;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <div id="lk-conn-dot" style="width:8px;height:8px;border-radius:50%;background:#ff9800;animation:pulse-orange 2s infinite;"></div>
+                            <span id="lk-conn-text" style="color:rgba(255,255,255,0.55);">Connexion en cours...</span>
+                        </div>
+                        <span id="lk-participant-count" style="color:rgba(255,255,255,0.35);font-weight:700;">0 participant</span>
+                    </div>
+                    <div id="lk-mosaic-wrapper" style="position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;">
+                        <div id="lk-pinned-zone" style="display:none;padding:0.6rem 0.75rem;background:rgba(232,130,12,0.04);border-bottom:1px solid rgba(232,130,12,0.12);flex-shrink:0;">
+                            <div style="font-size:0.65rem;font-weight:800;color:rgba(232,130,12,0.6);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;">📌 Épinglés</div>
+                            <div id="lk-pinned-grid" style="display:grid;gap:0.4rem;"></div>
+                        </div>
+                        <div id="lk-participants-grid" style="flex:1;display:grid;gap:0.5rem;padding:0.75rem;align-content:start;overflow:hidden;"></div>
+                        <div id="lk-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:rgba(255,255,255,0.3);text-align:center;padding:2rem;">
+                            <div style="font-size:3.5rem;margin-bottom:1rem;opacity:0.5;">🎙️</div>
+                            <p style="font-size:0.9rem;font-weight:600;margin:0 0 0.25rem;">En attente des intervenants</p>
+                            <p style="font-size:0.75rem;margin:0;opacity:0.7;">Les participants avec caméra et micro apparaissent ici</p>
+                        </div>
+                        <div id="lk-pagination" style="display:none;align-items:center;justify-content:center;gap:1rem;padding:0.5rem;background:rgba(0,0,0,0.4);border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
+                            <button onclick="lkPrevPage()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;padding:0.3rem 0.75rem;cursor:pointer;font-size:0.8rem;font-weight:700;outline:none;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">← Préc.</button>
+                            <span id="lk-page-info" style="font-size:0.78rem;color:rgba(255,255,255,0.45);font-weight:700;min-width:60px;text-align:center;">1/1</span>
+                            <button onclick="lkNextPage()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;padding:0.3rem 0.75rem;cursor:pointer;font-size:0.8rem;font-weight:700;outline:none;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">Suiv. →</button>
+                        </div>
+                        <div id="lk-local-pip" style="position:absolute;bottom:3rem;left:0.75rem;width:130px;height:75px;background:#11100c;border:2px solid rgba(76,175,80,0.45);border-radius:10px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,0.6);display:none;z-index:10;">
+                            <video id="lk-local-video" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.75);padding:0.15rem 0.4rem;font-size:0.6rem;font-weight:700;color:#81c784;">🎙️ Moi</div>
+                        </div>
+                    </div>
+                    <div id="lk-controls" style="background:rgba(10,10,7,0.98);border-top:1px solid rgba(255,255,255,0.06);padding:0.55rem 1rem;display:flex;justify-content:center;gap:0.55rem;align-items:center;flex-shrink:0;">
+                        <button id="lk-btn-mic" onclick="lkToggleMic()" disabled title="Micro (accordé par l'admin)" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:50%;width:40px;height:40px;color:rgba(255,255,255,0.22);cursor:not-allowed;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:all 0.2s;flex-shrink:0;outline:none;">🎙️</button>
+                        <button id="lk-btn-cam" onclick="lkToggleCam()" disabled title="Caméra (accordée par l'admin)" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:50%;width:40px;height:40px;color:rgba(255,255,255,0.22);cursor:not-allowed;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:all 0.2s;flex-shrink:0;outline:none;">📹</button>
+                        <button id="lk-btn-share" onclick="lkToggleShare()" disabled title="Partage écran (accordé par l'admin)" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:50%;width:40px;height:40px;color:rgba(255,255,255,0.22);cursor:not-allowed;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:all 0.2s;flex-shrink:0;outline:none;">🖥️</button>
+                        <div style="width:1px;height:22px;background:rgba(255,255,255,0.07);margin:0 0.15rem;"></div>
+                        <button onclick="lkToggleFullscreen()" title="Plein écran" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:50%;width:40px;height:40px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all 0.2s;flex-shrink:0;outline:none;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">⛶</button>
+                        <button onclick="closePlayer()" style="background:#ef5350;border:none;border-radius:20px;padding:0.5rem 1.25rem;font-weight:800;font-size:0.78rem;color:#fff;cursor:pointer;display:flex;align-items:center;gap:0.3rem;transition:all 0.2s;outline:none;" onmouseover="this.style.background='#d32f2f'" onmouseout="this.style.background='#ef5350'">🚪 Quitter</button>
+                    </div>
+                </div>
+            `;
+
+            // Panneau latéral (info)
+            infoEl.innerHTML = `
+                <div style="display:flex;flex-direction:column;gap:0.9rem;height:100%;overflow:hidden;">
+                    <div>
+                        <div style="display:inline-flex;align-items:center;gap:0.4rem;background:rgba(232,130,12,0.12);border:1px solid rgba(232,130,12,0.25);color:#e8820c;font-size:0.68rem;font-weight:800;padding:0.25rem 0.65rem;border-radius:100px;text-transform:uppercase;letter-spacing:0.05em;width:fit-content;margin-bottom:0.5rem;">
+                            <span class="pulsing-dot" style="width:6px;height:6px;background:#e8820c;border-radius:50%;display:inline-block;"></span> Direct Interactif
+                        </div>
+                        <h2 style="margin:0;font-size:1.35rem;font-weight:800;color:#fff;font-family:'Outfit',sans-serif;">${title}</h2>
+                        <p style="margin:0.4rem 0 0;color:rgba(237,232,223,0.42);font-size:0.8rem;line-height:1.5;">${description || 'Webinaire interactif ultra-basse latence. LiveKit WebRTC.'}</p>
+                    </div>
+                    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:0.9rem;">
+                        <button id="lk-raise-hand-btn" onclick="lkToggleSpeechRequest()" style="width:100%;padding:0.75rem 1.25rem;background:linear-gradient(135deg,#e8820c,#f5a623);border:none;border-radius:12px;color:#fff;font-weight:800;font-size:0.88rem;cursor:pointer;transition:all 0.3s;display:flex;align-items:center;justify-content:center;gap:0.5rem;box-shadow:0 4px 15px rgba(232,130,12,0.25);outline:none;" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter='none'">
+                            <span>Demander la parole</span> ✋
+                        </button>
+                        <p id="lk-speech-info" style="text-align:center;font-size:0.7rem;color:rgba(237,232,223,0.32);margin:0.4rem 0 0;font-style:italic;">Mode spectateur — En écoute seule</p>
+                    </div>
+                    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:0.75rem;flex:1;min-height:0;display:flex;flex-direction:column;gap:0.5rem;">
+                        <h4 style="font-size:0.7rem;font-weight:800;color:rgba(237,232,223,0.45);text-transform:uppercase;letter-spacing:0.05em;margin:0;display:flex;align-items:center;justify-content:space-between;">
+                            👥 Participants <span id="lk-panel-count" style="background:rgba(232,130,12,0.1);border:1px solid rgba(232,130,12,0.2);color:#e8820c;padding:0.1rem 0.4rem;border-radius:4px;font-size:0.62rem;">0</span>
+                        </h4>
+                        <div id="lk-panel-participants" style="overflow-y:auto;display:flex;flex-direction:column;gap:0.25rem;max-height:120px;flex-shrink:0;">
+                            <div style="color:rgba(237,232,223,0.22);font-size:0.75rem;font-style:italic;padding:0.3rem;">Aucun participant actif</div>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:0.65rem;flex-shrink:0;">
+                        <h4 style="font-size:0.7rem;font-weight:800;color:rgba(237,232,223,0.45);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 0.4rem;display:flex;align-items:center;gap:0.3rem;">
+                            🎤 En parole <span id="lk-speakers-count" style="background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.2);color:#81c784;padding:0.1rem 0.4rem;border-radius:4px;font-size:0.62rem;">0</span>
+                        </h4>
+                        <div id="lk-speakers-list" style="font-size:0.75rem;color:rgba(237,232,223,0.32);font-style:italic;">Aucun membre n'a la parole actuellement.</div>
+                    </div>
+                    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:0.65rem;display:flex;flex-direction:column;gap:0.4rem;flex-shrink:0;">
+                        <h4 style="font-size:0.7rem;font-weight:800;color:rgba(237,232,223,0.45);text-transform:uppercase;letter-spacing:0.05em;margin:0;">💬 Chat en direct</h4>
+                        <div id="lk-chat-messages" style="height:90px;overflow-y:auto;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:0.4rem;display:flex;flex-direction:column;gap:0.25rem;font-size:0.72rem;">
+                            <div id="lk-chat-placeholder" style="color:rgba(237,232,223,0.22);font-style:italic;text-align:center;padding:1rem 0;">Le chat s'active après connexion</div>
+                        </div>
+                        <div style="display:flex;gap:0.4rem;">
+                            <input id="lk-chat-input" type="text" placeholder="Votre message..." maxlength="300" style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#fff;padding:0.4rem 0.6rem;font-size:0.75rem;outline:none;" onfocus="this.style.borderColor='rgba(232,130,12,0.4)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'" onkeypress="if(event.key==='Enter')lkSendChat()">
+                            <button onclick="lkSendChat()" style="background:rgba(232,130,12,0.15);border:1px solid rgba(232,130,12,0.25);border-radius:8px;color:#e8820c;padding:0.4rem 0.65rem;cursor:pointer;font-size:0.85rem;font-weight:700;transition:all 0.2s;outline:none;" onmouseover="this.style.background='rgba(232,130,12,0.25)'" onmouseout="this.style.background='rgba(232,130,12,0.15)'">→</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Chargement SDK et connexion
+            try {
+                await loadLiveKitSDK();
+                await lkConnect(liveId);
+            } catch(err) {
+                console.error('LiveKit init error:', err);
+                const ct = document.getElementById('lk-conn-text');
+                if (ct) ct.textContent = 'Erreur: ' + err.message;
+            }
+
+            // Polling statut (promotion/révocation)
+            window.lkStatusInterval = setInterval(lkPollStatus, 3000);
+        }
+
+        // —— Load LiveKit SDK from CDN ——
+        async function loadLiveKitSDK() {
+            if (window.LivekitClient) return;
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js';
+                s.onload = () => { console.log('\u2705 LiveKit SDK charg\u00e9'); resolve(); };
+                s.onerror = () => reject(new Error('Impossible de charger le SDK LiveKit'));
+                document.head.appendChild(s);
+            });
+        }
+
+        // —— Connect to LiveKit Room ——
+        async function lkConnect(liveId) {
+            const cd = document.getElementById('lk-conn-dot');
+            const ct = document.getElementById('lk-conn-text');
+            try {
+                const data = await fetch(`/api/livekit/token?live_id=${liveId}`).then(r => r.json());
+                if (data.error) throw new Error(data.error);
+
+                window.lkRoom = new LivekitClient.Room({
+                    adaptiveStream: true,
+                    dynacast: true,
+                    audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                    videoCaptureDefaults: { resolution: LivekitClient.VideoPresets.h720.resolution },
+                });
+
+                setupLkEvents();
+
+                await window.lkRoom.connect(data.livekit_url, data.token, { autoSubscribe: false });
+
+                if (cd) { cd.style.background = '#4caf50'; cd.style.animation = ''; }
+                if (ct) ct.textContent = 'Connecté — ' + data.display_name;
+
+                // Ajouter les participants déjà présents
+                for (const [id, p] of window.lkRoom.remoteParticipants) {
+                    window.lkParticipants.set(id, p);
+                    attachLkParticipantEvents(p);
+                }
+                lkRenderMosaic();
+                updateLkParticipantCount();
+
+                // Retirer placeholder chat
+                const pl = document.getElementById('lk-chat-placeholder');
+                if (pl) pl.remove();
+                lkAddChatMsg('\uD83D\uDFE2 Syst\u00e8me', 'Connexion au webinaire établie !', 'system');
+
+                window.lkSpeechStatus = data.can_publish ? 'allowed' : 'spectator';
+                if (data.can_publish) enableLkControls(true);
+                updateLkSpeechUI(window.lkSpeechStatus);
+
+            } catch(err) {
+                if (cd) { cd.style.background = '#ef5350'; cd.style.animation = ''; }
+                if (ct) ct.textContent = 'Erreur de connexion: ' + err.message;
+                throw err;
+            }
+        }
+
+        // —— Room Event Listeners ——
+        function setupLkEvents() {
+            const room = window.lkRoom;
+            if (!room) return;
+            room
+                .on(LivekitClient.RoomEvent.ParticipantConnected, p => {
+                    window.lkParticipants.set(p.identity, p);
+                    attachLkParticipantEvents(p);
+                    lkRenderMosaic(); updateLkParticipantCount();
+                    lkAddChatMsg('\uD83D\uDFE2 Syst\u00e8me', `${p.name || p.identity} a rejoint`, 'system');
+                })
+                .on(LivekitClient.RoomEvent.ParticipantDisconnected, p => {
+                    window.lkParticipants.delete(p.identity);
+                    window.lkPinnedSet.delete(p.identity);
+                    lkRenderMosaic(); updateLkParticipantCount();
+                    lkAddChatMsg('\uD83D\uDD34 Syst\u00e8me', `${p.name || p.identity} a quitté`, 'system');
+                })
+                .on(LivekitClient.RoomEvent.TrackSubscribed, (track, pub, p) => {
+                    if (track.kind === 'audio') track.attach();
+                    lkRenderMosaic();
+                })
+                .on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => { track.detach(); lkRenderMosaic(); })
+                .on(LivekitClient.RoomEvent.ActiveSpeakersChanged, speakers => {
+                    window.lkActiveSpeakers = new Set(speakers.map(s => s.identity));
+                    lkRenderMosaic();
+                })
+                .on(LivekitClient.RoomEvent.ConnectionQualityChanged, (q, p) => handleLkQuality(q, p))
+                .on(LivekitClient.RoomEvent.DataReceived, (data, p) => {
+                    try {
+                        const msg = JSON.parse(new TextDecoder().decode(data));
+                        if (msg.type === 'chat') lkAddChatMsg(msg.sender, msg.text, 'remote');
+                    } catch(e) {}
+                })
+                .on(LivekitClient.RoomEvent.LocalTrackPublished, pub => {
+                    if (pub.track?.kind === 'video') {
+                        const pip = document.getElementById('lk-local-pip');
+                        const lv = document.getElementById('lk-local-video');
+                        if (pip) pip.style.display = 'block';
+                        if (lv) pub.track.attach(lv);
+                    }
+                })
+                .on(LivekitClient.RoomEvent.LocalTrackUnpublished, pub => {
+                    if (pub.track?.kind === 'video') {
+                        const pip = document.getElementById('lk-local-pip');
+                        if (pip) pip.style.display = 'none';
+                    }
+                })
+                .on(LivekitClient.RoomEvent.Disconnected, () => {
+                    const cd = document.getElementById('lk-conn-dot');
+                    const ct = document.getElementById('lk-conn-text');
+                    if (cd) cd.style.background = '#ef5350';
+                    if (ct) ct.textContent = 'Déconnecté';
+                });
+        }
+
+        function attachLkParticipantEvents(p) {
+            p.on(LivekitClient.ParticipantEvent.TrackMuted, () => lkRenderMosaic())
+             .on(LivekitClient.ParticipantEvent.TrackUnmuted, () => lkRenderMosaic())
+             .on(LivekitClient.ParticipantEvent.IsSpeakingChanged, () => lkRenderMosaic());
+        }
+
+        // —— Mosaic Renderer ——
+        function lkRenderMosaic() {
+            const grid = document.getElementById('lk-participants-grid');
+            const empty = document.getElementById('lk-empty-state');
+            const pgn = document.getElementById('lk-pagination');
+            if (!grid) return;
+
+            let all = Array.from(window.lkParticipants.values());
+
+            // Tri: locuteurs actifs d'abord, puis épinglés, puis alphabétique
+            all.sort((a, b) => {
+                const as = window.lkActiveSpeakers.has(a.identity) ? 0 : 1;
+                const bs = window.lkActiveSpeakers.has(b.identity) ? 0 : 1;
+                if (as !== bs) return as - bs;
+                const ap = window.lkPinnedSet.has(a.identity) ? 0 : 1;
+                const bp = window.lkPinnedSet.has(b.identity) ? 0 : 1;
+                if (ap !== bp) return ap - bp;
+                return (a.name || a.identity).localeCompare(b.name || b.identity);
+            });
+
+            const totalPages = Math.max(1, Math.ceil(all.length / window.lkPageSize));
+            window.lkCurrentPage = Math.min(window.lkCurrentPage, totalPages - 1);
+            const s = window.lkCurrentPage * window.lkPageSize;
+            const e = s + window.lkPageSize;
+            const visible = all.slice(s, e);
+
+            // Abonnement dynamique (bandwidth saving)
+            all.forEach((p, idx) => {
+                const isVis = idx >= s && idx < e;
+                for (const pub of p.videoTrackPublications.values()) {
+                    try { pub.setSubscribed(isVis); } catch(_) {}
+                }
+            });
+
+            const hasPart = all.length > 0;
+            grid.style.display = hasPart ? 'grid' : 'none';
+            if (empty) empty.style.display = hasPart ? 'none' : 'flex';
+            if (pgn) pgn.style.display = totalPages > 1 ? 'flex' : 'none';
+            const pi = document.getElementById('lk-page-info');
+            if (pi) pi.textContent = `${window.lkCurrentPage + 1}/${totalPages}`;
+
+            const cols = visible.length <= 1 ? 1 : visible.length <= 4 ? 2 : visible.length <= 9 ? 3 : 4;
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+            grid.innerHTML = '';
+            visible.forEach(p => grid.appendChild(createLkTile(p)));
+
+            lkUpdatePinnedZone(all);
+            lkUpdatePanelParticipants(all);
+        }
+
+        // —— Participant Tile ——
+        function createLkTile(p) {
+            const tile = document.createElement('div');
+            const isPinned = window.lkPinnedSet.has(p.identity);
+            const isSpeaking = window.lkActiveSpeakers.has(p.identity);
+            const hasVideo = p.videoTrackPublications.size > 0;
+            const hasAudio = p.audioTrackPublications.size > 0;
+            const name = p.name || p.identity;
+            const initials = name.split(' ').map(w => w[0] || '').join('').slice(0,2).toUpperCase() || '?';
+
+            tile.setAttribute('data-identity', p.identity);
+            tile.style.cssText = `position:relative;background:${isSpeaking ? 'rgba(76,175,80,0.07)' : 'rgba(13,13,10,0.95)'};border:2px solid ${isSpeaking ? '#4caf50' : isPinned ? '#e8820c' : 'rgba(255,255,255,0.07)'};border-radius:10px;overflow:hidden;aspect-ratio:16/9;cursor:pointer;transition:border-color 0.2s;${isSpeaking ? 'box-shadow:0 0 16px rgba(76,175,80,0.22);' : ''}`;
+
+            // Video
+            const video = document.createElement('video');
+            video.autoplay = true; video.playsInline = true; video.muted = true;
+            video.style.cssText = `width:100%;height:100%;object-fit:cover;display:${hasVideo ? 'block' : 'none'};`;
+            if (hasVideo) {
+                for (const pub of p.videoTrackPublications.values()) {
+                    if (pub.track) pub.track.attach(video);
+                }
+            }
+            tile.appendChild(video);
+
+            // Avatar fallback
+            const av = document.createElement('div');
+            av.style.cssText = `position:absolute;inset:0;display:${hasVideo ? 'none' : 'flex'};align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(232,130,12,0.07),rgba(14,14,10,0.97));`;
+            av.innerHTML = `<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,rgba(232,130,12,0.35),rgba(232,130,12,0.12));border:2px solid rgba(232,130,12,0.28);display:flex;align-items:center;justify-content:center;font-size:1.15rem;font-weight:800;color:#e8820c;">${initials}</div>`;
+            tile.appendChild(av);
+
+            // Overlay
+            const ov = document.createElement('div');
+            ov.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.85));padding:0.9rem 0.55rem 0.35rem;display:flex;align-items:flex-end;justify-content:space-between;';
+            ov.innerHTML = `<span style="font-size:0.68rem;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72%;">${hasAudio ? '🎙️' : '🔇'} ${name}</span>${isSpeaking ? '<span style="font-size:0.58rem;background:rgba(76,175,80,0.22);border:1px solid rgba(76,175,80,0.4);color:#81c784;padding:0.08rem 0.3rem;border-radius:4px;font-weight:800;white-space:nowrap;">● VIE</span>' : ''}`;
+            tile.appendChild(ov);
+
+            // Pin button
+            const pb = document.createElement('button');
+            pb.style.cssText = `position:absolute;top:0.4rem;right:0.4rem;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.18);border-radius:6px;color:${isPinned ? '#e8820c' : 'rgba(255,255,255,0.65)'};padding:0.12rem 0.32rem;font-size:0.62rem;cursor:pointer;opacity:0;transition:opacity 0.2s;outline:none;`;
+            pb.textContent = isPinned ? '📌' : '📌';
+            pb.onclick = ev => { ev.stopPropagation(); lkTogglePin(p.identity); };
+            tile.appendChild(pb);
+            tile.onmouseenter = () => pb.style.opacity = '1';
+            tile.onmouseleave = () => pb.style.opacity = '0';
+            tile.onclick = () => lkTogglePin(p.identity);
+
+            return tile;
+        }
+
+        function lkTogglePin(identity) {
+            if (window.lkPinnedSet.has(identity)) window.lkPinnedSet.delete(identity);
+            else window.lkPinnedSet.add(identity);
+            lkRenderMosaic();
+        }
+
+        function lkUpdatePinnedZone(all) {
+            const zone = document.getElementById('lk-pinned-zone');
+            const pg = document.getElementById('lk-pinned-grid');
+            if (!zone || !pg) return;
+            const pinned = all.filter(p => window.lkPinnedSet.has(p.identity));
+            zone.style.display = pinned.length > 0 ? 'block' : 'none';
+            if (pinned.length === 0) return;
+            const cols = pinned.length === 1 ? 1 : pinned.length <= 4 ? 2 : 3;
+            pg.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            pg.style.cssText = `display:grid;gap:0.4rem;max-height:160px;grid-template-columns:repeat(${cols}, 1fr);`;
+            pg.innerHTML = '';
+            pinned.forEach(p => { const t = createLkTile(p); t.style.borderColor = '#e8820c'; pg.appendChild(t); });
+        }
+
+        function lkUpdatePanelParticipants(all) {
+            const list = document.getElementById('lk-panel-participants');
+            const cnt = document.getElementById('lk-panel-count');
+            if (!list) return;
+            if (cnt) cnt.textContent = all.length;
+            if (all.length === 0) {
+                list.innerHTML = '<div style="color:rgba(237,232,223,0.22);font-size:0.72rem;font-style:italic;padding:0.3rem;">Aucun participant actif</div>';
+                return;
+            }
+            list.innerHTML = all.map(p => {
+                const speak = window.lkActiveSpeakers.has(p.identity);
+                return `<div style="display:flex;align-items:center;gap:0.35rem;padding:0.25rem 0.4rem;border-radius:6px;background:${speak ? 'rgba(76,175,80,0.07)' : 'transparent'};border:1px solid ${speak ? 'rgba(76,175,80,0.18)' : 'transparent'};transition:all 0.2s;">
+                    <span style="font-size:0.7rem;">${p.audioTrackPublications.size > 0 ? '🎙️' : '🔇'}</span>
+                    <span style="font-size:0.72rem;font-weight:600;color:${speak ? '#81c784' : '#ede8df'};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name || p.identity}</span>
+                    ${speak ? '<span style="font-size:0.58rem;background:rgba(76,175,80,0.18);color:#81c784;padding:0.05rem 0.28rem;border-radius:3px;font-weight:800;">● PARLE</span>' : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function updateLkParticipantCount() {
+            const el = document.getElementById('lk-participant-count');
+            if (!el) return;
+            const n = window.lkParticipants.size;
+            el.textContent = `${n} participant${n > 1 ? 's' : ''}`;
+        }
+
+        function lkPrevPage() { if (window.lkCurrentPage > 0) { window.lkCurrentPage--; lkRenderMosaic(); } }
+        function lkNextPage() {
+            const t = Math.ceil(window.lkParticipants.size / window.lkPageSize);
+            if (window.lkCurrentPage < t - 1) { window.lkCurrentPage++; lkRenderMosaic(); }
+        }
+
+        // —— Controls ——
+        async function lkToggleMic() {
+            if (!window.lkRoom || window.lkSpeechStatus !== 'allowed') return;
+            window.lkMicEnabled = !window.lkMicEnabled;
+            await window.lkRoom.localParticipant.setMicrophoneEnabled(window.lkMicEnabled);
+            updateLkControlButtons();
+        }
+        async function lkToggleCam() {
+            if (!window.lkRoom || window.lkSpeechStatus !== 'allowed') return;
+            window.lkCamEnabled = !window.lkCamEnabled;
+            await window.lkRoom.localParticipant.setCameraEnabled(window.lkCamEnabled);
+            const pip = document.getElementById('lk-local-pip');
+            if (pip) pip.style.display = window.lkCamEnabled ? 'block' : 'none';
+            updateLkControlButtons();
+        }
+        async function lkToggleShare() {
+            if (!window.lkRoom || window.lkSpeechStatus !== 'allowed') return;
+            if (/Android|iPhone|iPad/i.test(navigator.userAgent)) { alert("Partage d'écran non supporté sur mobile."); return; }
+            window.lkShareEnabled = !window.lkShareEnabled;
+            await window.lkRoom.localParticipant.setScreenShareEnabled(window.lkShareEnabled);
+            updateLkControlButtons();
+        }
+        function updateLkControlButtons() {
+            const defs = [{id:'lk-btn-mic', on: window.lkMicEnabled, col:'rgba(76,175,80,0.25)', bc:'#4caf50'}, {id:'lk-btn-cam', on: window.lkCamEnabled, col:'rgba(76,175,80,0.25)', bc:'#4caf50'}, {id:'lk-btn-share', on: window.lkShareEnabled, col:'rgba(33,150,243,0.25)', bc:'#2196f3'}];
+            defs.forEach(({id, on, col, bc}) => {
+                const b = document.getElementById(id);
+                if (!b) return;
+                b.style.background = on ? col : 'rgba(255,255,255,0.08)';
+                b.style.borderColor = on ? bc : 'rgba(255,255,255,0.12)';
+            });
+        }
+        function enableLkControls(en) {
+            ['lk-btn-mic','lk-btn-cam','lk-btn-share'].forEach(id => {
+                const b = document.getElementById(id);
+                if (!b) return;
+                b.disabled = !en;
+                b.style.cursor = en ? 'pointer' : 'not-allowed';
+                b.style.color = en ? '#fff' : 'rgba(255,255,255,0.22)';
+                b.style.background = en ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)';
+                b.style.borderColor = en ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)';
+            });
+        }
+        function lkToggleFullscreen() {
+            const c = document.getElementById('lk-wrapper');
+            if (!c) return;
+            if (!document.fullscreenElement) c.requestFullscreen?.();
+            else document.exitFullscreen?.();
+        }
+
+        // —— Speech Request + Promotion Polling ——
+        async function lkPollStatus() {
+            if (!window.lkActiveLiveId) return;
+            try {
+                const [tokenRes, statusRes] = await Promise.all([
+                    fetch(`/api/livekit/token?live_id=${window.lkActiveLiveId}`).then(r => r.json()),
+                    fetch(`/api/webinaire/status?live_id=${window.lkActiveLiveId}`).then(r => r.json())
+                ]);
+
+                // Update speakers list (dérivé de la DB)
+                const sl = document.getElementById('lk-speakers-list');
+                const sc = document.getElementById('lk-speakers-count');
+                if (sl && statusRes.speakers !== undefined) {
+                    if (sc) sc.textContent = statusRes.speakers.length;
+                    sl.innerHTML = statusRes.speakers.length === 0
+                        ? '<div style="color:rgba(237,232,223,0.32);font-size:0.75rem;font-style:italic;">Aucun membre n\'a la parole actuellement.</div>'
+                        : statusRes.speakers.map(s => `<div style="display:inline-flex;align-items:center;gap:0.3rem;background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.22);color:#81c784;padding:0.18rem 0.45rem;border-radius:5px;font-size:0.7rem;font-weight:700;margin:0.12rem;">\uD83C\uDF99\uFE0F ${s.display_name || s.user_email}</div>`).join('');
+                }
+
+                // Détecter changement de statut
+                const newStatus = statusRes.status || 'spectator';
+                const wasAllowed = window.lkSpeechStatus === 'allowed';
+
+                if (newStatus !== window.lkSpeechStatus) {
+                    window.lkSpeechStatus = newStatus;
+                    if (newStatus === 'allowed' && !wasAllowed) {
+                        await lkPromoteUser(tokenRes);
+                    } else if (newStatus !== 'allowed' && wasAllowed) {
+                        await lkDemoteUser();
+                    }
+                    updateLkSpeechUI(newStatus);
+                }
+            } catch(e) { /* silently fail */ }
+        }
+
+        async function lkPromoteUser(tokenData) {
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            // Reconnexion avec nouveau token can_publish=True
+            if (window.lkRoom && tokenData?.token && tokenData?.can_publish && tokenData?.livekit_url) {
+                try {
+                    await window.lkRoom.disconnect();
+                    await new Promise(r => setTimeout(r, 400));
+                    // Réinit room (il faut recréer l'objet après disconnect)
+                    window.lkRoom = new LivekitClient.Room({
+                        adaptiveStream: true, dynacast: true,
+                        audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                    });
+                    setupLkEvents();
+                    await window.lkRoom.connect(tokenData.livekit_url, tokenData.token, { autoSubscribe: false });
+                    // Récupérer participants
+                    for (const [id, p] of window.lkRoom.remoteParticipants) { window.lkParticipants.set(id, p); attachLkParticipantEvents(p); }
+                    lkRenderMosaic(); updateLkParticipantCount();
+                    const cd = document.getElementById('lk-conn-dot'); if (cd) cd.style.background = '#4caf50';
+                    const ct = document.getElementById('lk-conn-text'); if (ct) ct.textContent = 'Connecté (Intervenant)';
+                } catch(e) { console.warn('Promote reconnect error:', e); }
+            }
+            enableLkControls(true);
+            lkAddChatMsg('\uD83C\uDF99\uFE0F Régie', 'La parole vous a été accordée ! Activez votre micro pour parler.', 'system');
+            // Toast notification
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;top:1.5rem;left:50%;transform:translate(-50%,-20px);background:linear-gradient(135deg,#1b1a14,#0e0e0a);border:2px solid #4caf50;border-radius:14px;padding:1rem 1.5rem;z-index:99999;display:flex;align-items:center;gap:1rem;box-shadow:0 20px 40px rgba(0,0,0,0.6);opacity:0;transition:all 0.4s;min-width:280px;';
+            toast.innerHTML = `<span style="font-size:1.5rem;">\uD83C\uDF99\uFE0F</span><div><div style="font-size:0.72rem;font-weight:800;color:#4caf50;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.15rem;">Parole accordée</div><div style="font-size:0.88rem;font-weight:700;color:#fff;">Votre micro et caméra sont maintenant disponibles !</div></div>`;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translate(-50%,0)'; });
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 5000);
+        }
+
+        async function lkDemoteUser() {
+            if (window.lkRoom) {
+                try {
+                    if (window.lkMicEnabled) { await window.lkRoom.localParticipant.setMicrophoneEnabled(false); window.lkMicEnabled = false; }
+                    if (window.lkCamEnabled) { await window.lkRoom.localParticipant.setCameraEnabled(false); window.lkCamEnabled = false; const pip = document.getElementById('lk-local-pip'); if (pip) pip.style.display = 'none'; }
+                    if (window.lkShareEnabled) { await window.lkRoom.localParticipant.setScreenShareEnabled(false); window.lkShareEnabled = false; }
+                } catch(e) {}
+            }
+            enableLkControls(false);
+            updateLkControlButtons();
+            lkAddChatMsg('\uD83D\uDD07 Régie', 'Votre micro a été coupé par l\'administrateur.', 'system');
+        }
+
+        function updateLkSpeechUI(status) {
+            const btn = document.getElementById('lk-raise-hand-btn');
+            const info = document.getElementById('lk-speech-info');
+            if (!btn) return;
+            if (status === 'allowed') {
+                btn.style.background = 'linear-gradient(135deg,#4caf50,#2e7d32)';
+                btn.style.boxShadow = '0 4px 15px rgba(76,175,80,0.3)';
+                btn.innerHTML = '<span>Rendre la parole (Couper mon micro)</span> \uD83D\uDD07';
+                if (info) { info.textContent = '\u2705 Parole accordée — Activez votre micro'; info.style.color = '#81c784'; }
+            } else if (status === 'pending') {
+                btn.style.background = 'linear-gradient(135deg,#e65100,#ff8f00)';
+                btn.style.boxShadow = '0 4px 15px rgba(230,81,0,0.3)';
+                btn.innerHTML = '<span>Demande envoyée... (Annuler)</span> \u23F3';
+                if (info) { info.textContent = '\u23F3 En attente de validation par l\'administrateur'; info.style.color = '#ffb74d'; }
+            } else {
+                btn.style.background = 'linear-gradient(135deg,#e8820c,#f5a623)';
+                btn.style.boxShadow = '0 4px 15px rgba(232,130,12,0.25)';
+                btn.innerHTML = '<span>Demander la parole</span> \u270B';
+                if (info) { info.textContent = 'Mode spectateur \u2014 En écoute seule'; info.style.color = 'rgba(237,232,223,0.32)'; }
+            }
+        }
+
+        async function lkToggleSpeechRequest() {
+            const liveId = window.lkActiveLiveId;
+            if (!liveId) return;
+            const btn = document.getElementById('lk-raise-hand-btn');
+            if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+            const isCancelling = (window.lkSpeechStatus === 'allowed' || window.lkSpeechStatus === 'pending');
+            const endpoint = isCancelling ? '/api/webinaire/cancel-speech' : '/api/webinaire/request-speech';
+            try {
+                const res = await fetch(endpoint, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({live_id: liveId}) });
+                const data = await res.json();
+                if (data.status) { window.lkSpeechStatus = data.status; updateLkSpeechUI(data.status); }
+                if (isCancelling) await lkDemoteUser();
+            } catch(e) { console.error('Speech toggle error:', e); }
+            finally { if (btn) { btn.disabled = false; btn.style.opacity = '1'; } }
+        }
+
+        // —— Chat ——
+        function lkSendChat() {
+            const input = document.getElementById('lk-chat-input');
+            const text = input?.value?.trim();
+            if (!text || !window.lkRoom) return;
+            const senderName = '{{ session.get("user_email", "Moi") }}'.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const msg = { type: 'chat', sender: senderName, text, time: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}) };
+            try {
+                window.lkRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(msg)), { reliable: true });
+            } catch(e) { console.warn('DataChannel send error:', e); }
+            lkAddChatMsg(senderName + ' (Moi)', text, 'local');
+            if (input) input.value = '';
+        }
+
+        function lkAddChatMsg(sender, text, type) {
+            const chat = document.getElementById('lk-chat-messages');
+            if (!chat) return;
+            const pl = document.getElementById('lk-chat-placeholder');
+            if (pl) pl.remove();
+            const el = document.createElement('div');
+            const isSystem = type === 'system';
+            const isLocal = type === 'local';
+            el.style.cssText = `padding:0.28rem 0.38rem;border-radius:5px;background:${isSystem ? 'rgba(232,130,12,0.06)' : isLocal ? 'rgba(255,255,255,0.04)' : 'rgba(76,175,80,0.05)'};border:1px solid ${isSystem ? 'rgba(232,130,12,0.1)' : isLocal ? 'rgba(255,255,255,0.06)' : 'rgba(76,175,80,0.1)'};animation:fadeIn 0.3s ease;`;
+            el.innerHTML = `<span style="font-size:0.62rem;font-weight:800;color:${isSystem ? '#e8820c' : isLocal ? 'rgba(237,232,223,0.55)' : '#81c784'};">${sender}</span><div style="font-size:0.7rem;color:rgba(237,232,223,0.82);margin-top:0.1rem;line-height:1.4;">${text}</div>`;
+            chat.appendChild(el);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // —— Network Quality ——
+        function handleLkQuality(quality, participant) {
+            if (!window.lkRoom) return;
+            const isLocal = participant === window.lkRoom.localParticipant;
+            if (isLocal && quality === LivekitClient.ConnectionQuality.Poor) {
+                for (const [, p] of window.lkParticipants) {
+                    for (const pub of p.videoTrackPublications.values()) {
+                        try { pub.setSubscribed(false); } catch(_) {}
+                    }
+                }
+                lkAddChatMsg('\u26a0\uFE0F Réseau', 'Connexion instable détectée — vidéo suspendue pour préserver l\'audio', 'system');
+            }
+        }
+
+        // —— Cleanup on close/navigation ——
+        function lkCleanup() {
+            if (window.lkStatusInterval) { clearInterval(window.lkStatusInterval); window.lkStatusInterval = null; }
+            if (window.lkActiveLiveId && (window.lkSpeechStatus === 'pending' || window.lkSpeechStatus === 'allowed')) {
+                fetch('/api/webinaire/cancel-speech', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({live_id: window.lkActiveLiveId}) }).catch(() => {});
+            }
+            if (window.lkRoom) { try { window.lkRoom.disconnect(); } catch(e) {} window.lkRoom = null; }
+            window.lkParticipants = new Map();
+            window.lkPinnedSet = new Set();
+            window.lkActiveLiveId = null;
+            window.lkSpeechStatus = 'spectator';
+            window.lkMicEnabled = false;
+            window.lkCamEnabled = false;
+            window.lkShareEnabled = false;
+            window.lkActiveSpeakers = new Set();
+        }
+
     </script>
 </body>
 </html>

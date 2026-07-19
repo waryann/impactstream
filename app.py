@@ -19,6 +19,48 @@ import io
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
+# Chargement des variables d'environnement (.env)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv optionnel en dev
+
+# ─────────────────────────────────────────────
+# Configuration LiveKit (Webinaire Ultra-Basse Latence)
+# ─────────────────────────────────────────────
+LIVEKIT_URL = os.environ.get('LIVEKIT_URL', '')
+LIVEKIT_API_KEY = os.environ.get('LIVEKIT_API_KEY', '')
+LIVEKIT_API_SECRET = os.environ.get('LIVEKIT_API_SECRET', '')
+
+try:
+    from livekit.api import AccessToken, VideoGrants
+    LIVEKIT_SDK_AVAILABLE = True
+except ImportError:
+    LIVEKIT_SDK_AVAILABLE = False
+    print("⚠️  livekit-api non installé — Exécutez: pip install livekit-api")
+
+
+def generate_livekit_token(room_name, identity, display_name, can_publish=False):
+    """Génère un JWT LiveKit signé pour un participant."""
+    if not LIVEKIT_SDK_AVAILABLE or not LIVEKIT_API_KEY or not LIVEKIT_API_SECRET:
+        return None
+    try:
+        token = AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET)
+        token.with_identity(identity)
+        token.with_name(display_name)
+        token.with_grants(VideoGrants(
+            room_join=True,
+            room=room_name,
+            can_publish=can_publish,
+            can_subscribe=True,
+            can_publish_data=True,
+        ))
+        return token.to_jwt()
+    except Exception as e:
+        print(f"⚠️ Erreur génération token LiveKit: {e}")
+        return None
+
 app = Flask(__name__)
 app.secret_key = 'impactstream-secret-key-2026-mai'
 
@@ -2478,6 +2520,100 @@ def api_webinaire_admin_clear():
     conn.close()
     
     return jsonify({'success': True})
+
+
+# ─────────────────────────────────────────────
+# API LiveKit — Webinaire Ultra-Basse Latence
+# ─────────────────────────────────────────────
+
+@app.route('/api/livekit/config')
+@user_login_required
+def api_livekit_config():
+    """Retourne la configuration LiveKit publique (sans les secrets)."""
+    configured = bool(LIVEKIT_URL and LIVEKIT_API_KEY and LIVEKIT_API_SECRET and LIVEKIT_SDK_AVAILABLE)
+    return jsonify({
+        'configured': configured,
+        'livekit_url': LIVEKIT_URL if configured else None,
+        'sdk_available': LIVEKIT_SDK_AVAILABLE
+    })
+
+
+@app.route('/api/livekit/token')
+@user_login_required
+def api_livekit_token():
+    """Génère un JWT LiveKit pour l'utilisateur courant.
+    Le token inclut can_publish=True uniquement si le statut DB est 'allowed'.
+    """
+    live_id = request.args.get('live_id')
+    user_email = session.get('user_email')
+
+    if not live_id:
+        return jsonify({'error': 'live_id manquant'}), 400
+    if not LIVEKIT_URL or not LIVEKIT_API_KEY:
+        return jsonify({'error': 'LiveKit non configuré sur ce serveur'}), 503
+
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
+
+    room_name = f'impactstream_live_{live_id}'
+    display_name = user_email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
+
+    # Vérifier si l'utilisateur a les droits de publication (statut 'allowed' en base)
+    conn = get_db()
+    row = conn.execute(
+        "SELECT status FROM webinaire_queue WHERE live_id = ? AND user_email = ?",
+        (live_id, user_email)
+    ).fetchone()
+    conn.close()
+
+    can_publish = bool(row and row['status'] == 'allowed')
+
+    token = generate_livekit_token(room_name, user_email, display_name, can_publish=can_publish)
+    if not token:
+        return jsonify({'error': 'Erreur de génération du token LiveKit'}), 500
+
+    return jsonify({
+        'token': token,
+        'room': room_name,
+        'identity': user_email,
+        'display_name': display_name,
+        'can_publish': can_publish,
+        'livekit_url': LIVEKIT_URL
+    })
+
+
+@app.route('/api/livekit/admin/token')
+@login_required
+def api_livekit_admin_token():
+    """Génère un JWT LiveKit admin avec tous les droits (publication + modération)."""
+    live_id = request.args.get('live_id')
+    if not live_id:
+        return jsonify({'error': 'live_id manquant'}), 400
+    if not LIVEKIT_URL or not LIVEKIT_API_KEY:
+        return jsonify({'error': 'LiveKit non configuré sur ce serveur'}), 503
+
+    try:
+        live_id = int(live_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'live_id invalide'}), 400
+
+    room_name = f'impactstream_live_{live_id}'
+    token = generate_livekit_token(
+        room_name,
+        'admin_impactstream',
+        'Pasteur Yann (Régie)',
+        can_publish=True
+    )
+    if not token:
+        return jsonify({'error': 'Erreur de génération du token LiveKit admin'}), 500
+
+    return jsonify({
+        'token': token,
+        'room': room_name,
+        'livekit_url': LIVEKIT_URL
+    })
 
 
 # ─────────────────────────────────────────────

@@ -5,6 +5,11 @@ env/
 __pycache__/
 *.pyc
 
+# Variables d'environnement (clés secrètes — NE JAMAIS COMMITER)
+.env
+.env.*
+!.env.example
+
 # Base de données locale SQLite
 *.db
 *.sqlite3
