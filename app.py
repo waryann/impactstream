@@ -238,25 +238,46 @@ class PostgresConnectionWrapper:
 
 _db_initialized = False
 
+def _connect_postgres():
+    return psycopg2.connect(
+        DATABASE_URL,
+        connect_timeout=5,
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=5
+    )
+
+
 def get_db():
     """Obtenir une connexion à la base de données (SQLite en local, PostgreSQL/Supabase en prod)."""
     global _db_initialized, pg_pool
     if DATABASE_URL:
         if pg_pool is None:
             try:
-                # Créer le pool de connexion
-                pg_pool = psycopg2.pool.ThreadedConnectionPool(1, 10, DATABASE_URL)
+                # Créer le pool de connexion avec options keepalive
+                pg_pool = psycopg2.pool.ThreadedConnectionPool(
+                    1, 10, DATABASE_URL,
+                    connect_timeout=5, keepalives=1, keepalives_idle=30
+                )
             except Exception as e:
                 print(f"⚠️ Erreur création pool PostgreSQL: {e}")
-                conn = psycopg2.connect(DATABASE_URL)
+                conn = _connect_postgres()
                 return PostgresConnectionWrapper(conn)
         
         try:
             conn = pg_pool.getconn()
+            # Si la connexion du pool est fermée ou morte, en ouvrir une nouvelle
+            if conn and getattr(conn, 'closed', 0) != 0:
+                try:
+                    pg_pool.putconn(conn, close=True)
+                except Exception:
+                    pass
+                conn = _connect_postgres()
             wrapper = PostgresConnectionWrapper(conn)
         except Exception as e:
             print(f"⚠️ Erreur récupération connexion du pool: {e}")
-            conn = psycopg2.connect(DATABASE_URL)
+            conn = _connect_postgres()
             wrapper = PostgresConnectionWrapper(conn)
         
         # Auto-migration PostgreSQL (salle d'attente & expulsion) - exécutée une seule fois
