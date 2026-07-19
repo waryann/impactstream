@@ -2844,10 +2844,14 @@
                     nativeAudio.load();
                 }
 
-                // Apply speed playback rate
-                const speedSelect = document.getElementById('bible-audio-speed');
-                if (speedSelect) {
-                    nativeAudio.playbackRate = parseFloat(speedSelect.value) || 1.0;
+                // Apply speed playback rate (wrap in try-catch for iOS Safari compatibility)
+                try {
+                    const speedSelect = document.getElementById('bible-audio-speed');
+                    if (speedSelect) {
+                        nativeAudio.playbackRate = parseFloat(speedSelect.value) || 1.0;
+                    }
+                } catch (e) {
+                    console.warn("La modification de vitesse de lecture n'est pas supportée sur cet appareil.", e);
                 }
 
                 nativeAudio.play().then(() => {
@@ -3238,7 +3242,11 @@
             const val = parseFloat(value);
             if (!nativeAudio) nativeAudio = document.getElementById('bible-native-audio');
             if (nativeAudio) {
-                nativeAudio.playbackRate = val;
+                try {
+                    nativeAudio.playbackRate = val;
+                } catch (e) {
+                    console.warn("La modification de vitesse de lecture n'est pas supportée sur cet appareil.", e);
+                }
             }
             if (isBibleSpeaking && bibleUtterance) {
                 bibleUtterance.rate = val;
