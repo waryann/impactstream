@@ -2772,11 +2772,7 @@
             66: "66_Apocalypse"
         };
 
-        // ─── Bible Audio Engine (réécriture complète) ───────────────────────────────
-        // Fixes:
-        //  1. Suppression de l'alert() bloquant → basculement silencieux
-        //  2. Lecture continue téléphone verrouillé (iOS MediaSession + src stable)
-        //  3. Auto-passage au chapitre suivant fiable via addEventListener
+        // ─── Bible Audio Engine ────────────────────────────────────────────
 
         let nativeAudio = null;
         let isStudioPlaying = false;
@@ -2784,31 +2780,64 @@
         let currentVerseIndexToRead = 0;
         let versesToRead = [];
         let isBibleSpeaking = false;
-        let _studioEndedBound = false; // guard contre double binding
+        let _lastLoadedSrc = null;
 
-        // Initialisation unique de l'élément audio et de ses listeners
+        // Initialisation unique de l'élément audio (attach events une seule fois)
         function initNativeAudio() {
             if (nativeAudio) return;
             nativeAudio = document.getElementById('bible-native-audio');
             if (!nativeAudio) return;
 
-            nativeAudio.addEventListener('timeupdate', updateCustomAudioProgress);
-            nativeAudio.addEventListener('loadedmetadata', onCustomAudioMetadata);
-            nativeAudio.addEventListener('ended', onCustomAudioEnded);
+            nativeAudio.addEventListener('timeupdate', function() {
+                const progress = document.getElementById('custom-audio-progress');
+                const timeCurrent = document.getElementById('custom-audio-time-current');
+                if (nativeAudio.duration && !isNaN(nativeAudio.duration)) {
+                    if (progress) progress.value = (nativeAudio.currentTime / nativeAudio.duration) * 100;
+                    if (timeCurrent) timeCurrent.innerText = formatAudioTime(nativeAudio.currentTime);
+                }
+            });
 
-            // Gestion des erreurs réseau silencieuse (pas d'alert)
-            nativeAudio.addEventListener('error', function(e) {
-                if (!isStudioPlaying) return;
-                const code = nativeAudio.error ? nativeAudio.error.code : '?';
-                console.warn('[BibleAudio] Erreur chargement (code ' + code + '). Bascule voix synthétique.');
+            nativeAudio.addEventListener('loadedmetadata', function() {
+                const timeTotal = document.getElementById('custom-audio-time-total');
+                if (timeTotal && nativeAudio.duration && !isNaN(nativeAudio.duration)) {
+                    timeTotal.innerText = formatAudioTime(nativeAudio.duration);
+                }
+            });
+
+            nativeAudio.addEventListener('ended', function() {
                 isStudioPlaying = false;
                 updateStudioPlayerUI(false);
-                // Bascule silencieuse vers la synthèse vocale
-                const sel = document.getElementById('audio-source-type');
-                if (sel) sel.value = 'synthesis';
-                isBibleSpeaking = false;
-                toggleSynthesisAudio();
+                playNextBibleChapter();
             });
+
+            // Erreur réseau : on affiche un toast discret, PAS d'alert(), PAS de bascule automatique
+            nativeAudio.addEventListener('error', function() {
+                if (!isStudioPlaying) return;
+                isStudioPlaying = false;
+                _lastLoadedSrc = null;
+                updateStudioPlayerUI(false);
+                // Toast discret sans bloquer
+                showBibleAudioToast('⚠️ Fichier audio indisponible. Vérifiez votre connexion et réessayez.');
+            });
+        }
+
+        // Toast discret pour les erreurs audio (pas d'alert bloquant)
+        function showBibleAudioToast(msg) {
+            let toast = document.getElementById('bible-audio-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'bible-audio-toast';
+                toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(30,20,10,0.95);color:#ede8df;padding:0.75rem 1.25rem;border-radius:12px;border:1px solid rgba(232,130,12,0.4);font-size:0.82rem;font-weight:600;z-index:9999;text-align:center;max-width:85vw;box-shadow:0 8px 24px rgba(0,0,0,0.5);';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            toast.style.opacity = '1';
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => { toast.style.display = 'none'; }, 400);
+            }, 4000);
         }
 
         window.playNextChapterAudio = function() {
@@ -2835,11 +2864,6 @@
                 stopSynthesisAudio();
                 toggleStudioAudio();
             } else {
-                if (sourceType === 'studio') {
-                    // Bascule silencieuse (pas d'alert) si traduction non LS1910
-                    const sel = document.getElementById('audio-source-type');
-                    if (sel) sel.value = 'synthesis';
-                }
                 stopStudioAudio();
                 toggleSynthesisAudio();
             }
@@ -2851,17 +2875,18 @@
             toggleBibleAudio();
         }
 
-        // --- Studio Audio (Pre-recorded MP3) ---
+        // --- Studio Audio (Pre-recorded MP3 archive.org) ---
         function toggleStudioAudio() {
             initNativeAudio();
             if (!nativeAudio) return;
 
-            // Pause active MP3 music player pour éviter les conflits
+            // Pause le lecteur MP3 principal pour éviter les conflits
             const activePlayer = document.getElementById('active-player');
             if (activePlayer && !activePlayer.paused) activePlayer.pause();
 
             const expectedSrc = getStudioAudioUrl();
 
+            // Si déjà en lecture → pause
             if (isStudioPlaying) {
                 nativeAudio.pause();
                 isStudioPlaying = false;
@@ -2869,18 +2894,18 @@
                 return;
             }
 
-            // Changer la source uniquement si nécessaire
-            if (nativeAudio.getAttribute('data-loaded-src') !== expectedSrc) {
+            // Charger uniquement si la source a changé
+            if (_lastLoadedSrc !== expectedSrc) {
                 nativeAudio.src = expectedSrc;
-                nativeAudio.setAttribute('data-loaded-src', expectedSrc);
                 nativeAudio.load();
+                _lastLoadedSrc = expectedSrc;
             }
 
             // Vitesse de lecture
             try {
                 const speedSelect = document.getElementById('bible-audio-speed');
                 if (speedSelect) nativeAudio.playbackRate = parseFloat(speedSelect.value) || 1.0;
-            } catch (e) { /* iOS peut refuser avant interaction utilisateur */ }
+            } catch (e) {}
 
             nativeAudio.play().then(() => {
                 isStudioPlaying = true;
@@ -2888,14 +2913,16 @@
                 updateBibleMediaSession();
                 prefetchNextBibleChapter();
             }).catch(err => {
-                // Pas d'alert() : on logue et on bascule silencieusement
-                console.warn('[BibleAudio] play() échoué (' + err.name + '). Bascule voix synthétique.');
+                // NotAllowedError = pas encore d'interaction utilisateur (autoplay block)
+                // AbortError = lecture annulée (changement de src rapide)
+                // Autres = vrai problème réseau
+                console.warn('[BibleAudio] play() échoué:', err.name, err.message);
                 isStudioPlaying = false;
+                _lastLoadedSrc = null;
                 updateStudioPlayerUI(false);
-                const sel = document.getElementById('audio-source-type');
-                if (sel) sel.value = 'synthesis';
-                isBibleSpeaking = false;
-                toggleSynthesisAudio();
+                if (err.name !== 'AbortError') {
+                    showBibleAudioToast('⚠️ Impossible de lire l’audio. Vérifiez votre connexion et réessayez.');
+                }
             });
         }
 
@@ -3021,12 +3048,11 @@
                 _bibleTextNeedsUpdate = true;
             }
 
-            // Changer la source et relancer — c'est ce qui maintient la session iOS
             initNativeAudio();
             if (nativeAudio) {
                 const newSrc = getStudioAudioUrl();
                 nativeAudio.src = newSrc;
-                nativeAudio.setAttribute('data-loaded-src', newSrc);
+                _lastLoadedSrc = newSrc;
                 nativeAudio.load();
                 nativeAudio.play().then(() => {
                     isStudioPlaying = true;
@@ -3036,6 +3062,7 @@
                 }).catch(err => {
                     console.warn('[BibleAudio] Chapitre suivant échoué:', err.name);
                     isStudioPlaying = false;
+                    _lastLoadedSrc = null;
                 });
             }
         }
@@ -3071,7 +3098,7 @@
             if (nativeAudio) {
                 const newSrc = getStudioAudioUrl();
                 nativeAudio.src = newSrc;
-                nativeAudio.setAttribute('data-loaded-src', newSrc);
+                _lastLoadedSrc = newSrc;
                 nativeAudio.load();
                 nativeAudio.play().then(() => {
                     isStudioPlaying = true;
@@ -3081,6 +3108,7 @@
                 }).catch(err => {
                     console.warn('[BibleAudio] Chapitre précédent échoué:', err.name);
                     isStudioPlaying = false;
+                    _lastLoadedSrc = null;
                 });
             }
         }
@@ -3098,23 +3126,29 @@
             }
         });
 
-        // ended : appelé via addEventListener dans initNativeAudio()
-        function onCustomAudioEnded() {
+        // Ces fonctions sont gérées via addEventListener dans initNativeAudio()
+        // Les versions window.* restent pour compatibilité avec d'éventuels appels HTML
+        window.onCustomAudioEnded = function() {
             isStudioPlaying = false;
+            _lastLoadedSrc = null;
             updateStudioPlayerUI(false);
             playNextBibleChapter();
-        }
-        window.onCustomAudioEnded = onCustomAudioEnded;
-
-        function onCustomAudioMetadata() {
+        };
+        window.onCustomAudioMetadata = function() {
             if (!nativeAudio) return;
             const timeTotal = document.getElementById('custom-audio-time-total');
-            if (timeTotal && nativeAudio.duration && !isNaN(nativeAudio.duration)) {
+            if (timeTotal && nativeAudio.duration && !isNaN(nativeAudio.duration))
                 timeTotal.innerText = formatAudioTime(nativeAudio.duration);
+        };
+        window.updateCustomAudioProgress = function() {
+            if (!nativeAudio) return;
+            const progress = document.getElementById('custom-audio-progress');
+            const timeCurrent = document.getElementById('custom-audio-time-current');
+            if (nativeAudio.duration && !isNaN(nativeAudio.duration)) {
+                if (progress) progress.value = (nativeAudio.currentTime / nativeAudio.duration) * 100;
+                if (timeCurrent) timeCurrent.innerText = formatAudioTime(nativeAudio.currentTime);
             }
-        }
-        window.onCustomAudioMetadata = onCustomAudioMetadata;
-
+        };
         window.seekCustomAudio = function(percent) {
             initNativeAudio();
             if (!nativeAudio) return;
