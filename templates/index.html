@@ -1839,7 +1839,7 @@
 
             <!-- Hidden Audio Element -->
             <audio id="bible-native-audio" style="display: none;" ontimeupdate="updateCustomAudioProgress()" onended="onCustomAudioEnded()" onloadedmetadata="onCustomAudioMetadata()"></audio>
-            <audio id="bible-native-audio-silence" loop style="display: none;" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAAAD"></audio>
+            <audio id="bible-native-audio-silence" loop style="display: none;" src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV"></audio>
 
             <!-- Bible Audio Player Card -->
             <div id="bible-audio-player-card" style="display: none; background: linear-gradient(165deg, rgba(27, 26, 20, 0.75), rgba(14, 14, 10, 0.95)); border: 1px solid rgba(232, 130, 12, 0.25); border-radius: 16px; padding: 1rem 1.5rem; margin-bottom: 1.75rem; align-items: center; justify-content: space-between; gap: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.4); animation: fadeIn 0.4s ease; flex-wrap: wrap;">
@@ -2844,18 +2844,19 @@
                     nativeAudio.playbackRate = parseFloat(speedSelect.value) || 1.0;
                 }
 
+                const silenceAudio = document.getElementById('bible-native-audio-silence');
+                if (silenceAudio) {
+                    silenceAudio.play().catch(e => console.log("Silence audio play deferred:", e));
+                }
+
                 nativeAudio.play().then(() => {
                     isStudioPlaying = true;
                     updateStudioPlayerUI(true);
                     updateBibleMediaSession();
                     prefetchNextBibleChapter();
-                    
-                    const silenceAudio = document.getElementById('bible-native-audio-silence');
-                    if (silenceAudio) {
-                        silenceAudio.play().catch(e => console.log("Silence audio play deferred:", e));
-                    }
                 }).catch(err => {
                     console.error("Error playing studio audio:", err);
+                    if (silenceAudio) silenceAudio.pause();
                     alert("Le fichier audio studio n'a pas pu être chargé. Passage à la voix synthétique.");
                     document.getElementById('audio-source-type').value = 'synthesis';
                     toggleBibleAudio();
