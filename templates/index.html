@@ -2928,9 +2928,7 @@
         }
 
         function getStudioAudioUrl() {
-            const bookPrefix = bibleAudioPrefixes[currentBibleBook];
-            const chapterPad = String(currentBibleChapter).padStart(3, '0');
-            return `https://archive.org/download/french_audiobible/${bookPrefix}_${chapterPad}.mp3?v=2`;
+            return `https://www.wordproaudio.net/bibles/app/audio/7/${currentBibleBook}/${currentBibleChapter}.mp3`;
         }
 
         function prefetchNextBibleChapter() {
@@ -2946,9 +2944,7 @@
                     nextChapter = 1;
                 }
                 
-                const nextBookPrefix = bibleAudioPrefixes[nextBook];
-                const nextChapterPad = String(nextChapter).padStart(3, '0');
-                const nextUrl = `https://archive.org/download/french_audiobible/${nextBookPrefix}_${nextChapterPad}.mp3?v=2`;
+                const nextUrl = `https://www.wordproaudio.net/bibles/app/audio/7/${nextBook}/${nextChapter}.mp3`;
                 
                 // Use standard link rel=preload to populate HTTP cache cleanly
                 let oldLink = document.getElementById('bible-audio-preload-link');
