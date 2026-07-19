@@ -8931,7 +8931,7 @@
 
                 setupLkEvents();
 
-                await window.lkRoom.connect(data.livekit_url, data.token, { autoSubscribe: false });
+                await window.lkRoom.connect(data.livekit_url, data.token, { autoSubscribe: true });
 
                 if (cd) { cd.style.background = '#4caf50'; cd.style.animation = ''; }
                 if (ct) ct.textContent = 'Connecté — ' + data.display_name;
@@ -9317,7 +9317,7 @@
                         audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
                     });
                     setupLkEvents();
-                    await window.lkRoom.connect(tokenData.livekit_url, tokenData.token, { autoSubscribe: false });
+                    await window.lkRoom.connect(tokenData.livekit_url, tokenData.token, { autoSubscribe: true });
                     // Récupérer participants
                     for (const [id, p] of window.lkRoom.remoteParticipants) { window.lkParticipants.set(id, p); attachLkParticipantEvents(p); }
                     lkRenderMosaic(); updateLkParticipantCount();
