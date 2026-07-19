@@ -2866,7 +2866,7 @@
         function getStudioAudioUrl() {
             const bookPrefix = bibleAudioPrefixes[currentBibleBook];
             const chapterPad = String(currentBibleChapter).padStart(3, '0');
-            return `https://archive.org/download/french_audiobible/${bookPrefix}_${chapterPad}.mp3`;
+            return `https://archive.org/download/french_audiobible/${bookPrefix}_${chapterPad}.mp3?v=2`;
         }
 
         function prefetchNextBibleChapter() {
@@ -2884,12 +2884,18 @@
                 
                 const nextBookPrefix = bibleAudioPrefixes[nextBook];
                 const nextChapterPad = String(nextChapter).padStart(3, '0');
-                const nextUrl = `https://archive.org/download/french_audiobible/${nextBookPrefix}_${nextChapterPad}.mp3`;
+                const nextUrl = `https://archive.org/download/french_audiobible/${nextBookPrefix}_${nextChapterPad}.mp3?v=2`;
                 
-                // Pre-fetch the file using standard fetch to populate the browser's HTTP cache
-                fetch(nextUrl, { mode: 'no-cors' })
-                    .then(() => console.log("Prefetched next chapter audio successfully"))
-                    .catch(err => console.warn("Prefetch next chapter failed:", err));
+                // Use standard link rel=preload to populate HTTP cache cleanly
+                let oldLink = document.getElementById('bible-audio-preload-link');
+                if (oldLink) oldLink.remove();
+                
+                const link = document.createElement('link');
+                link.id = 'bible-audio-preload-link';
+                link.rel = 'preload';
+                link.as = 'audio';
+                link.href = nextUrl;
+                document.head.appendChild(link);
             }
         }
 
