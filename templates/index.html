@@ -2841,6 +2841,7 @@
             } else {
                 if (nativeAudio.src !== expectedSrc) {
                     nativeAudio.src = expectedSrc;
+                    nativeAudio.load();
                 }
 
                 // Apply speed playback rate
@@ -2987,6 +2988,8 @@
                 if (!nativeAudio) nativeAudio = document.getElementById('bible-native-audio');
                 if (nativeAudio) {
                     nativeAudio.src = getStudioAudioUrl();
+                    nativeAudio.load();
+                    window.shouldAutoPlayNext = true;
                     nativeAudio.play().then(() => {
                         isStudioPlaying = true;
                         updateStudioPlayerUI(true);
@@ -3032,6 +3035,8 @@
                 if (!nativeAudio) nativeAudio = document.getElementById('bible-native-audio');
                 if (nativeAudio) {
                     nativeAudio.src = getStudioAudioUrl();
+                    nativeAudio.load();
+                    window.shouldAutoPlayNext = true;
                     nativeAudio.play().then(() => {
                         isStudioPlaying = true;
                         updateStudioPlayerUI(true);
