@@ -2208,6 +2208,15 @@
                     .then(reg => console.log('Service Worker enregistré avec succès, scope:', reg.scope))
                     .catch(err => console.warn('Échec de l\'enregistrement du Service Worker:', err));
             });
+
+            // Recharger la page dès que le nouveau Service Worker (v6) s'active
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
+            });
         }
 
         // Splash Screen Logic (Animated WebP intro with logo reveal)
