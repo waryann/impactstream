@@ -9147,24 +9147,31 @@
             if (pi) pi.textContent = `${window.lkCurrentPage + 1}/${totalPages}`;
 
             if (hasPinned) {
-                grid.style.maxHeight = '140px';
+                grid.style.maxHeight = '130px';
                 grid.style.flexShrink = '0';
-                grid.style.gridTemplateColumns = `repeat(auto-fit, minmax(120px, 1fr))`;
+                grid.style.gridTemplateColumns = `repeat(auto-fit, minmax(110px, 1fr))`;
+                grid.innerHTML = '';
+                visible.forEach(p => grid.appendChild(createLkTile(p, false)));
+            } else if (visible.length === 1) {
+                grid.style.maxHeight = 'none';
+                grid.style.flex = '1';
+                grid.style.gridTemplateColumns = '1fr';
+                grid.innerHTML = '';
+                grid.appendChild(createLkTile(visible[0], true));
             } else {
                 grid.style.maxHeight = 'none';
                 grid.style.flex = '1';
-                const cols = visible.length <= 1 ? 1 : visible.length <= 4 ? 2 : visible.length <= 9 ? 3 : 4;
+                const cols = visible.length <= 4 ? 2 : visible.length <= 9 ? 3 : 4;
                 grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                grid.innerHTML = '';
+                visible.forEach(p => grid.appendChild(createLkTile(p, false)));
             }
-
-            grid.innerHTML = '';
-            visible.forEach(p => grid.appendChild(createLkTile(p)));
 
             lkUpdatePanelParticipants(all);
         }
 
         // —— Participant Tile ——
-        function createLkTile(p) {
+        function createLkTile(p, isFullStage = false) {
             const tile = document.createElement('div');
             const isPinned = window.lkPinnedSet.has(p.identity);
             const isSpeaking = window.lkActiveSpeakers.has(p.identity);
@@ -9173,8 +9180,10 @@
             const name = p.name || p.identity;
             const initials = name.split(' ').map(w => w[0] || '').join('').slice(0,2).toUpperCase() || '?';
 
+            const stageCss = isFullStage ? 'height:100%;width:100%;flex:1;' : 'aspect-ratio:16/9;';
+
             tile.setAttribute('data-identity', p.identity);
-            tile.style.cssText = `position:relative;background:${isSpeaking ? 'rgba(76,175,80,0.07)' : 'rgba(13,13,10,0.95)'};border:2px solid ${isSpeaking ? '#4caf50' : isPinned ? '#e8820c' : 'rgba(255,255,255,0.07)'};border-radius:10px;overflow:hidden;aspect-ratio:16/9;cursor:pointer;transition:border-color 0.2s;${isSpeaking ? 'box-shadow:0 0 16px rgba(76,175,80,0.22);' : ''}`;
+            tile.style.cssText = `position:relative;background:${isSpeaking ? 'rgba(76,175,80,0.07)' : 'rgba(13,13,10,0.95)'};border:2px solid ${isSpeaking ? '#4caf50' : isPinned ? '#e8820c' : 'rgba(255,255,255,0.07)'};border-radius:12px;overflow:hidden;${stageCss}cursor:pointer;transition:border-color 0.2s;${isSpeaking ? 'box-shadow:0 0 16px rgba(76,175,80,0.22);' : ''}`;
 
             // Video
             const video = document.createElement('video');
@@ -9226,10 +9235,10 @@
             zone.style.minHeight = '0';
             zone.style.flexDirection = 'column';
             const cols = pinned.length === 1 ? 1 : 2;
-            pg.style.cssText = `display:grid;gap:0.5rem;width:100%;height:100%;grid-template-columns:repeat(${cols}, 1fr);`;
+            pg.style.cssText = `display:grid;gap:0.5rem;width:100%;height:100%;grid-template-columns:repeat(${cols}, 1fr);align-content:stretch;`;
             pg.innerHTML = '';
             pinned.forEach(p => { 
-                const t = createLkTile(p); 
+                const t = createLkTile(p, true); 
                 t.style.borderColor = '#e8820c'; 
                 pg.appendChild(t); 
             });
