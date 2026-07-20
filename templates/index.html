@@ -9052,14 +9052,15 @@
                 .on(LivekitClient.RoomEvent.DataReceived, (data, p) => {
                     try {
                         const msg = JSON.parse(new TextDecoder().decode(data));
+                        const myIdentity = window.lkRoom?.localParticipant?.identity;
                         if (msg.type === 'chat') {
                             lkAddChatMsg(msg.sender, msg.text, 'remote');
                         } else if (msg.type === 'speech_grant') {
-                            if (!currentUserEmail || msg.target === currentUserEmail) {
+                            if (myIdentity && msg.target === myIdentity) {
                                 lkPollStatus();
                             }
                         } else if (msg.type === 'speech_mute') {
-                            if (!currentUserEmail || msg.target === currentUserEmail) {
+                            if (myIdentity && msg.target === myIdentity) {
                                 lkPollStatus();
                             }
                         } else if (msg.type === 'queue_clear') {
