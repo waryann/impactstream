@@ -83,6 +83,17 @@
         }
         ::-webkit-scrollbar-thumb:hover { background: #f5a623; }
 
+        /* Fullscreen Fallback for iPhone / iOS Safari */
+        .lk-mobile-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 999999 !important;
+            border-radius: 0 !important;
+        }
+
         /* Audio Bible Speaking Highlighting & Visualizer */
         .bible-verse.speaking-now {
             background-color: rgba(232, 130, 12, 0.18) !important;
@@ -9089,7 +9100,7 @@
             lkUpdatePanelParticipants(Array.from(window.lkParticipants.values()));
         }
 
-        // —— Mosaic Renderer ——
+        // —— Mosaic Renderer (Main Stage pour Épinglés + Rangée secondaire pour non-épinglés) ——
         function lkRenderMosaic() {
             const grid = document.getElementById('lk-participants-grid');
             const empty = document.getElementById('lk-empty-state');
@@ -9098,45 +9109,57 @@
 
             let all = Array.from(window.lkParticipants.values());
 
-            // Tri: locuteurs actifs d'abord, puis épinglés, puis alphabétique
-            all.sort((a, b) => {
+            const pinned = all.filter(p => window.lkPinnedSet.has(p.identity));
+            const unpinned = all.filter(p => !window.lkPinnedSet.has(p.identity));
+
+            const hasPinned = pinned.length > 0;
+
+            // Rendu de la zone Épinglée (Main Stage)
+            lkUpdatePinnedZone(pinned);
+
+            // Rendu des non-épinglés
+            unpinned.sort((a, b) => {
                 const as = window.lkActiveSpeakers.has(a.identity) ? 0 : 1;
                 const bs = window.lkActiveSpeakers.has(b.identity) ? 0 : 1;
                 if (as !== bs) return as - bs;
-                const ap = window.lkPinnedSet.has(a.identity) ? 0 : 1;
-                const bp = window.lkPinnedSet.has(b.identity) ? 0 : 1;
-                if (ap !== bp) return ap - bp;
                 return (a.name || a.identity).localeCompare(b.name || b.identity);
             });
 
-            const totalPages = Math.max(1, Math.ceil(all.length / window.lkPageSize));
+            const totalPages = Math.max(1, Math.ceil(unpinned.length / window.lkPageSize));
             window.lkCurrentPage = Math.min(window.lkCurrentPage, totalPages - 1);
             const s = window.lkCurrentPage * window.lkPageSize;
             const e = s + window.lkPageSize;
-            const visible = all.slice(s, e);
+            const visible = unpinned.slice(s, e);
 
-            // Abonnement dynamique (bandwidth saving)
-            all.forEach((p, idx) => {
-                const isVis = idx >= s && idx < e;
+            // Abonnement dynamique
+            all.forEach((p) => {
+                const isVis = visible.includes(p) || pinned.includes(p);
                 for (const pub of p.videoTrackPublications.values()) {
                     try { pub.setSubscribed(isVis); } catch(_) {}
                 }
             });
 
             const hasPart = all.length > 0;
-            grid.style.display = hasPart ? 'grid' : 'none';
+            grid.style.display = (unpinned.length > 0) ? 'grid' : 'none';
             if (empty) empty.style.display = hasPart ? 'none' : 'flex';
             if (pgn) pgn.style.display = totalPages > 1 ? 'flex' : 'none';
             const pi = document.getElementById('lk-page-info');
             if (pi) pi.textContent = `${window.lkCurrentPage + 1}/${totalPages}`;
 
-            const cols = visible.length <= 1 ? 1 : visible.length <= 4 ? 2 : visible.length <= 9 ? 3 : 4;
-            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            if (hasPinned) {
+                grid.style.maxHeight = '140px';
+                grid.style.flexShrink = '0';
+                grid.style.gridTemplateColumns = `repeat(auto-fit, minmax(120px, 1fr))`;
+            } else {
+                grid.style.maxHeight = 'none';
+                grid.style.flex = '1';
+                const cols = visible.length <= 1 ? 1 : visible.length <= 4 ? 2 : visible.length <= 9 ? 3 : 4;
+                grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            }
 
             grid.innerHTML = '';
             visible.forEach(p => grid.appendChild(createLkTile(p)));
 
-            lkUpdatePinnedZone(all);
             lkUpdatePanelParticipants(all);
         }
 
@@ -9172,18 +9195,16 @@
 
             // Overlay
             const ov = document.createElement('div');
-            ov.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.85));padding:0.9rem 0.55rem 0.35rem;display:flex;align-items:flex-end;justify-content:space-between;';
+            ov.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.85));padding:0.9rem 0.55rem 0.35rem;display:flex;align-items:flex-end;justify-content:space-between;pointer-events:none;';
             ov.innerHTML = `<span style="font-size:0.68rem;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72%;">${hasAudio ? '🎙️' : '🔇'} ${name}</span>${isSpeaking ? '<span style="font-size:0.58rem;background:rgba(76,175,80,0.22);border:1px solid rgba(76,175,80,0.4);color:#81c784;padding:0.08rem 0.3rem;border-radius:4px;font-weight:800;white-space:nowrap;">● VIE</span>' : ''}`;
             tile.appendChild(ov);
 
             // Pin button
             const pb = document.createElement('button');
-            pb.style.cssText = `position:absolute;top:0.4rem;right:0.4rem;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.18);border-radius:6px;color:${isPinned ? '#e8820c' : 'rgba(255,255,255,0.65)'};padding:0.12rem 0.32rem;font-size:0.62rem;cursor:pointer;opacity:0;transition:opacity 0.2s;outline:none;`;
-            pb.textContent = isPinned ? '📌' : '📌';
+            pb.style.cssText = `position:absolute;top:0.4rem;right:0.4rem;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.18);border-radius:6px;color:${isPinned ? '#e8820c' : 'rgba(255,255,255,0.65)'};padding:0.12rem 0.32rem;font-size:0.62rem;cursor:pointer;opacity:0.8;transition:opacity 0.2s;outline:none;`;
+            pb.textContent = isPinned ? '📌 Desépingler' : '📌 Épingler';
             pb.onclick = ev => { ev.stopPropagation(); lkTogglePin(p.identity); };
             tile.appendChild(pb);
-            tile.onmouseenter = () => pb.style.opacity = '1';
-            tile.onmouseleave = () => pb.style.opacity = '0';
             tile.onclick = () => lkTogglePin(p.identity);
 
             return tile;
@@ -9195,18 +9216,23 @@
             lkRenderMosaic();
         }
 
-        function lkUpdatePinnedZone(all) {
+        function lkUpdatePinnedZone(pinned) {
             const zone = document.getElementById('lk-pinned-zone');
             const pg = document.getElementById('lk-pinned-grid');
             if (!zone || !pg) return;
-            const pinned = all.filter(p => window.lkPinnedSet.has(p.identity));
-            zone.style.display = pinned.length > 0 ? 'block' : 'none';
+            zone.style.display = pinned.length > 0 ? 'flex' : 'none';
             if (pinned.length === 0) return;
-            const cols = pinned.length === 1 ? 1 : pinned.length <= 4 ? 2 : 3;
-            pg.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-            pg.style.cssText = `display:grid;gap:0.4rem;max-height:160px;grid-template-columns:repeat(${cols}, 1fr);`;
+            zone.style.flex = '1';
+            zone.style.minHeight = '0';
+            zone.style.flexDirection = 'column';
+            const cols = pinned.length === 1 ? 1 : 2;
+            pg.style.cssText = `display:grid;gap:0.5rem;width:100%;height:100%;grid-template-columns:repeat(${cols}, 1fr);`;
             pg.innerHTML = '';
-            pinned.forEach(p => { const t = createLkTile(p); t.style.borderColor = '#e8820c'; pg.appendChild(t); });
+            pinned.forEach(p => { 
+                const t = createLkTile(p); 
+                t.style.borderColor = '#e8820c'; 
+                pg.appendChild(t); 
+            });
         }
 
         function lkUpdatePanelParticipants(all) {
@@ -9286,8 +9312,16 @@
         function lkToggleFullscreen() {
             const c = document.getElementById('lk-wrapper');
             if (!c) return;
-            if (!document.fullscreenElement) c.requestFullscreen?.();
-            else document.exitFullscreen?.();
+            if (c.requestFullscreen) {
+                if (!document.fullscreenElement) c.requestFullscreen();
+                else document.exitFullscreen();
+            } else if (c.webkitRequestFullscreen) {
+                if (!document.webkitFullscreenElement) c.webkitRequestFullscreen();
+                else document.webkitExitFullscreen();
+            } else {
+                // Fallback pour iPhone (iOS Safari mobile)
+                c.classList.toggle('lk-mobile-fullscreen');
+            }
         }
 
         // —— Speech Request + Promotion Polling ——
