@@ -1,8 +1,9 @@
-const CACHE_NAME = 'impactstream-v7';
+const CACHE_NAME = 'impactstream-v8';
 const ASSETS_TO_CACHE = [
   '/',
   '/static/images/logo.png',
-  '/static/images/intro.webp'
+  '/static/images/intro.webp',
+  '/static/offline.html'
 ];
 
 // Install Event
@@ -39,7 +40,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   
-  // Contourner le Service Worker pour les fichiers média (audio/vidéo) et les requêtes de type Range (streaming/reprise)
+  // Contourner le Service Worker pour les fichiers média
   const isMedia = 
     event.request.destination === 'audio' ||
     event.request.destination === 'video' ||
@@ -70,7 +71,17 @@ self.addEventListener('fetch', event => {
         return response;
       })
       .catch(() => {
-        return caches.match(event.request);
+        // En cas d'échec réseau, on cherche dans le cache
+        return caches.match(event.request).then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // Si on est hors ligne et qu'il s'agit d'une navigation vers une page (HTML), on affiche la page offline
+          if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+            return caches.match('/static/offline.html');
+          }
+          return null;
+        });
       })
   );
 });

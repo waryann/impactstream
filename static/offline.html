@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mode Hors Ligne — ImpactStream</title>
+    <link rel="icon" type="image/png" href="/static/images/logo.png">
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+        body {
+            background-color: #121212;
+            color: #ede8df;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Gradient Background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(232, 130, 12, 0.1) 0%, transparent 40%);
+            animation: pulse 8s infinite alternate;
+            z-index: 0;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(232, 130, 12, 0.4);
+        }
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, #fff, #f5a623);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p {
+            font-size: 1rem;
+            color: rgba(237, 232, 223, 0.6);
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+        .retry-btn {
+            background: linear-gradient(135deg, #e8820c, #f5a623);
+            color: #fff;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(232, 130, 12, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(232, 130, 12, 0.5);
+        }
+        .retry-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Animation d'antenne déconnectée */
+        .icon-container {
+            margin-bottom: 1.5rem;
+            position: relative;
+            display: inline-block;
+        }
+        .icon {
+            font-size: 4rem;
+            filter: drop-shadow(0 0 10px rgba(239, 83, 80, 0.4));
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="/static/images/logo.png" alt="ImpactStream Logo" class="logo">
+        <div class="icon-container">
+            <span class="icon">📡</span>
+        </div>
+        <h1>Vous êtes hors ligne</h1>
+        <p>Il semble que vous ayez perdu votre connexion Internet. ImpactStream a besoin d'une connexion active pour diffuser les directs, lire les vidéos ou accéder aux chants.</p>
+        <button class="retry-btn" onclick="window.location.reload()">Réessayer</button>
+    </div>
+
+    <script>
+        // Si la connexion revient pendant que l'utilisateur est sur cette page, on rafraîchit automatiquement
+        window.addEventListener('online', () => {
+            document.querySelector('.retry-btn').innerText = 'Connexion rétablie ! Redirection...';
+            document.querySelector('.retry-btn').style.background = 'linear-gradient(135deg, #4caf50, #81c784)';
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
