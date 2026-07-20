@@ -2354,7 +2354,7 @@ def admin_delete_live(live_id):
 @app.route('/api/webinaire/join', methods=['POST'])
 @user_login_required
 def api_webinaire_join():
-    """Initialiser le fidèle dans le webinaire : toujours spectateur au départ (aucun statut conservé)."""
+    """Initialiser le saint dans le webinaire : toujours spectateur au départ (aucun statut conservé)."""
     data = request.get_json(force=True, silent=True) or {}
     live_id = data.get('live_id')
     user_email = session.get('user_email')
@@ -2378,7 +2378,7 @@ def api_webinaire_join():
 @app.route('/api/webinaire/status', methods=['GET'])
 @user_login_required
 def api_webinaire_status():
-    """Vérifier le statut actuel du fidèle (spectateur, en attente, ou parole accordée)."""
+    """Vérifier le statut actuel du saint (spectateur, en attente, ou parole accordée)."""
     live_id = request.args.get('live_id')
     user_email = session.get('user_email')
     
@@ -2406,7 +2406,7 @@ def api_webinaire_status():
 @app.route('/api/webinaire/request-speech', methods=['POST'])
 @user_login_required
 def api_webinaire_request_speech():
-    """Fidèle qui lève la main pour demander la parole."""
+    """Saint qui lève la main pour demander la parole."""
     data = request.get_json(force=True, silent=True) or {}
     live_id = data.get('live_id')
     user_email = session.get('user_email')
@@ -2446,7 +2446,7 @@ def api_webinaire_request_speech():
 @app.route('/api/webinaire/cancel-speech', methods=['POST'])
 @user_login_required
 def api_webinaire_cancel_speech():
-    """Fidèle qui baisse la main ou rend la parole."""
+    """Saint qui baisse la main ou rend la parole."""
     data = request.get_json(force=True, silent=True) or {}
     live_id = data.get('live_id')
     user_email = session.get('user_email')
@@ -2488,7 +2488,7 @@ def api_webinaire_admin_queue():
 @app.route('/api/webinaire/admin/allow', methods=['POST'])
 @login_required
 def api_webinaire_admin_allow():
-    """Régie technique : Donner la parole (activer le micro) à un fidèle."""
+    """Régie technique : Donner la parole (activer le micro) à un saint."""
     data = request.get_json(force=True, silent=True) or {}
     live_id = data.get('live_id')
     user_email = data.get('user_email')
