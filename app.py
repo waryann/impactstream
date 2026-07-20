@@ -2354,7 +2354,7 @@ def admin_delete_live(live_id):
 @app.route('/api/webinaire/join', methods=['POST'])
 @user_login_required
 def api_webinaire_join():
-    """Initialiser ou récupérer le statut du fidèle dans le webinaire."""
+    """Initialiser le fidèle dans le webinaire : toujours spectateur au départ (aucun statut conservé)."""
     data = request.get_json(force=True, silent=True) or {}
     live_id = data.get('live_id')
     user_email = session.get('user_email')
@@ -2367,14 +2367,12 @@ def api_webinaire_join():
         return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
-    # On regarde si l'utilisateur est déjà dans la file
-    row = conn.execute("SELECT status FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email)).fetchone()
+    # Réinitialisation stricte : supprimer tout ancien statut en base lors d'une nouvelle entrée
+    conn.execute("DELETE FROM webinaire_queue WHERE live_id = ? AND user_email = ?", (live_id, user_email))
+    conn.commit()
     conn.close()
     
-    if row:
-        return jsonify({'status': row['status']})
-    else:
-        return jsonify({'status': 'spectator'})
+    return jsonify({'status': 'spectator'})
 
 
 @app.route('/api/webinaire/status', methods=['GET'])
@@ -2635,7 +2633,7 @@ def api_livekit_admin_token():
     token = generate_livekit_token(
         room_name,
         'admin_impactstream',
-        'Pasteur Yann (Régie)',
+        'Régie (Admin)',
         can_publish=True
     )
     if not token:

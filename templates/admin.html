@@ -2926,11 +2926,6 @@
                 }
                 
                 data.forEach(user => {
-                    // Generate a simulated location based on email/index for realistic presentation
-                    const locations = ['France 🇫🇷', 'Belgique 🇧🇪', 'RD Congo 🇨🇩', 'Canada 🇨🇦', 'Suisse 🇨🇭', 'Congo 🇨🇬', 'États-Unis 🇺🇸'];
-                    const locIndex = Math.abs(user.user_email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % locations.length;
-                    const location = locations[locIndex];
-
                     const isAllowed = (user.status === 'allowed');
                     const statusText = isAllowed 
                         ? `<span style="color: #4caf50; font-weight: bold; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.2rem;">● En parole 🎙️</span>`
