@@ -2484,13 +2484,6 @@ def api_webinaire_admin_queue():
         return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
-    # Nettoyage automatique des demandes de parole obsolètes
-    try:
-        conn.execute("DELETE FROM webinaire_queue WHERE created_at < datetime('now', '-1 hour') OR created_at < (CURRENT_TIMESTAMP - INTERVAL '1 hour')")
-        conn.commit()
-    except Exception:
-        pass
-
     rows = conn.execute("SELECT * FROM webinaire_queue WHERE live_id = ? ORDER BY created_at ASC", (live_id,)).fetchall()
     conn.close()
     
