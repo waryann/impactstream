@@ -8764,6 +8764,7 @@
         // —— Entry Point ——
         async function initLiveKitPlayer(liveId, title, description, playerEl, infoEl) {
             window.lkActiveLiveId = liveId;
+            try { await fetch('/api/webinaire/join', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({live_id: liveId}) }); } catch(e) {}
             window.lkSpeechStatus = 'spectator';
             window.lkParticipants = new Map();
             window.lkPinnedSet = new Set();

@@ -2906,7 +2906,7 @@
 
         async function refreshWebinaireQueueList(liveId) {
             try {
-                const res = await fetch(`/api/webinaire/admin/queue?live_id=${liveId}`);
+                const res = await fetch(`/api/webinaire/admin/queue?live_id=${liveId}&t=${Date.now()}`);
                 const data = await res.json();
                 
                 const tbody = document.getElementById('webinaire-regie-queue-list');
@@ -2946,7 +2946,7 @@
                     tr.innerHTML = `
                         <td style="padding: 0.75rem 0.5rem;">
                             <div style="font-weight: bold; color: #fff; font-size: 0.85rem;">${user.display_name}</div>
-                            <div style="font-size: 0.72rem; color: rgba(237,232,223,0.35);">${user.user_email} — <span style="color: rgba(237,232,223,0.55);">${location}</span></div>
+                            <div style="font-size: 0.72rem; color: rgba(237,232,223,0.35);">${user.user_email}</div>
                         </td>
                         <td style="padding: 0.75rem 0.5rem; vertical-align: middle;">${statusText}</td>
                         <td style="padding: 0.75rem 0.5rem; text-align: right; vertical-align: middle;">${actionBtns}</td>
