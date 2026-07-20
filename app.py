@@ -318,6 +318,11 @@ def get_db():
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_user ON webinaire_queue(live_id, user_email)")
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_cat_comm ON medias(categorie, commission)")
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_series ON medias(series_id)")
+                # Nettoyage automatique des anciennes données de test au démarrage du serveur
+                try:
+                    cur.execute("DELETE FROM webinaire_queue")
+                except Exception:
+                    pass
                 wrapper.commit()
                 _db_initialized = True
             except Exception as e:
@@ -2479,6 +2484,13 @@ def api_webinaire_admin_queue():
         return jsonify({'error': 'live_id invalide'}), 400
         
     conn = get_db()
+    # Nettoyage automatique des demandes de parole obsolètes
+    try:
+        conn.execute("DELETE FROM webinaire_queue WHERE created_at < datetime('now', '-1 hour') OR created_at < (CURRENT_TIMESTAMP - INTERVAL '1 hour')")
+        conn.commit()
+    except Exception:
+        pass
+
     rows = conn.execute("SELECT * FROM webinaire_queue WHERE live_id = ? ORDER BY created_at ASC", (live_id,)).fetchall()
     conn.close()
     
