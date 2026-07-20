@@ -8899,7 +8899,7 @@
             }
 
             // Polling statut (promotion/révocation)
-            window.lkStatusInterval = setInterval(lkPollStatus, 3000);
+            window.lkStatusInterval = setInterval(lkPollStatus, 5000);
         }
 
         // —— Load LiveKit SDK from CDN ——
@@ -8922,11 +8922,15 @@
                 const data = await fetch(`/api/livekit/token?live_id=${liveId}`).then(r => r.json());
                 if (data.error) throw new Error(data.error);
 
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                const videoPreset = isMobile ? LivekitClient.VideoPresets.h360 : LivekitClient.VideoPresets.h720;
+
                 window.lkRoom = new LivekitClient.Room({
                     adaptiveStream: true,
                     dynacast: true,
+                    publishDefaults: { simulcast: true },
                     audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-                    videoCaptureDefaults: { resolution: LivekitClient.VideoPresets.h720.resolution },
+                    videoCaptureDefaults: { resolution: videoPreset.resolution },
                 });
 
                 setupLkEvents();
