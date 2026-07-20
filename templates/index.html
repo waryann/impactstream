@@ -9052,7 +9052,19 @@
                 .on(LivekitClient.RoomEvent.DataReceived, (data, p) => {
                     try {
                         const msg = JSON.parse(new TextDecoder().decode(data));
-                        if (msg.type === 'chat') lkAddChatMsg(msg.sender, msg.text, 'remote');
+                        if (msg.type === 'chat') {
+                            lkAddChatMsg(msg.sender, msg.text, 'remote');
+                        } else if (msg.type === 'speech_grant') {
+                            if (!currentUserEmail || msg.target === currentUserEmail) {
+                                lkPollStatus();
+                            }
+                        } else if (msg.type === 'speech_mute') {
+                            if (!currentUserEmail || msg.target === currentUserEmail) {
+                                lkPollStatus();
+                            }
+                        } else if (msg.type === 'queue_clear') {
+                            lkPollStatus();
+                        }
                     } catch(e) {}
                 })
                 .on(LivekitClient.RoomEvent.LocalTrackPublished, pub => {

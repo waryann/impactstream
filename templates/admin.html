@@ -2839,12 +2839,49 @@
         // ── Webinaire Régie Logic ──
         let webinaireRegieInterval = null;
         let activeWebinaireLiveId = null;
+        window.adminLkRoom = null;
+
+        async function connectAdminLkRoom(liveId) {
+            if (window.adminLkRoom && window.adminLkRoom.state === 'connected') return;
+            try {
+                if (!window.LivekitClient) {
+                    await new Promise((resolve, reject) => {
+                        const s = document.createElement('script');
+                        s.src = 'https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js';
+                        s.onload = resolve;
+                        s.onerror = reject;
+                        document.head.appendChild(s);
+                    });
+                }
+                const data = await fetch(`/api/livekit/admin/token?live_id=${liveId}`).then(r => r.json());
+                if (data.token && data.livekit_url) {
+                    window.adminLkRoom = new LivekitClient.Room({ adaptiveStream: true, dynacast: true });
+                    await window.adminLkRoom.connect(data.livekit_url, data.token, { autoSubscribe: false });
+                }
+            } catch(e) {
+                console.warn("Admin LiveKit room connect error:", e);
+            }
+        }
+
+        async function broadcastAdminSignal(payload) {
+            try {
+                if (window.adminLkRoom && window.adminLkRoom.state === 'connected') {
+                    const dataStr = JSON.stringify(payload);
+                    const encoder = new TextEncoder();
+                    await window.adminLkRoom.localParticipant.publishData(encoder.encode(dataStr), { reliable: true });
+                }
+            } catch(e) {
+                console.warn("DataChannel broadcast error:", e);
+            }
+        }
 
         function openWebinaireRegieModal(liveId, liveTitle) {
             activeWebinaireLiveId = liveId;
             document.getElementById('webinaire-regie-subtitle').textContent = `Direct : ${liveTitle}`;
             document.getElementById('modal-lives-webinaire-regie').classList.add('active');
             
+            connectAdminLkRoom(liveId);
+
             // Fetch once immediately
             refreshWebinaireQueueList(liveId);
             
@@ -2858,6 +2895,10 @@
             if (webinaireRegieInterval) {
                 clearInterval(webinaireRegieInterval);
                 webinaireRegieInterval = null;
+            }
+            if (window.adminLkRoom) {
+                try { window.adminLkRoom.disconnect(); } catch(e) {}
+                window.adminLkRoom = null;
             }
             activeWebinaireLiveId = null;
             document.getElementById('modal-lives-webinaire-regie').classList.remove('active');
@@ -2924,6 +2965,7 @@
 
         async function allowWebinaireSpeech(liveId, userEmail) {
             try {
+                broadcastAdminSignal({ type: 'speech_grant', target: userEmail, live_id: liveId });
                 const res = await fetch('/api/webinaire/admin/allow', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

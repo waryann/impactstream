@@ -313,6 +313,11 @@ def get_db():
                         UNIQUE(live_id, user_email)
                     )
                 ''')
+                # Index SQL haute performance (exécution sub-millisecondes)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_status ON webinaire_queue(live_id, status)")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_user ON webinaire_queue(live_id, user_email)")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_cat_comm ON medias(categorie, commission)")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_series ON medias(series_id)")
                 wrapper.commit()
                 _db_initialized = True
             except Exception as e:
@@ -442,6 +447,12 @@ def get_db():
             UNIQUE(live_id, user_email)
         )
     ''')
+
+    # Index SQL haute performance SQLite
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_status ON webinaire_queue(live_id, status)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_user ON webinaire_queue(live_id, user_email)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_medias_cat_comm ON medias(categorie, commission)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_medias_series ON medias(series_id)")
 
     # Création table quizzes
     cursor.execute('''
