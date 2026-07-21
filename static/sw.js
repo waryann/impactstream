@@ -77,6 +77,11 @@ async function handleRangeRequest(request) {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
+  // 0. Bypass SW for offline downloads (bug Safari cache no-store)
+  if (url.searchParams.has('offline_download')) {
+    return;
+  }
+
   // 1. Gérer les fichiers médias (Audio) via le Cache de Médias
   const isMedia = 
     event.request.destination === 'audio' ||
