@@ -2220,7 +2220,11 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                    .then(reg => console.log('Service Worker enregistré avec succès, scope:', reg.scope))
+                    .then(reg => {
+                        console.log('Service Worker enregistré avec succès, scope:', reg.scope);
+                        // Force update to flush out the old Safari crashing cache SW
+                        reg.update();
+                    })
                     .catch(err => console.warn('Échec de l\'enregistrement du Service Worker:', err));
             });
 
