@@ -3581,7 +3581,8 @@
                     : '';
 
                 const isDownloaded = window.downloadedMedias ? (window.downloadedMedias.has(m.url_video) || window.downloadedMedias.has(new URL(m.url_video, window.location.origin).href)) : false;
-                const offlineBtnHtml = isAudio
+                const showOfflineBtn = (currentCategory === "Musique" || currentCategory === "Enseignement");
+                const offlineBtnHtml = (isAudio && showOfflineBtn)
                     ? `<button class="card-download-btn" onclick="toggleOfflineMedia(event, ${m.id}, '${m.url_video}')" title="${isDownloaded ? 'Supprimer du mode hors-ligne' : 'Télécharger pour le mode hors-ligne'}" style="position: absolute; top: 10px; right: ${showPlaylistBtn ? '50px' : '10px'}; z-index: 10; background: rgba(20, 20, 16, 0.7); border: 1px solid rgba(237, 232, 223, 0.15); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(20, 20, 16, 0.95)';" onmouseout="this.style.transform='none'; this.style.background='rgba(20, 20, 16, 0.7)';">
                             ${isDownloaded 
                                 ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>` 
