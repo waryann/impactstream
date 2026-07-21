@@ -2218,6 +2218,17 @@
 
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
+            // Nettoyage radical du Service Worker buggé
+            if (!localStorage.getItem('sw_reset_v10')) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                    }
+                    localStorage.setItem('sw_reset_v10', 'true');
+                    setTimeout(() => window.location.reload(true), 500);
+                });
+            }
+
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js', { scope: '/' })
                     .then(reg => {
