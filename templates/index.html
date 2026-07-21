@@ -9610,7 +9610,13 @@
                     isDownloaded = false;
                 } else {
                     btn.innerHTML = `<span style="font-size:0.7rem;">⏳</span>`;
-                    await cache.add(fullUrl);
+                    
+                    const response = await fetch(fullUrl, { cache: 'no-store' });
+                    if (!response.ok && response.status !== 206) {
+                        throw new Error(`Erreur réseau: ${response.status}`);
+                    }
+                    await cache.put(fullUrl, response);
+                    
                     isDownloaded = true;
                 }
                 
