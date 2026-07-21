@@ -1,4 +1,4 @@
-const CACHE_NAME = 'impactstream-v9';
+const CACHE_NAME = 'impactstream-v10';
 const MEDIA_CACHE = 'impactstream-media';
 const BIBLE_CACHE = 'impactstream-bible';
 
