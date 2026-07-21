@@ -2797,6 +2797,16 @@ def admin_api_save_questions(quiz_id):
 def serve_manifest():
     return send_from_directory('static', 'manifest.json')
 
+@app.route('/api/download_media', methods=['POST'])
+def download_media_offline():
+    data = request.get_json()
+    filepath = data.get('filepath')
+    if not filepath or '..' in filepath or not filepath.startswith('/static/videos/'):
+        return jsonify({"error": "Invalid path"}), 400
+    
+    filename = filepath.replace('/static/videos/', '')
+    return send_from_directory(app.config['UPLOAD_FOLDER_VIDEOS'], filename, as_attachment=True)
+
 @app.route('/sw.js')
 def serve_sw():
     response = make_response(send_from_directory('static', 'sw.js'))

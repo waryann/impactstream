@@ -9626,25 +9626,25 @@
                 } else {
                     btn.innerHTML = `<span style="font-size:0.7rem;">⏳</span>`;
                     
-                    const downloadUrl = fullUrl + (fullUrl.includes('?') ? '&' : '?') + 'offline_download=1';
-                    const response = await fetch(downloadUrl);
+                    const response = await fetch('/api/download_media', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filepath: urlString })
+                    });
                     
-                    if (!response.ok && response.status !== 206) {
+                    if (!response.ok) {
                         throw new Error(`Erreur réseau: ${response.status}`);
                     }
                     
-                    let finalResponse = response;
-                    if (response.status === 206) {
-                        const buffer = await response.arrayBuffer();
-                        finalResponse = new Response(buffer, {
-                            status: 200,
-                            statusText: 'OK',
-                            headers: {
-                                'Content-Type': response.headers.get('Content-Type') || 'audio/mpeg',
-                                'Content-Length': buffer.byteLength
-                            }
-                        });
-                    }
+                    const buffer = await response.arrayBuffer();
+                    let finalResponse = new Response(buffer, {
+                        status: 200,
+                        statusText: 'OK',
+                        headers: {
+                            'Content-Type': response.headers.get('Content-Type') || 'audio/mpeg',
+                            'Content-Length': buffer.byteLength
+                        }
+                    });
                     
                     await cache.put(fullUrl, finalResponse);
                     
