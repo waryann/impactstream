@@ -1,4 +1,7 @@
-const CACHE_NAME = 'impactstream-v8';
+const CACHE_NAME = 'impactstream-v9';
+const MEDIA_CACHE = 'impactstream-media';
+const BIBLE_CACHE = 'impactstream-bible';
+
 const ASSETS_TO_CACHE = [
   '/',
   '/static/images/logo.png',
@@ -25,7 +28,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(keys => {
       return Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== MEDIA_CACHE && key !== BIBLE_CACHE) {
             console.log('[Service Worker] Removing old cache:', key);
             return caches.delete(key);
           }
@@ -36,32 +39,93 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch Event (Network first, fall back to cache)
+// Helper for Range requests (Audio/Video offline support for Safari)
+async function handleRangeRequest(request) {
+  const cache = await caches.open(MEDIA_CACHE);
+  const cachedResponse = await cache.match(request.url);
+  
+  if (!cachedResponse) {
+    return fetch(request);
+  }
+
+  const rangeHeader = request.headers.get('range');
+  if (!rangeHeader) {
+    return cachedResponse;
+  }
+
+  const arrayBuffer = await cachedResponse.arrayBuffer();
+  const match = rangeHeader.match(/bytes=(\d+)-(.*)/);
+  if (!match) return cachedResponse;
+
+  const start = Number(match[1]);
+  const end = match[2] ? Number(match[2]) : arrayBuffer.byteLength - 1;
+  const slicedBuffer = arrayBuffer.slice(start, end + 1);
+
+  return new Response(slicedBuffer, {
+    status: 206,
+    statusText: 'Partial Content',
+    headers: {
+      'Content-Type': cachedResponse.headers.get('Content-Type') || 'audio/mpeg',
+      'Content-Range': `bytes ${start}-${end}/${arrayBuffer.byteLength}`,
+      'Content-Length': slicedBuffer.byteLength,
+      'Accept-Ranges': 'bytes'
+    }
+  });
+}
+
+// Fetch Event
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  
-  // Contourner le Service Worker pour les fichiers média
+
+  // 1. Gérer les fichiers médias (Audio) via le Cache de Médias
   const isMedia = 
     event.request.destination === 'audio' ||
-    event.request.destination === 'video' ||
     event.request.headers.has('range') ||
-    url.pathname.includes('/videos/') ||
-    url.pathname.match(/\.(mp3|mp4|wav|m4a|webm|ogg|flac|aac|mov|avi|mkv)$/i);
+    url.pathname.match(/\.(mp3|mp4|wav|m4a|webm|ogg|flac|aac)$/i);
 
+  if (isMedia) {
+    event.respondWith(handleRangeRequest(event.request));
+    return;
+  }
+
+  // 2. Gérer les requêtes API Bible
+  if (url.hostname === 'api.getbible.net') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Clone and cache the response if successful
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(BIBLE_CACHE).then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(async () => {
+          // Hors-ligne : chercher dans le cache bible
+          const cache = await caches.open(BIBLE_CACHE);
+          return cache.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // 3. Ignorer certaines requêtes backend (LiveKit, etc) mais autoriser /api/medias
   if (
     event.request.method !== 'GET' || 
-    url.pathname.includes('/api/') || 
-    url.pathname.includes('/video') || 
-    isMedia
+    (url.pathname.includes('/api/') && url.hostname !== 'api.getbible.net' && !url.pathname.includes('/api/medias')) || 
+    url.pathname.includes('/video')
   ) {
     return;
   }
 
+  // 4. Stratégie classique (Network First, Cache Fallback)
   event.respondWith(
     fetch(event.request)
       .then(response => {
         if (response && response.status === 200 && response.type === 'basic') {
-          if (url.pathname.startsWith('/static/')) {
+          if (url.pathname.startsWith('/static/') || url.pathname.includes('/api/medias')) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then(cache => {
               cache.put(event.request, responseToCache);
@@ -71,12 +135,10 @@ self.addEventListener('fetch', event => {
         return response;
       })
       .catch(() => {
-        // En cas d'échec réseau, on cherche dans le cache
         return caches.match(event.request).then(cachedResponse => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          // Si on est hors ligne et qu'il s'agit d'une navigation vers une page (HTML), on affiche la page offline
           if (event.request.mode === 'navigate' || event.request.destination === 'document') {
             return caches.match('/static/offline.html');
           }

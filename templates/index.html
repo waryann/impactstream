@@ -1819,6 +1819,10 @@
                     <button id="btn-bible-audio-stop" onclick="stopBibleAudio()" style="background: rgba(237,232,223,0.06); border: 1px solid rgba(237,232,223,0.15); border-radius: 10px; color: #ede8df; padding: 0.6rem 0.8rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(239, 83, 80, 0.15)'; this.style.borderColor='#ef5350';" onmouseout="this.style.background='rgba(237,232,223,0.06)'; this.style.borderColor='rgba(237,232,223,0.15)';">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>
                     </button>
+                    <!-- Offline Bible Download -->
+                    <button id="btn-bible-offline" onclick="toggleOfflineBibleChapter()" style="background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.2); border-radius: 10px; color: #4caf50; padding: 0.6rem 0.8rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center;" title="Télécharger pour la lecture hors ligne" onmouseover="this.style.background='rgba(76, 175, 80, 0.2)'" onmouseout="if(this.title!=='Supprimer du mode hors-ligne') this.style.background='rgba(76, 175, 80, 0.1)'">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </button>
                     <!-- Audio Bible Speed Selection -->
                     <div style="display: flex; align-items: center; gap: 0.35rem; background: rgba(9, 9, 7, 0.5); border: 1px solid rgba(237,232,223,0.1); border-radius: 10px; padding: 0.4rem 0.6rem 0.4rem 0.8rem; height: 38px;">
                         <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: rgba(237,232,223,0.4); letter-spacing: 0.05em; pointer-events: none;">Vitesse</span>
@@ -2750,6 +2754,10 @@
 
                     // Update progress representation and buttons
                     updateBibleProgress();
+                    
+                    if (typeof updateBibleOfflineStatus === 'function') {
+                        updateBibleOfflineStatus();
+                    }
 
                     if (window.shouldAutoPlayNext) {
                         window.shouldAutoPlayNext = false;
@@ -3572,6 +3580,16 @@
                        </button>`
                     : '';
 
+                const isDownloaded = window.downloadedMedias ? (window.downloadedMedias.has(m.url_video) || window.downloadedMedias.has(new URL(m.url_video, window.location.origin).href)) : false;
+                const offlineBtnHtml = isAudio
+                    ? `<button class="card-download-btn" onclick="toggleOfflineMedia(event, ${m.id}, '${m.url_video}')" title="${isDownloaded ? 'Supprimer du mode hors-ligne' : 'Télécharger pour le mode hors-ligne'}" style="position: absolute; top: 10px; right: ${showPlaylistBtn ? '50px' : '10px'}; z-index: 10; background: rgba(20, 20, 16, 0.7); border: 1px solid rgba(237, 232, 223, 0.15); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(20, 20, 16, 0.95)';" onmouseout="this.style.transform='none'; this.style.background='rgba(20, 20, 16, 0.7)';">
+                            ${isDownloaded 
+                                ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>` 
+                                : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`
+                            }
+                       </button>`
+                    : '';
+
                 return `
                     <article class="media-card" onclick="openPlayer(${m.id})" style="animation-delay: ${index * 0.07}s" id="card-${m.id}">
                         <div class="card-thumbnail">
@@ -3579,6 +3597,7 @@
                             <div class="card-thumbnail-overlay"></div>
                             
                             ${playlistBtnHtml}
+                            ${offlineBtnHtml}
 
                             <div class="card-play-icon">
                                 ${isAudio
@@ -3623,7 +3642,10 @@
 
             fetch(`/api/medias?${params.toString()}`)
                 .then(res => res.json())
-                .then(medias => renderGrid(medias))
+                .then(async medias => {
+                    await loadDownloadedMedias();
+                    renderGrid(medias);
+                })
                 .catch(err => console.error('Erreur de chargement :', err));
 
             // Fetch series if applicable
@@ -3669,13 +3691,38 @@
                 });
                 // Add Ma Playlist pill
                 html += `<button class="pill-btn ${selectedCommission === 'playlist' ? 'active' : ''}" onclick="selectCommission('playlist')" style="border-color: rgba(232, 130, 12, 0.4); color: ${selectedCommission === 'playlist' ? '#fff' : '#e8820c'}">📁 Ma Playlist</button>`;
+                html += `<button class="pill-btn ${selectedCommission === 'offline' ? 'active' : ''}" onclick="selectCommission('offline')" style="border-color: rgba(76, 175, 80, 0.4); color: ${selectedCommission === 'offline' ? '#fff' : '#4caf50'}">📥 Téléchargements</button>`;
                 pillsContainer.innerHTML = html;
             }
             
             if (selectedCommission === 'playlist') {
                 renderCategoryPlaylistGrid();
+            } else if (selectedCommission === 'offline') {
+                renderOfflineGrid();
             } else {
                 fetchMedias();
+            }
+        }
+        
+        async function renderOfflineGrid() {
+            await loadDownloadedMedias();
+            try {
+                const params = new URLSearchParams();
+                if (currentCategory) params.set('categorie', currentCategory);
+                const res = await fetch(`/api/medias?${params.toString()}`);
+                const medias = await res.json();
+                
+                const offlineMedias = medias.filter(m => {
+                    if (!m.url_video) return false;
+                    let fullUrl;
+                    try { fullUrl = new URL(m.url_video, window.location.origin).href; } catch(e) { fullUrl = m.url_video; }
+                    return window.downloadedMedias.has(m.url_video) || window.downloadedMedias.has(fullUrl);
+                });
+                
+                renderGrid(offlineMedias);
+            } catch (err) {
+                console.error("Impossible de charger la liste", err);
+                renderGrid([]);
             }
         }
 
@@ -9524,6 +9571,106 @@
         }
 
         window.addEventListener('beforeunload', lkCleanup);
+
+        // ═══════════════════════════════════════════
+        // Offline Downloads (Media & Bible)
+        // ═══════════════════════════════════════════
+        window.downloadedMedias = new Set();
+        async function loadDownloadedMedias() {
+            try {
+                window.downloadedMedias.clear();
+                const cache = await caches.open('impactstream-media');
+                const requests = await cache.keys();
+                requests.forEach(r => {
+                    const url = new URL(r.url);
+                    window.downloadedMedias.add(url.pathname);
+                    window.downloadedMedias.add(r.url);
+                });
+            } catch(e) { console.warn("Erreur chargement medias hors ligne:", e); }
+        }
+
+        async function toggleOfflineMedia(event, id, urlString) {
+            event.stopPropagation();
+            const btn = event.currentTarget;
+            try {
+                const cache = await caches.open('impactstream-media');
+                let isDownloaded = false;
+                
+                let fullUrl;
+                try {
+                    fullUrl = new URL(urlString, window.location.origin).href;
+                } catch(e) { fullUrl = urlString; }
+
+                const requests = await cache.keys();
+                const req = requests.find(r => r.url === fullUrl || new URL(r.url).pathname === urlString);
+                
+                if (req) {
+                    await cache.delete(req);
+                    isDownloaded = false;
+                } else {
+                    btn.innerHTML = `<span style="font-size:0.7rem;">⏳</span>`;
+                    await cache.add(fullUrl);
+                    isDownloaded = true;
+                }
+                
+                await loadDownloadedMedias();
+                
+                btn.innerHTML = isDownloaded 
+                    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+                    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
+                btn.title = isDownloaded ? 'Supprimer du mode hors-ligne' : 'Télécharger pour le mode hors-ligne';
+                
+            } catch (err) {
+                console.error("Erreur téléchargement offline:", err);
+                alert("Erreur lors de la mise en cache.");
+                btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef5350" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+            }
+        }
+
+        async function updateBibleOfflineStatus() {
+            try {
+                const btn = document.getElementById('btn-bible-offline');
+                if (!btn) return;
+                const url = `https://api.getbible.net/v2/${currentBibleTranslation}/${currentBibleBook}/${currentBibleChapter}.json`;
+                const cache = await caches.open('impactstream-bible');
+                const req = await cache.match(url);
+                if (req) {
+                    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                    btn.style.background = 'rgba(76, 175, 80, 0.2)';
+                    btn.title = 'Supprimer du mode hors-ligne';
+                } else {
+                    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
+                    btn.style.background = 'rgba(76, 175, 80, 0.1)';
+                    btn.title = 'Télécharger pour la lecture hors ligne';
+                }
+            } catch(e) {}
+        }
+
+        async function toggleOfflineBibleChapter() {
+            const btn = document.getElementById('btn-bible-offline');
+            if (btn) btn.innerHTML = `<span style="font-size:0.7rem;">⏳</span>`;
+            try {
+                const url = `https://api.getbible.net/v2/${currentBibleTranslation}/${currentBibleBook}/${currentBibleChapter}.json`;
+                const cache = await caches.open('impactstream-bible');
+                const req = await cache.match(url);
+                
+                if (req) {
+                    await cache.delete(url);
+                } else {
+                    await cache.add(url);
+                }
+                updateBibleOfflineStatus();
+            } catch(e) {
+                console.error(e);
+                alert("Erreur lors du téléchargement.");
+                updateBibleOfflineStatus();
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDownloadedMedias();
+        });
 
     </script>
 </body>
