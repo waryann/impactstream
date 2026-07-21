@@ -2814,9 +2814,11 @@ def download_media_offline():
         return send_from_directory(UPLOAD_VIDEOS, filename, as_attachment=True)
     elif R2_PUBLIC_URL:
         # Fichier non présent sur le disque éphémère de Render, proxy depuis Cloudflare R2
-        r2_url = f"{R2_PUBLIC_URL.rstrip('/')}/video/{filename}"
+        import urllib.parse
+        quoted_filename = urllib.parse.quote(filename)
+        r2_url = f"{R2_PUBLIC_URL.rstrip('/')}/video/{quoted_filename}"
         try:
-            req = urllib.request.Request(r2_url)
+            req = urllib.request.Request(r2_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
             r2_response = urllib.request.urlopen(req)
             
             def generate():
