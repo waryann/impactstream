@@ -2799,13 +2799,45 @@ def serve_manifest():
 
 @app.route('/api/download_media', methods=['POST'])
 def download_media_offline():
+    from flask import Response, stream_with_context
+    import urllib.request
+    
     data = request.get_json()
     filepath = data.get('filepath')
     if not filepath or '..' in filepath or not filepath.startswith('/static/videos/'):
         return jsonify({"error": "Invalid path"}), 400
     
     filename = filepath.replace('/static/videos/', '')
-    return send_from_directory(UPLOAD_VIDEOS, filename, as_attachment=True)
+    local_path = os.path.join(UPLOAD_VIDEOS, filename)
+    
+    if os.path.exists(local_path):
+        return send_from_directory(UPLOAD_VIDEOS, filename, as_attachment=True)
+    elif R2_PUBLIC_URL:
+        # Fichier non présent sur le disque éphémère de Render, proxy depuis Cloudflare R2
+        r2_url = f"{R2_PUBLIC_URL.rstrip('/')}/video/{filename}"
+        try:
+            req = urllib.request.Request(r2_url)
+            r2_response = urllib.request.urlopen(req)
+            
+            def generate():
+                while True:
+                    chunk = r2_response.read(1024 * 64) # 64KB chunks
+                    if not chunk:
+                        break
+                    yield chunk
+                    
+            return Response(
+                stream_with_context(generate()), 
+                mimetype=r2_response.headers.get('Content-Type', 'audio/mpeg'),
+                headers={
+                    'Content-Disposition': f'attachment; filename="{filename}"',
+                    'Content-Length': r2_response.headers.get('Content-Length')
+                }
+            )
+        except Exception as e:
+            return jsonify({"error": f"Failed to fetch from R2: {str(e)}"}), 502
+    else:
+        return jsonify({"error": "File not found locally and R2 is not configured"}), 404
 
 @app.route('/sw.js')
 def serve_sw():
