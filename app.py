@@ -2805,7 +2805,7 @@ def download_media_offline():
         return jsonify({"error": "Invalid path"}), 400
     
     filename = filepath.replace('/static/videos/', '')
-    return send_from_directory(app.config['UPLOAD_FOLDER_VIDEOS'], filename, as_attachment=True)
+    return send_from_directory(UPLOAD_VIDEOS, filename, as_attachment=True)
 
 @app.route('/sw.js')
 def serve_sw():
