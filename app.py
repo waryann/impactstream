@@ -345,6 +345,18 @@ def get_db():
                         date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 ''')
+                # Création table messages pour PostgreSQL (Chat Espaces)
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS messages (
+                        id SERIAL PRIMARY KEY,
+                        espace_name VARCHAR(100) NOT NULL,
+                        user_email VARCHAR(255) NOT NULL,
+                        user_name VARCHAR(255) NOT NULL,
+                        user_role VARCHAR(100),
+                        message_text TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
                 # Nettoyage automatique des anciennes données de test au démarrage du serveur
                 try:
                     cur.execute("DELETE FROM webinaire_queue")
@@ -559,6 +571,19 @@ def get_db():
             note_content TEXT NOT NULL,
             date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Création table messages pour SQLite (Chat Espaces)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            espace_name TEXT NOT NULL,
+            user_email TEXT NOT NULL,
+            user_name TEXT NOT NULL,
+            user_role TEXT,
+            message_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
@@ -1246,6 +1271,261 @@ def api_delete_note(note_id):
     conn.close()
     
     return jsonify({'success': True})
+
+
+# ─────────────────────────────────────────────
+# Integration Annuaire & Chat des Espaces
+# ─────────────────────────────────────────────
+
+def get_directory_member_info(email):
+    """
+    Looks up a member's info (role_rang, commissions, nom_complet) from the directory.
+    Uses PostgreSQL if DATABASE_URL is defined, else searches in local eglise-annuaire SQLite databases.
+    """
+    if not email:
+        return None
+    email = email.lower().strip()
+    
+    # 1. Production PostgreSQL path
+    if DATABASE_URL:
+        try:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+            pg_conn = psycopg2.connect(DATABASE_URL)
+            with pg_conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT nom_complet, role_rang, commissions FROM membres WHERE email = %s LIMIT 1", (email,))
+                row = cur.fetchone()
+                if row:
+                    return {
+                        'nom_complet': row['nom_complet'],
+                        'role_rang': row['role_rang'] or 'Saint',
+                        'commissions': [c.strip() for c in (row['commissions'] or '').split(',') if c.strip()]
+                    }
+        except Exception as e:
+            app.logger.error(f"Error querying Postgres directory: {e}")
+        finally:
+            if 'pg_conn' in locals():
+                pg_conn.close()
+
+    # 2. Local SQLite path
+    else:
+        # Search in all eglise_*.db files in the eglise-annuaire data directory
+        annuaire_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'eglise-annuaire', 'data')
+        if os.path.exists(annuaire_data_dir):
+            for filename in os.listdir(annuaire_data_dir):
+                if filename.startswith('eglise_') and filename.endswith('.db'):
+                    db_path = os.path.join(annuaire_data_dir, filename)
+                    try:
+                        import sqlite3
+                        sqlite_conn = sqlite3.connect(db_path)
+                        sqlite_conn.row_factory = sqlite3.Row
+                        cursor = sqlite_conn.cursor()
+                        cursor.execute("SELECT nom_complet, role_rang, commissions FROM membres WHERE email = ? LIMIT 1", (email,))
+                        row = cursor.fetchone()
+                        if row:
+                            return {
+                                'nom_complet': row['nom_complet'],
+                                'role_rang': row['role_rang'] or 'Saint',
+                                'commissions': [c.strip() for c in (row['commissions'] or '').split(',') if c.strip()]
+                            }
+                    except Exception as e:
+                        pass
+                    finally:
+                        if 'sqlite_conn' in locals():
+                            sqlite_conn.close()
+                            
+    # Fallback default
+    return {
+        'nom_complet': email.split('@')[0].replace('.', ' ').title(),
+        'role_rang': 'Saint',
+        'commissions': []
+    }
+
+def get_directory_commission_members(commission_name):
+    """
+    Returns all members belonging to a specific commission from the directory database.
+    """
+    members = []
+    
+    # 1. PostgreSQL path
+    if DATABASE_URL:
+        try:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+            pg_conn = psycopg2.connect(DATABASE_URL)
+            with pg_conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT nom_complet, email, role_rang, commissions FROM membres")
+                rows = cur.fetchall()
+                for row in rows:
+                    comms = [c.strip() for c in (row['commissions'] or '').split(',') if c.strip()]
+                    if commission_name in comms:
+                        members.append({
+                            'nom_complet': row['nom_complet'],
+                            'email': row['email'],
+                            'role_rang': row['role_rang'] or 'Saint'
+                        })
+        except Exception as e:
+            app.logger.error(f"Error querying Postgres commission members: {e}")
+        finally:
+            if 'pg_conn' in locals():
+                pg_conn.close()
+                
+    # 2. SQLite path
+    else:
+        annuaire_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'eglise-annuaire', 'data')
+        if os.path.exists(annuaire_data_dir):
+            for filename in os.listdir(annuaire_data_dir):
+                if filename.startswith('eglise_') and filename.endswith('.db'):
+                    db_path = os.path.join(annuaire_data_dir, filename)
+                    try:
+                        import sqlite3
+                        sqlite_conn = sqlite3.connect(db_path)
+                        sqlite_conn.row_factory = sqlite3.Row
+                        cursor = sqlite_conn.cursor()
+                        cursor.execute("SELECT nom_complet, email, role_rang, commissions FROM membres")
+                        rows = cursor.fetchall()
+                        for row in rows:
+                            comms = [c.strip() for c in (row['commissions'] or '').split(',') if c.strip()]
+                            if commission_name in comms:
+                                members.append({
+                                    'nom_complet': row['nom_complet'],
+                                    'email': row['email'],
+                                    'role_rang': row['role_rang'] or 'Saint'
+                                })
+                    except Exception as e:
+                        pass
+                    finally:
+                        if 'sqlite_conn' in locals():
+                            sqlite_conn.close()
+                            
+    members.sort(key=lambda x: x['nom_complet'])
+    return members
+
+@app.route('/api/user/commissions', methods=['GET'])
+def api_get_user_commissions():
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    email = session.get('user_email')
+    info = get_directory_member_info(email)
+    if not info:
+        info = {
+            'nom_complet': email.split('@')[0].replace('.', ' ').title(),
+            'role_rang': 'Saint',
+            'commissions': []
+        }
+    return jsonify(info)
+
+@app.route('/api/espaces/<espace_name>/messages', methods=['GET'])
+def api_get_espace_messages(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    is_admin = session.get('is_admin', False)
+    
+    # Gating security check
+    if not is_admin:
+        info = get_directory_member_info(email)
+        commissions = info['commissions'] if info else []
+        if espace_name not in commissions:
+            return jsonify({'error': 'Access denied to this commission'}), 403
+            
+    since_id = request.args.get('since_id', type=int)
+    
+    conn = get_db()
+    if DATABASE_URL:
+        if since_id is not None:
+            rows = conn.execute(
+                'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM messages WHERE espace_name = %s AND id > %s ORDER BY id DESC LIMIT 100',
+                (espace_name, since_id)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM messages WHERE espace_name = %s ORDER BY id DESC LIMIT 100',
+                (espace_name,)
+            ).fetchall()
+    else:
+        if since_id is not None:
+            rows = conn.execute(
+                'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM messages WHERE espace_name = ? AND id > ? ORDER BY id DESC LIMIT 100',
+                (espace_name, since_id)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM messages WHERE espace_name = ? ORDER BY id DESC LIMIT 100',
+                (espace_name,)
+            ).fetchall()
+        
+    conn.close()
+    
+    messages = []
+    for r in rows:
+        messages.append({
+            'id': r['id'],
+            'user_email': r['user_email'],
+            'user_name': r['user_name'],
+            'user_role': r['user_role'],
+            'message_text': r['message_text'],
+            'created_at': r['created_at'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(r['created_at'], 'strftime') else r['created_at']
+        })
+        
+    messages.reverse()
+    return jsonify(messages)
+
+@app.route('/api/espaces/<espace_name>/messages', methods=['POST'])
+def api_send_espace_message(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    is_admin = session.get('is_admin', False)
+    info = get_directory_member_info(email)
+    commissions = info['commissions'] if info else []
+    
+    if not is_admin and espace_name not in commissions:
+        return jsonify({'error': 'Access denied'}), 403
+        
+    data = request.get_json() or {}
+    message_text = data.get('message_text', '').strip()
+    if not message_text:
+        return jsonify({'error': 'Empty message'}), 400
+        
+    user_name = info['nom_complet'] if info else email.split('@')[0].replace('.', ' ').title()
+    user_role = info['role_rang'] if info else 'Saint'
+    
+    conn = get_db()
+    if DATABASE_URL:
+        conn.execute(
+            'INSERT INTO messages (espace_name, user_email, user_name, user_role, message_text) VALUES (%s, %s, %s, %s, %s)',
+            (espace_name, email, user_name, user_role, message_text)
+        )
+    else:
+        conn.execute(
+            'INSERT INTO messages (espace_name, user_email, user_name, user_role, message_text) VALUES (?, ?, ?, ?, ?)',
+            (espace_name, email, user_name, user_role, message_text)
+        )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/espaces/<espace_name>/members', methods=['GET'])
+def api_get_espace_members(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    is_admin = session.get('is_admin', False)
+    
+    if not is_admin:
+        info = get_directory_member_info(email)
+        commissions = info['commissions'] if info else []
+        if espace_name not in commissions:
+            return jsonify({'error': 'Access denied'}), 403
+            
+    members = get_directory_commission_members(espace_name)
+    return jsonify(members)
 
 
 # ─────────────────────────────────────────────

@@ -3795,136 +3795,244 @@
             const container = document.getElementById('espaces-container');
             if (!container) return;
 
-            // List of commissions with icons, descriptions and subtitles
-            globalEspaces = [
-                {
-                    name: "Intercession",
-                    subtitle: "Département d'Intercession & Combat Spirituel",
-                    desc: "Rejoignez le flot de la prière continuelle et soutenez l'œuvre du Seigneur.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
-                    visible: true
-                },
-                {
-                    name: "Couples",
-                    subtitle: "Département des Couples & Familles",
-                    desc: "Grandir ensemble dans la foi, l'amour et la sagesse familiale chrétienne.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>`,
-                    visible: true
-                },
-                {
-                    name: "HED",
-                    subtitle: "Hautes Études Diplomatiques & Leadership",
-                    desc: "Formation d'excellence pour impacter le monde diplomatique et professionnel.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg>`,
-                    visible: true
-                },
-                {
-                    name: "Johanna",
-                    subtitle: "Ministère des Femmes d'Impact",
-                    desc: "S'épanouir dans sa destinée royale et impacter sa génération pour Christ.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18M3 12h18"></path></svg>`,
-                    visible: true
-                },
-                {
-                    name: "Joseph",
-                    subtitle: "Espace des Entrepreneurs & Affaires",
-                    desc: "Exercer un leadership économique intègre et prospérer selon les principes divins.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
-                    visible: true
-                },
-                {
-                    name: "PDS",
-                    subtitle: "Protocole, Diaconat & Secours",
-                    desc: "Servir le corps du Christ avec amour, ordre, assistance et dévouement.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`,
-                    visible: true
-                },
-                {
-                    name: "Culte",
-                    subtitle: "Louange, Adoration & Liturgie",
-                    desc: "Célébrer la grandeur de Dieu à travers le chant et les célébrations dominicales.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`,
-                    visible: true
-                },
-                {
-                    name: "Nayoth",
-                    subtitle: "L'école de la Prophétie & Révélation",
-                    desc: "Développer sa sensibilité spirituelle et écouter la voix du Seigneur.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
-                    visible: hasNayothAccess
-                },
-                {
-                    name: "FGI",
-                    subtitle: "Flambeau de la Grande Île",
-                    desc: "Propager la lumière de l'Évangile à travers les nations et les îles.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11.034C18 14.88 15.419 18 12 18s-6-3.12-6-6.966C6 7.665 12 2 12 2s6 5.665 6 9.034z"></path><path d="M12 22v-4"></path></svg>`,
-                    visible: true
-                },
-                {
-                    name: "Animateur GC",
-                    subtitle: "Espace des Animateurs de Groupes de Croissance",
-                    desc: "Outils, guides et ressources pour animer et accompagner les Groupes de Croissance.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
-                    visible: true
-                },
-                {
-                    name: "Enfants",
-                    subtitle: "Jeux & Éveil Biblique",
-                    desc: "Apprendre la Parole en s'amusant avec des jeux interactifs et des défis bibliques.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6h-2V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM9 4h6v2H9V4zm9 14H6V8h12v10z"></path><circle cx="9" cy="11" r="1"></circle><circle cx="15" cy="11" r="1"></circle><path d="M9 14c1 1.5 3 1.5 4 0"></path></svg>`,
-                    visible: true
-                },
-                {
-                    name: "Plan de lecture biblique",
-                    subtitle: "Plan de Lecture Biblique",
-                    desc: "Méditez la Parole de Dieu quotidiennement à travers notre plan de lecture guidé sur 365 jours.",
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
-                    visible: true
-                }
-            ];
-
-            let html = `
-                <div style="display: flex; flex-direction: column; gap: 1.25rem; animation: fadeIn 0.4s ease;">
+            container.innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; min-height: 250px;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Chargement de vos espaces...</span>
+                    </div>
+                </div>
             `;
 
-            globalEspaces.forEach((s, idx) => {
-                if (!s.visible) return;
+            fetch('/api/user/commissions')
+                .then(res => res.json())
+                .then(user_info => {
+                    const commissions = user_info.commissions || [];
+                    const is_admin = {% if session.get('is_admin') %}true{% else %}false{% endif %};
 
-                html += `
-                    <div onclick="openEspaceView(${idx})" 
-                         style="background: linear-gradient(135deg, rgba(27,26,20,0.6) 0%, rgba(14,14,10,0.85) 100%); border: 1px solid rgba(232, 130, 12, 0.15); border-radius: 20px; padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1.5rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3);"
-                         class="espace-card-vertical"
-                         onmouseover="this.style.borderColor='rgba(232, 130, 12, 0.6)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 35px rgba(232, 130, 12, 0.12)';"
-                         onmouseout="this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.transform='none'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.3)';">
-                        
-                        <!-- Glowing circular icon -->
-                        <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(232, 130, 12, 0.08); border: 1.5px solid rgba(232, 130, 12, 0.35); color: #e8820c; display: flex; align-items: center; justify-content: center; shrink-0: 0; box-shadow: 0 0 15px rgba(232, 130, 12, 0.1); transition: all 0.3s;">
-                            ${s.icon}
-                        </div>
-                        
-                        <!-- Content -->
-                        <div style="flex: 1;">
-                            <span style="font-size: 0.72rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 0.25rem;">
-                                ${s.subtitle}
-                            </span>
-                            <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0; font-family: 'Outfit', sans-serif;">
-                                ${s.name}
-                            </h3>
-                            <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.55); margin: 0.25rem 0 0; line-height: 1.5;">
-                                ${s.desc}
-                            </p>
-                        </div>
-                        
-                        <!-- Chevron arrow -->
-                        <div style="color: rgba(237, 232, 223, 0.3); transition: all 0.3s;" class="chevron-indicator">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </div>
-                    </div>
-                `;
-            });
+                    // Configuration des Espaces avec thèmes personnalisés et visions spécifiques
+                    globalEspaces = [
+                        {
+                            name: "Intercession",
+                            subtitle: "Département d'Intercession & Combat Spirituel",
+                            desc: "Rejoignez le flot de la prière continuelle et soutenez l'œuvre du Seigneur.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
+                            visible: is_admin || commissions.includes("Intercession"),
+                            theme: {
+                                primary: "#c084fc",
+                                bg: "linear-gradient(135deg, rgba(88, 28, 135, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#e9d5ff",
+                                vision: "Portez les fardeaux les uns des autres et soutenez l'œuvre spirituelle par une prière fervente, continuelle et persévérante."
+                            }
+                        },
+                        {
+                            name: "Couples",
+                            subtitle: "Département des Couples & Familles",
+                            desc: "Grandir ensemble dans la foi, l'amour et la sagesse familiale chrétienne.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>`,
+                            visible: is_admin || commissions.includes("Couples"),
+                            theme: {
+                                primary: "#f472b6",
+                                bg: "linear-gradient(135deg, rgba(157, 23, 77, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#fbcfe8",
+                                vision: "Bâtir des foyers solides, épanouis et inébranlables, fondés sur les principes bibliques d'amour, de respect mutuel et de fidélité."
+                            }
+                        },
+                        {
+                            name: "HED",
+                            subtitle: "Hautes Études Diplomatiques & Leadership",
+                            desc: "Formation d'excellence pour impacter le monde diplomatique et professionnel.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg>`,
+                            visible: is_admin || commissions.includes("HED"),
+                            theme: {
+                                primary: "#60a5fa",
+                                bg: "linear-gradient(135deg, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#bfdbfe",
+                                vision: "Former des leaders intègres et influents pour impacter positivement les sphères de la diplomatie, de l'administration et des affaires."
+                            }
+                        },
+                        {
+                            name: "Johanna",
+                            subtitle: "Ministère des Femmes d'Impact",
+                            desc: "S'épanouir dans sa destinée royale et impacter sa génération pour Christ.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18M3 12h18"></path></svg>`,
+                            visible: is_admin || commissions.includes("Johanna"),
+                            theme: {
+                                primary: "#2dd4bf",
+                                bg: "linear-gradient(135deg, rgba(20, 83, 76, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#ccfbf1",
+                                vision: "Révéler la dignité, la force et la destinée royale de chaque femme pour faire d'elles des piliers dans leur foyer, l'Église et la société."
+                            }
+                        },
+                        {
+                            name: "Joseph",
+                            subtitle: "Espace des Entrepreneurs & Affaires",
+                            desc: "Exercer un leadership économique intègre et prospérer selon les principes divins.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
+                            visible: is_admin || commissions.includes("Joseph"),
+                            theme: {
+                                primary: "#fbbf24",
+                                bg: "linear-gradient(135deg, rgba(120, 53, 4, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#fef3c7",
+                                vision: "Déployer les talents d'entrepreneurs pour une gestion économique éthique, créative et prospère sous la conduite du Saint-Esprit."
+                            }
+                        },
+                        {
+                            name: "PDS",
+                            subtitle: "Protocole, Diaconat & Secours",
+                            desc: "Servir le corps du Christ avec amour, ordre, assistance et dévouement.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`,
+                            visible: is_admin || commissions.includes("PDS"),
+                            theme: {
+                                primary: "#94a3b8",
+                                bg: "linear-gradient(135deg, rgba(71, 85, 105, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#e2e8f0",
+                                vision: "Assurer un accueil chaleureux et d'excellence, veiller à l'ordre des célébrations et apporter une assistance fraternelle aux saints."
+                            }
+                        },
+                        {
+                            name: "Culte",
+                            subtitle: "Louange, Adoration & Liturgie",
+                            desc: "Célébrer la grandeur de Dieu à travers le chant et les célébrations dominicales.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`,
+                            visible: is_admin || commissions.includes("Culte"),
+                            theme: {
+                                primary: "#a78bfa",
+                                bg: "linear-gradient(135deg, rgba(109, 40, 217, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#ddd6fe",
+                                vision: "Conduire le peuple de Dieu dans une adoration sincère, vibrante et profonde qui attire la gloire, la puissance et la présence divine."
+                            }
+                        },
+                        {
+                            name: "Nayoth",
+                            subtitle: "L'école de la Prophétie & Révélation",
+                            desc: "Développer sa sensibilité spirituelle et écouter la voix du Seigneur.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
+                            visible: is_admin || commissions.includes("Nayoth"),
+                            theme: {
+                                primary: "#22d3ee",
+                                bg: "linear-gradient(135deg, rgba(21, 94, 117, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#cffafe",
+                                vision: "Former, exercer et aiguiser les dons prophétiques et spirituels dans l'ordre, la maturité et la fidélité absolue aux Saintes Écritures."
+                            }
+                        },
+                        {
+                            name: "FGI",
+                            subtitle: "Flambeau de la Grande Île",
+                            desc: "Propager la lumière de l'Évangile à travers les nations et les îles.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11.034C18 14.88 15.419 18 12 18s-6-3.12-6-6.966C6 7.665 12 2 12 2s6 5.665 6 9.034z"></path><path d="M12 22v-4"></path></svg>`,
+                            visible: is_admin || commissions.includes("FGI"),
+                            theme: {
+                                primary: "#22d3ee",
+                                bg: "linear-gradient(135deg, rgba(8, 145, 178, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#cffafe",
+                                vision: "Répandre l'amour de Dieu et la puissance de la parole révélée dans les îles du monde entier et jusqu'aux extrémités de la terre."
+                            }
+                        },
+                        {
+                            name: "Animateur GC",
+                            subtitle: "Espace des Animateurs de Groupes de Croissance",
+                            desc: "Outils, guides et ressources pour animer et accompagner les Groupes de Croissance.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+                            visible: is_admin || commissions.includes("Animateur GC"),
+                            theme: {
+                                primary: "#34d399",
+                                bg: "linear-gradient(135deg, rgba(6, 95, 70, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#d1fae5",
+                                vision: "Encadrer et coordonner les Groupes de Croissance avec sagesse, amour et bienveillance afin de fortifier la communion fraternelle."
+                            }
+                        },
+                        {
+                            name: "Enfants",
+                            subtitle: "Jeux & Éveil Biblique",
+                            desc: "Apprendre la Parole en s'amusant avec des jeux interactifs et des défis bibliques.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6h-2V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM9 4h6v2H9V4zm9 14H6V8h12v10z"></path><circle cx="9" cy="11" r="1"></circle><circle cx="15" cy="11" r="1"></circle><path d="M9 14c1 1.5 3 1.5 4 0"></path></svg>`,
+                            visible: is_admin || commissions.includes("Enfants"),
+                            theme: {
+                                primary: "#f472b6",
+                                bg: "linear-gradient(135deg, rgba(144, 205, 244, 0.35) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#e2e8f0",
+                                vision: "Instruire les enfants selon les voies du Seigneur par des jeux et des enseignements créatifs pour en faire des disciples solides."
+                            }
+                        },
+                        {
+                            name: "Plan de lecture biblique",
+                            subtitle: "Plan de Lecture Biblique",
+                            desc: "Méditez la Parole de Dieu quotidiennement à travers notre plan de lecture guidé sur 365 jours.",
+                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
+                            visible: true,
+                            theme: {
+                                primary: "#e8820c",
+                                bg: "linear-gradient(135deg, rgba(120, 53, 4, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#ede8df",
+                                vision: "Méditer et s'enraciner dans la parole divine quotidiennement pour grandir spirituellement."
+                            }
+                        }
+                    ];
 
-            html += `</div>`;
-            container.innerHTML = html;
+                    const visibleEspaces = globalEspaces.filter(e => e.visible);
+
+                    if (visibleEspaces.length === 0) {
+                        container.innerHTML = `
+                            <div style="background: linear-gradient(135deg, rgba(27,26,20,0.5) 0%, rgba(14,14,10,0.85) 100%); border: 1px solid rgba(232, 130, 12, 0.15); border-radius: 24px; padding: 4rem 2rem; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                                <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(232, 130, 12, 0.08); display: flex; align-items: center; justify-content: center; color: #e8820c; margin: 0 auto 1.5rem; border: 1px solid rgba(232,130,12,0.25);">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                </div>
+                                <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif;">Aucun espace activé</h3>
+                                <p style="font-size: 0.88rem; color: rgba(237,232,223,0.7); max-width: 500px; margin: 0 auto 2rem; line-height: 1.6;">
+                                    Vous n'êtes actuellement inscrit dans aucune commission de l'annuaire de l'église. Veuillez mettre à jour votre carte de membre dans l'annuaire en y cochant vos commissions pour activer vos accès.
+                                </p>
+                                <a href="http://localhost:5002" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.5rem; border-radius: 100px; background: #e8820c; color: #fff; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: background 0.3s;" onmouseover="this.style.background='#d0720a'" onmouseout="this.style.background='#e8820c'">
+                                    🔗 Accéder à l'Annuaire
+                                </a>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let html = `
+                        <div style="display: flex; flex-direction: column; gap: 1.25rem; animation: fadeIn 0.4s ease;">
+                    `;
+
+                    globalEspaces.forEach((s, idx) => {
+                        if (!s.visible) return;
+
+                        html += `
+                            <div onclick="openEspaceView(${idx})" 
+                                 style="background: ${s.theme.bg}; border: 1px solid ${s.theme.primary}25; border-radius: 20px; padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1.5rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3);"
+                                 class="espace-card-vertical"
+                                 onmouseover="this.style.borderColor='${s.theme.primary}80'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 35px ${s.theme.primary}12';"
+                                 onmouseout="this.style.borderColor='${s.theme.primary}25'; this.style.transform='none'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.3)';"
+                                 id="espace-card-${idx}">
+                                 
+                                 <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.04); border: 1.5px solid ${s.theme.primary}50; color: ${s.theme.primary}; display: flex; align-items: center; justify-content: center; shrink-0: 0; box-shadow: 0 0 15px ${s.theme.primary}15; transition: all 0.3s;">
+                                     ${s.icon}
+                                 </div>
+                                 
+                                 <div style="flex: 1;">
+                                     <span style="font-size: 0.72rem; font-weight: 700; color: ${s.theme.primary}; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 0.25rem;">
+                                         ${s.subtitle}
+                                     </span>
+                                     <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0; font-family: 'Outfit', sans-serif;">
+                                         ${s.name}
+                                     </h3>
+                                     <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.55); margin: 0.25rem 0 0; line-height: 1.5;">
+                                         ${s.desc}
+                                     </p>
+                                 </div>
+                                 
+                                 <div style="color: rgba(237, 232, 223, 0.3); transition: all 0.3s;" class="chevron-indicator">
+                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                 </div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error("Error fetching user commissions:", err);
+                    container.innerHTML = `<p style="color: red; text-align: center; padding: 2rem;">Impossible de charger vos commissions.</p>`;
+                });
         }
 
         // --- BIBLE READING PLANS MODULE ---
@@ -5064,12 +5172,20 @@
             }, 300);
         };
 
+        let activeChatInterval = null;
+
         window.openEspaceView = function(idx) {
             const s = globalEspaces[idx];
             if (!s) return;
             
             const container = document.getElementById('espaces-container');
             if (!container) return;
+
+            // Arrêter tout polling de chat actif précédent
+            if (activeChatInterval) {
+                clearInterval(activeChatInterval);
+                activeChatInterval = null;
+            }
 
             if (s.name === "Plan de lecture biblique") {
                 renderEspacePlanLecture(s, container);
@@ -5081,100 +5197,286 @@
                 return;
             }
 
-            // Loader animation
+            const theme = s.theme || {
+                primary: "#e8820c",
+                bg: "linear-gradient(135deg, rgba(27,26,20,0.6) 0%, rgba(14,14,10,0.85) 100%)",
+                text: "#ede8df",
+                vision: "Servir le Seigneur avec fidélité et excellence dans notre commission."
+            };
+
+            // Structure HTML de la Chatroom de l'Espace avec Vision Banner
             container.innerHTML = `
-                <div style="display: flex; justify-content: center; align-items: center; min-height: 250px;">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Chargement...</span>
+                <style>
+                @keyframes slideDown {
+                    from { transform: translateY(-15px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                .chat-bubble-wrapper {
+                    margin-bottom: 0.75rem;
+                }
+                </style>
+
+                <!-- Bouton Retour -->
+                <button onclick="renderEspacesGrid(); if(activeChatInterval) { clearInterval(activeChatInterval); activeChatInterval=null; }" 
+                        style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 100px; color: #ede8df; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.25rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 1.5rem; transition: all 0.3s;" 
+                        onmouseover="this.style.background='${theme.primary}20'; this.style.borderColor='${theme.primary}';" 
+                        onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.15)';">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Retour aux Espaces
+                </button>
+
+                <!-- Bannière de Vision/Mission de la Commission -->
+                <div style="background: ${theme.bg}; border: 1px solid ${theme.primary}40; border-radius: 20px; padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; animation: slideDown 0.4s ease;">
+                    <div style="position: absolute; right: -20px; bottom: -20px; opacity: 0.05; color: ${theme.primary}; transform: rotate(-15deg);">
+                        ${s.icon.replace('width="24"', 'width="150"').replace('height="24"', 'height="150"')}
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: ${theme.primary}15; display: flex; align-items: center; justify-content: center; color: ${theme.primary}; border: 1px solid ${theme.primary}30; flex-shrink: 0;">
+                        ${s.icon}
+                    </div>
+                    <div>
+                        <h4 style="margin: 0 0 0.25rem 0; font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.05em;">
+                            Vision & Mission — Commission ${s.name}
+                        </h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.75); line-height: 1.5; font-style: italic;">
+                            "${theme.vision}"
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Grille principale de la chatroom -->
+                <div style="display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; height: 550px; animation: fadeIn 0.5s ease; max-width: 100%;">
+                    
+                    <!-- Panneau de Chat -->
+                    <div style="display: flex; flex-direction: column; background: rgba(14, 14, 10, 0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); position: relative;">
+                        <!-- En-tête -->
+                        <div style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e;"></span>
+                                <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #fff;">Discussion Générale</h3>
+                            </div>
+                        </div>
+
+                        <!-- Liste de Messages -->
+                        <div id="chat-messages-container" style="flex-grow: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; background: radial-gradient(circle at top right, ${theme.primary}05 0%, transparent 70%);">
+                            <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="sr-only">Chargement de la discussion...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pied de page Input -->
+                        <form id="chat-input-form" onsubmit="sendChatMessage(event, '${s.name}')" style="background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255,255,255,0.06); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
+                            <input type="text" id="chat-message-input" placeholder="Écrire un message pour la commission ${s.name}..." autocomplete="off" required
+                                   style="flex-grow: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.75rem 1rem; color: #fff; font-size: 0.88rem; outline: none; transition: border-color 0.3s;"
+                                   onfocus="this.style.borderColor='${theme.primary}'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                            <button type="submit" style="background: ${theme.primary}; border: none; border-radius: 12px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: transform 0.2s;"
+                                    onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transform: rotate(45deg);"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Panneau de l'équipe (Membres) -->
+                    <div style="display: flex; flex-direction: column; background: rgba(14, 14, 10, 0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                        <div style="background: rgba(255,255,255,0.01); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 1rem 1.25rem;">
+                            <h3 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em;">Saints de l'Équipe</h3>
+                        </div>
+                        <div id="chat-members-container" style="flex-grow: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 2rem 0;">Chargement de l'équipe...</div>
+                        </div>
                     </div>
                 </div>
             `;
 
-            // Fetch the medias of this commission/espace
-            fetch(`/api/medias?commission=${encodeURIComponent(s.name)}`)
+            // Charger les messages et les membres
+            loadChatMessages(s.name);
+            loadChatMembers(s.name);
+            
+            // Démarrer le polling
+            activeChatInterval = setInterval(() => {
+                loadChatMessages(s.name, true);
+            }, 3000);
+        };
+
+        let lastChatMessageId = 0;
+
+        window.loadChatMessages = function(espaceName, isSilent = false) {
+            const container = document.getElementById('chat-messages-container');
+            if (!container) return;
+
+            let url = `/api/espaces/${encodeURIComponent(espaceName)}/messages`;
+            if (isSilent && lastChatMessageId > 0) {
+                url += `?since_id=${lastChatMessageId}`;
+            }
+
+            fetch(url)
                 .then(res => res.json())
-                .then(medias => {
-                    let contentHtml = '';
+                .then(messages => {
+                    if (messages.error) {
+                        container.innerHTML = `<p style="color: red; text-align: center; padding: 2rem;">${messages.error}</p>`;
+                        if (activeChatInterval) clearInterval(activeChatInterval);
+                        return;
+                    }
+
+                    if (messages.length === 0) {
+                        if (!isSilent) {
+                            container.innerHTML = `
+                                <div id="chat-empty-state" style="text-align: center; color: rgba(255,255,255,0.3); font-size: 0.85rem; padding: 4rem 1rem;">
+                                    🕊️ Aucun message pour l'instant. Soyez le premier à envoyer une parole d'édification !
+                                </div>
+                            `;
+                        }
+                        return;
+                    }
+
+                    const emptyState = document.getElementById('chat-empty-state');
+                    if (emptyState) {
+                        emptyState.remove();
+                    }
+
+                    const currentUserEmail = "{{ session.get('user_email', '') }}".toLowerCase().trim();
+                    const currentSpace = globalEspaces.find(e => e.name === espaceName);
                     
-                    if (medias.length === 0) {
-                        contentHtml = `
-                            <!-- Empty state panel -->
-                            <div style="background: linear-gradient(135deg, rgba(27,26,20,0.5) 0%, rgba(14,14,10,0.85) 100%); border: 1px solid rgba(232, 130, 12, 0.15); border-radius: 24px; padding: 4rem 2rem; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-                                <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(232, 130, 12, 0.08); display: flex; align-items: center; justify-content: center; color: #e8820c; margin: 0 auto 1.5rem; border: 1px solid rgba(232,130,12,0.25);">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                                </div>
-                                <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif;">Espace en cours de création</h3>
-                                <p style="font-size: 0.88rem; color: rgba(237,232,223,0.55); max-width: 450px; margin: 0 auto 2rem; line-height: 1.6;">
-                                    Les ressources, enseignements spécifiques et directs liés à l'espace <strong>${s.name}</strong> seront bientôt disponibles ici.
-                                </p>
-                                <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 100px; background: rgba(232,130,12,0.08); border: 1px solid rgba(232,130,12,0.2); color: #e8820c; font-size: 0.78rem; font-weight: 700;">
-                                    <span class="pulsing-dot" style="width: 6px; height: 6px; background: #e8820c; border-radius: 50%;"></span>
-                                    Restez connecté pour les nouveautés
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        // Render a beautiful grid of media cards
-                        let cardsHtml = '';
-                        medias.forEach((m) => {
-                            const isAudio = m.url_video && m.url_video.toLowerCase().endsWith('.mp3');
-                            const mediaIcon = isAudio 
-                                ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`
-                                : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
-                            
-                            cardsHtml += `
-                                <div onclick="openPlayer(${m.id})" class="media-card-espace" style="background: rgba(27, 26, 20, 0.4); border: 1px solid rgba(237, 232, 223, 0.05); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column;" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='rgba(232, 130, 12, 0.3)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.4)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(237, 232, 223, 0.05)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.2)';">
-                                    <div style="width: 100%; aspect-ratio: 16/9; background: #0c0b09; overflow: hidden; position: relative; border-bottom: 1px solid rgba(237,232,223,0.03);">
-                                        <img src="${m.url_miniature || '/static/images/default_cover.png'}" style="width:100%; height:100%; object-fit:cover; transition: all 0.4s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='none'">
-                                        <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.65); color: #fff; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem;">
-                                            ${mediaIcon}
-                                            ${m.categorie}
-                                        </span>
+                    let html = '';
+                    messages.forEach(msg => {
+                        if (msg.id > lastChatMessageId) {
+                            lastChatMessageId = msg.id;
+                        }
+
+                        const isMe = msg.user_email.toLowerCase().trim() === currentUserEmail;
+                        const timeStr = msg.created_at ? msg.created_at.substring(11, 16) : '';
+
+                        // Rangs colorés
+                        let badgeStyle = "background: rgba(232, 130, 12, 0.12); border: 1px solid rgba(232, 130, 12, 0.25); color: #e8820c;";
+                        if (msg.user_role === 'Pasteur') {
+                            badgeStyle = "background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: #a78bfa;";
+                        } else if (msg.user_role && msg.user_role.startsWith('Responsable')) {
+                            badgeStyle = "background: rgba(236, 72, 153, 0.15); border: 1px solid rgba(236, 72, 153, 0.3); color: #f472b6;";
+                        } else if (msg.user_role && msg.user_role.startsWith('Leader')) {
+                            badgeStyle = "background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa;";
+                        }
+
+                        if (isMe) {
+                            html += `
+                                <div class="chat-bubble-wrapper" style="display: flex; flex-direction: column; align-items: flex-end; width: 100%; animation: fadeIn 0.3s ease;">
+                                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem;">
+                                        <span style="font-size: 0.72rem; color: ${currentSpace.theme.primary}; font-weight: 700; background: rgba(255,255,255,0.06); padding: 0.1rem 0.4rem; border-radius: 100px;">Vous</span>
+                                        <span style="font-size: 0.72rem; color: rgba(255,255,255,0.4);">${timeStr}</span>
                                     </div>
-                                    <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1;">
-                                        <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin: 0; line-height: 1.3; font-family: 'Outfit', sans-serif;">${m.titre}</h4>
-                                        <p style="font-size: 0.78rem; color: rgba(237,232,223,0.5); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; flex: 1;">${m.description || ''}</p>
+                                    <div style="background: ${currentSpace.theme.primary}25; border: 1px solid ${currentSpace.theme.primary}40; border-radius: 18px 18px 2px 18px; padding: 0.75rem 1rem; max-width: 75%; word-break: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                                        <p style="margin: 0; font-size: 0.88rem; color: #fff; line-height: 1.4;">${msg.message_text}</p>
                                     </div>
                                 </div>
                             `;
-                        });
+                        } else {
+                            html += `
+                                <div class="chat-bubble-wrapper" style="display: flex; flex-direction: column; align-items: flex-start; width: 100%; animation: fadeIn 0.3s ease;">
+                                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem;">
+                                        <span style="font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.85);">${msg.user_name}</span>
+                                        <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 0.05rem 0.4rem; border-radius: 100px; ${badgeStyle}">${msg.user_role}</span>
+                                        <span style="font-size: 0.72rem; color: rgba(255,255,255,0.3);">${timeStr}</span>
+                                    </div>
+                                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px 18px 18px 2px; padding: 0.75rem 1rem; max-width: 75%; word-break: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                                        <p style="margin: 0; font-size: 0.88rem; color: rgba(255,255,255,0.9); line-height: 1.4;">${msg.message_text}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
 
-                        contentHtml = `
-                            <!-- Grid of department medias -->
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; animation: fadeIn 0.4s ease;">
-                                ${cardsHtml}
-                            </div>
-                        `;
+                    if (!isSilent && container.querySelector('.spinner-border')) {
+                        container.innerHTML = '';
                     }
 
-                    container.innerHTML = `
-                        <div style="animation: fadeIn 0.4s ease; max-width: 1000px; margin: 0 auto; padding: 1rem 0;">
-                            <!-- Back button -->
-                            <button onclick="renderEspacesGrid()" style="background: rgba(237,232,223,0.06); border: 1px solid rgba(237,232,223,0.15); border-radius: 100px; color: #ede8df; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.25rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 2rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(232, 130, 12, 0.15)'; this.style.borderColor='#e8820c';" onmouseout="this.style.background='rgba(237,232,223,0.06)'; this.style.borderColor='rgba(237,232,223,0.15)';">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                                Retour aux Espaces
-                            </button>
-                            
-                            <!-- Espace Header -->
-                            <div style="display: flex; align-items: center; gap: 1.5rem; border-bottom: 1px solid rgba(237,232,223,0.08); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-                                <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(232, 130, 12, 0.08); border: 2px solid #e8820c; display: flex; align-items: center; justify-content: center; color: #e8820c; box-shadow: 0 0 15px rgba(232, 130, 12, 0.25); flex-shrink: 0;">
-                                    ${s.icon}
+                    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+                    
+                    container.insertAdjacentHTML('beforeend', html);
+
+                    if (isNearBottom || !isSilent) {
+                        container.scrollTop = container.scrollHeight;
+                    }
+                });
+        };
+
+        window.sendChatMessage = function(event, espaceName) {
+            event.preventDefault();
+            const input = document.getElementById('chat-message-input');
+            if (!input) return;
+
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+
+            fetch(`/api/espaces/${encodeURIComponent(espaceName)}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message_text: text })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadChatMessages(espaceName);
+                } else {
+                    alert(data.error || "Erreur d'envoi.");
+                }
+            })
+            .catch(err => {
+                console.error("Error sending message:", err);
+            });
+        };
+
+        window.loadChatMembers = function(espaceName) {
+            const container = document.getElementById('chat-members-container');
+            if (!container) return;
+
+            fetch(`/api/espaces/${encodeURIComponent(espaceName)}/members`)
+                .then(res => res.json())
+                .then(members => {
+                    if (members.error) {
+                        container.innerHTML = `<div style="text-align: center; color: red; font-size: 0.8rem;">Erreur.</div>`;
+                        return;
+                    }
+
+                    if (members.length === 0) {
+                        container.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; padding: 2rem 0;">Aucun membre.</div>`;
+                        return;
+                    }
+
+                    let html = '';
+                    members.forEach(member => {
+                        const init = member.nom_complet.substring(0, 2).toUpperCase();
+                        
+                        let badgeStyle = "background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);";
+                        if (member.role_rang === 'Pasteur') {
+                            badgeStyle = "background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.25); color: #a78bfa;";
+                        } else if (member.role_rang && member.role_rang.startsWith('Responsable')) {
+                            badgeStyle = "background: rgba(236, 72, 153, 0.12); border: 1px solid rgba(236, 72, 153, 0.25); color: #f472b6;";
+                        } else if (member.role_rang && member.role_rang.startsWith('Leader')) {
+                            badgeStyle = "background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.25); color: #60a5fa;";
+                        }
+
+                        html += `
+                            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, rgba(232, 130, 12, 0.15) 0%, rgba(27,26,20,0.8) 100%); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #fff; border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0;">
+                                    ${init}
                                 </div>
-                                <div>
-                                    <span style="font-size: 0.72rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 0.25rem;">
-                                        ${s.subtitle}
-                                    </span>
-                                    <h2 style="font-size: 1.8rem; font-weight: 900; color: #fff; margin: 0; font-family: 'Outfit', sans-serif;">Espace ${s.name}</h2>
+                                <div style="overflow: hidden; flex-grow: 1;">
+                                    <div style="font-size: 0.85rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${member.nom_complet}</div>
+                                    <div style="display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 0.05rem 0.3rem; border-radius: 4px; margin-top: 0.1rem; ${badgeStyle}">
+                                        ${member.role_rang}
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <!-- Espace Contents -->
-                            ${contentHtml}
-                        </div>
-                    `;
-                })
-                .catch(err => {
-                    console.error("Error loading department medias:", err);
+                        `;
+                    });
+
+                    container.innerHTML = html;
                 });
         };
 
