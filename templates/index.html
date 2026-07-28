@@ -3815,12 +3815,12 @@
                             name: "Intercession",
                             subtitle: "Département d'Intercession & Combat Spirituel",
                             desc: "Rejoignez le flot de la prière continuelle et soutenez l'œuvre du Seigneur.",
-                            icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
+                            icon: `<img src="/static/images/logo_intercession.png" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: #fff;">`,
                             visible: is_admin || commissions.includes("Intercession"),
                             theme: {
-                                primary: "#c084fc",
-                                bg: "linear-gradient(135deg, rgba(88, 28, 135, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
-                                text: "#e9d5ff",
+                                primary: "#10b981",
+                                bg: "linear-gradient(135deg, rgba(6, 78, 59, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)",
+                                text: "#d1fae5",
                                 vision: "Portez les fardeaux les uns des autres et soutenez l'œuvre spirituelle par une prière fervente, continuelle et persévérante."
                             }
                         },
@@ -4004,7 +4004,7 @@
                                  onmouseout="this.style.borderColor='${s.theme.primary}25'; this.style.transform='none'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.3)';"
                                  id="espace-card-${idx}">
                                  
-                                 <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.04); border: 1.5px solid ${s.theme.primary}50; color: ${s.theme.primary}; display: flex; align-items: center; justify-content: center; shrink-0: 0; box-shadow: 0 0 15px ${s.theme.primary}15; transition: all 0.3s;">
+                                 <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.04); border: 1.5px solid ${s.theme.primary}50; color: ${s.theme.primary}; display: flex; align-items: center; justify-content: center; shrink-0: 0; box-shadow: 0 0 15px ${s.theme.primary}15; transition: all 0.3s; overflow: hidden;">
                                      ${s.icon}
                                  </div>
                                  
@@ -5231,10 +5231,10 @@
 
                 <!-- Bannière de Vision/Mission de la Commission -->
                 <div style="background: ${theme.bg}; border: 1px solid ${theme.primary}40; border-radius: 20px; padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; animation: slideDown 0.4s ease;">
-                    <div style="position: absolute; right: -20px; bottom: -20px; opacity: 0.05; color: ${theme.primary}; transform: rotate(-15deg);">
-                        ${s.icon.replace('width="24"', 'width="150"').replace('height="24"', 'height="150"')}
+                    <div style="position: absolute; right: -20px; bottom: -20px; opacity: 0.05; color: ${theme.primary}; transform: rotate(-15deg); width: 150px; height: 150px; display: flex; align-items: center; justify-content: center;">
+                        ${s.icon.includes('img') ? s.icon.replace('border-radius: 50%', 'border-radius: 20px') : s.icon.replace('width="24"', 'width="150"').replace('height="24"', 'height="150"')}
                     </div>
-                    <div style="width: 48px; height: 48px; border-radius: 50%; background: ${theme.primary}15; display: flex; align-items: center; justify-content: center; color: ${theme.primary}; border: 1px solid ${theme.primary}30; flex-shrink: 0;">
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: ${theme.primary}15; display: flex; align-items: center; justify-content: center; color: ${theme.primary}; border: 1px solid ${theme.primary}30; flex-shrink: 0; overflow: hidden;">
                         ${s.icon}
                     </div>
                     <div>
