@@ -3807,7 +3807,7 @@
                 .then(res => res.json())
                 .then(user_info => {
                     const commissions = user_info.commissions || [];
-                    const is_admin = {% if session.get('is_admin') %}true{% else %}false{% endif %};
+                    const is_admin = {% if session.get('admin_logged_in') %}true{% else %}false{% endif %} || (user_info.email && user_info.email.toLowerCase().trim() === 'yann.noukaze@ministereimpact.org');
 
                     // Configuration des Espaces avec thèmes personnalisés et visions spécifiques
                     globalEspaces = [

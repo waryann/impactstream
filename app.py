@@ -1410,10 +1410,16 @@ def api_get_user_commissions():
     info = get_directory_member_info(email)
     if not info:
         info = {
-            'nom_complet': email.split('@')[0].replace('.', ' ').title(),
+            'nom_complet': email.split('@')[0].replace('.', ' ').title() if email else 'Saint',
             'role_rang': 'Saint',
             'commissions': []
         }
+    
+    info['email'] = email
+    is_admin = session.get('admin_logged_in', False) or (email and email.lower().strip() == 'yann.noukaze@ministereimpact.org')
+    if is_admin:
+        info['commissions'] = ["Intercession", "Couples", "HED", "Johanna", "Joseph", "PDS", "Culte", "Nayoth", "FGI", "Animateur GC", "Enfants"]
+        
     return jsonify(info)
 
 @app.route('/api/espaces/<espace_name>/messages', methods=['GET'])
@@ -1422,7 +1428,7 @@ def api_get_espace_messages(espace_name):
         return jsonify({'error': 'Unauthorized'}), 401
         
     email = session.get('user_email')
-    is_admin = session.get('is_admin', False)
+    is_admin = session.get('admin_logged_in', False) or (email and email.lower().strip() == 'yann.noukaze@ministereimpact.org')
     
     # Gating security check
     if not is_admin:
@@ -1479,7 +1485,7 @@ def api_send_espace_message(espace_name):
         return jsonify({'error': 'Unauthorized'}), 401
         
     email = session.get('user_email')
-    is_admin = session.get('is_admin', False)
+    is_admin = session.get('admin_logged_in', False) or (email and email.lower().strip() == 'yann.noukaze@ministereimpact.org')
     info = get_directory_member_info(email)
     commissions = info['commissions'] if info else []
     
@@ -1516,7 +1522,7 @@ def api_get_espace_members(espace_name):
         return jsonify({'error': 'Unauthorized'}), 401
         
     email = session.get('user_email')
-    is_admin = session.get('is_admin', False)
+    is_admin = session.get('admin_logged_in', False) or (email and email.lower().strip() == 'yann.noukaze@ministereimpact.org')
     
     if not is_admin:
         info = get_directory_member_info(email)
