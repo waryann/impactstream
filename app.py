@@ -333,6 +333,18 @@ def get_db():
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_user ON webinaire_queue(live_id, user_email)")
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_cat_comm ON medias(categorie, commission)")
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_series ON medias(series_id)")
+                # Création table notes pour PostgreSQL
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS notes (
+                        id SERIAL PRIMARY KEY,
+                        user_email VARCHAR(255) NOT NULL,
+                        media_id INTEGER,
+                        media_title VARCHAR(255),
+                        note_content TEXT NOT NULL,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
                 # Nettoyage automatique des anciennes données de test au démarrage du serveur
                 try:
                     cur.execute("DELETE FROM webinaire_queue")
@@ -536,6 +548,19 @@ def get_db():
         cursor.execute("ALTER TABLE attendance ADD COLUMN is_evicted INTEGER DEFAULT 0")
     except sqlite3.OperationalError:
         pass
+
+    # Création table notes pour SQLite
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT NOT NULL,
+            media_id INTEGER,
+            media_title TEXT,
+            note_content TEXT NOT NULL,
+            date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
 
     conn.commit()
 
@@ -1106,6 +1131,121 @@ def api_media_detail(media_id):
             return jsonify({'error': 'Accès interdit'}), 403
 
     return jsonify(dict(media))
+
+
+# ─────────────────────────────────────────────
+# Routes API — Notes Spirituelles (pour les saints)
+# ─────────────────────────────────────────────
+
+@app.route('/api/notes', methods=['GET'])
+@user_login_required
+def api_get_notes():
+    """Récupérer toutes les notes du saint connecté."""
+    user_email = session.get('user_email')
+    conn = get_db()
+    
+    # Récupérer l'ID média si passé en paramètre pour filtrer
+    media_id = request.args.get('media_id')
+    if media_id:
+        notes = conn.execute(
+            'SELECT * FROM notes WHERE user_email = ? AND media_id = ? ORDER BY date_modification DESC',
+            (user_email, media_id)
+        ).fetchall()
+    else:
+        notes = conn.execute(
+            'SELECT * FROM notes WHERE user_email = ? ORDER BY date_modification DESC',
+            (user_email,)
+        ).fetchall()
+        
+    conn.close()
+    return jsonify([dict(n) for n in notes])
+
+@app.route('/api/notes', methods=['POST'])
+@user_login_required
+def api_save_note():
+    """Créer ou mettre à jour une note pour le saint connecté."""
+    user_email = session.get('user_email')
+    data = request.json or {}
+    
+    note_id = data.get('id')
+    media_id = data.get('media_id')
+    note_content = data.get('note_content', '').strip()
+    
+    if not note_content:
+        return jsonify({'error': 'Le contenu de la note ne peut pas être vide'}), 400
+        
+    conn = get_db()
+    
+    # Si media_id est fourni, récupérer le titre pour le stocker
+    media_title = None
+    if media_id:
+        media_row = conn.execute('SELECT titre FROM medias WHERE id = ?', (media_id,)).fetchone()
+        if media_row:
+            media_title = media_row['titre']
+            
+    now = datetime.now()
+    
+    if note_id:
+        # Vérifier d'abord si la note appartient bien à cet utilisateur
+        note_row = conn.execute('SELECT * FROM notes WHERE id = ? AND user_email = ?', (note_id, user_email)).fetchone()
+        if not note_row:
+            conn.close()
+            return jsonify({'error': 'Note introuvable ou accès non autorisé'}), 403
+            
+        conn.execute(
+            'UPDATE notes SET note_content = ?, media_id = ?, media_title = ?, date_modification = ? WHERE id = ?',
+            (note_content, media_id, media_title, now, note_id)
+        )
+        saved_id = note_id
+    else:
+        # Création d'une nouvelle note
+        # Si media_id est fourni, vérifions d'abord s'il existe déjà une note pour ce média et cet utilisateur
+        existing_note = None
+        if media_id:
+            existing_note = conn.execute(
+                'SELECT * FROM notes WHERE user_email = ? AND media_id = ?',
+                (user_email, media_id)
+            ).fetchone()
+            
+        if existing_note:
+            conn.execute(
+                'UPDATE notes SET note_content = ?, date_modification = ? WHERE id = ?',
+                (note_content, now, existing_note['id'])
+            )
+            saved_id = existing_note['id']
+        else:
+            cur = conn.cursor()
+            cur.execute(
+                'INSERT INTO notes (user_email, media_id, media_title, note_content, date_creation, date_modification) VALUES (?, ?, ?, ?, ?, ?)',
+                (user_email, media_id, media_title, note_content, now, now)
+            )
+            saved_id = cur.lastrowid
+            
+    conn.commit()
+    
+    # Récupérer la note enregistrée
+    saved_note = conn.execute('SELECT * FROM notes WHERE id = ?', (saved_id,)).fetchone()
+    conn.close()
+    
+    return jsonify(dict(saved_note))
+
+@app.route('/api/notes/<int:note_id>', methods=['DELETE'])
+@user_login_required
+def api_delete_note(note_id):
+    """Supprimer une note du saint connecté."""
+    user_email = session.get('user_email')
+    conn = get_db()
+    
+    note_row = conn.execute('SELECT * FROM notes WHERE id = ? AND user_email = ?', (note_id, user_email)).fetchone()
+    if not note_row:
+        conn.close()
+        return jsonify({'error': 'Note introuvable ou accès non autorisé'}), 403
+        
+    conn.execute('DELETE FROM notes WHERE id = ?', (note_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
 
 
 # ─────────────────────────────────────────────
