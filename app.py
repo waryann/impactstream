@@ -379,6 +379,15 @@ def get_db():
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 ''')
+                # Auto-migration des colonnes de partage de fichiers dans messages pour PostgreSQL
+                try:
+                    cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url VARCHAR(500)")
+                    cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_name VARCHAR(255)")
+                    cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_type VARCHAR(100)")
+                    cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_size INTEGER")
+                except Exception as e:
+                    print(f"⚠️ Erreur auto-migration PostgreSQL colonnes messages: {e}")
+
                 # Nettoyage automatique des anciennes données de test au démarrage du serveur
                 try:
                     cur.execute("DELETE FROM webinaire_queue")
@@ -702,6 +711,26 @@ def get_db():
     if live_migrated:
         conn.commit()
         print("⚙️ Migration SQLite : Colonne type_diffusion ajoutée à la table live_streams.")
+
+    # Auto-migration des colonnes de partage de fichiers dans messages
+    cursor.execute('PRAGMA table_info(messages)')
+    msg_cols = [row[1] for row in cursor.fetchall()]
+    msg_migrated = False
+    if 'file_url' not in msg_cols:
+        cursor.execute('ALTER TABLE messages ADD COLUMN file_url TEXT')
+        msg_migrated = True
+    if 'file_name' not in msg_cols:
+        cursor.execute('ALTER TABLE messages ADD COLUMN file_name TEXT')
+        msg_migrated = True
+    if 'file_type' not in msg_cols:
+        cursor.execute('ALTER TABLE messages ADD COLUMN file_type TEXT')
+        msg_migrated = True
+    if 'file_size' not in msg_cols:
+        cursor.execute('ALTER TABLE messages ADD COLUMN file_size INTEGER')
+        msg_migrated = True
+    if msg_migrated:
+        conn.commit()
+        print("⚙️ Migration SQLite : Colonnes de partage de fichiers ajoutées à la table messages.")
 
     # Créer un compte utilisateur par défaut si vide
     cursor.execute('SELECT COUNT(*) FROM users')
@@ -1515,23 +1544,23 @@ def api_get_espace_messages(espace_name):
     if DATABASE_URL:
         if since_id is not None:
             rows = conn.execute(
-                'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM messages WHERE espace_name = %s AND id > %s ORDER BY id DESC LIMIT 100',
+                'SELECT id, espace_name, user_email, user_name, user_role, message_text, file_url, file_name, file_type, file_size, created_at FROM messages WHERE espace_name = %s AND id > %s ORDER BY id DESC LIMIT 100',
                 (espace_name, since_id)
             ).fetchall()
         else:
             rows = conn.execute(
-                'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM messages WHERE espace_name = %s ORDER BY id DESC LIMIT 100',
+                'SELECT id, espace_name, user_email, user_name, user_role, message_text, file_url, file_name, file_type, file_size, created_at FROM messages WHERE espace_name = %s ORDER BY id DESC LIMIT 100',
                 (espace_name,)
             ).fetchall()
     else:
         if since_id is not None:
             rows = conn.execute(
-                'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM messages WHERE espace_name = ? AND id > ? ORDER BY id DESC LIMIT 100',
+                'SELECT id, espace_name, user_email, user_name, user_role, message_text, file_url, file_name, file_type, file_size, created_at FROM messages WHERE espace_name = ? AND id > ? ORDER BY id DESC LIMIT 100',
                 (espace_name, since_id)
             ).fetchall()
         else:
             rows = conn.execute(
-                'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM messages WHERE espace_name = ? ORDER BY id DESC LIMIT 100',
+                'SELECT id, espace_name, user_email, user_name, user_role, message_text, file_url, file_name, file_type, file_size, created_at FROM messages WHERE espace_name = ? ORDER BY id DESC LIMIT 100',
                 (espace_name,)
             ).fetchall()
         
@@ -1539,13 +1568,18 @@ def api_get_espace_messages(espace_name):
     
     messages = []
     for r in rows:
+        row_dict = dict(r) if hasattr(r, 'keys') else r
         messages.append({
-            'id': r['id'],
-            'user_email': r['user_email'],
-            'user_name': r['user_name'],
-            'user_role': r['user_role'],
-            'message_text': r['message_text'],
-            'created_at': r['created_at'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(r['created_at'], 'strftime') else r['created_at']
+            'id': row_dict.get('id'),
+            'user_email': row_dict.get('user_email'),
+            'user_name': row_dict.get('user_name'),
+            'user_role': row_dict.get('user_role'),
+            'message_text': row_dict.get('message_text'),
+            'file_url': row_dict.get('file_url'),
+            'file_name': row_dict.get('file_name'),
+            'file_type': row_dict.get('file_type'),
+            'file_size': row_dict.get('file_size'),
+            'created_at': row_dict.get('created_at').strftime('%Y-%m-%d %H:%M:%S') if hasattr(row_dict.get('created_at'), 'strftime') else row_dict.get('created_at')
         })
         
     messages.reverse()
@@ -1566,7 +1600,12 @@ def api_send_espace_message(espace_name):
         
     data = request.get_json() or {}
     message_text = data.get('message_text', '').strip()
-    if not message_text:
+    file_url = data.get('file_url')
+    file_name = data.get('file_name')
+    file_type = data.get('file_type')
+    file_size = data.get('file_size')
+    
+    if not message_text and not file_url:
         return jsonify({'error': 'Empty message'}), 400
         
     user_name = info['nom_complet'] if info else email.split('@')[0].replace('.', ' ').title()
@@ -1575,18 +1614,78 @@ def api_send_espace_message(espace_name):
     conn = get_db()
     if DATABASE_URL:
         conn.execute(
-            'INSERT INTO messages (espace_name, user_email, user_name, user_role, message_text) VALUES (%s, %s, %s, %s, %s)',
-            (espace_name, email, user_name, user_role, message_text)
+            'INSERT INTO messages (espace_name, user_email, user_name, user_role, message_text, file_url, file_name, file_type, file_size) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
+            (espace_name, email, user_name, user_role, message_text, file_url, file_name, file_type, file_size)
         )
     else:
         conn.execute(
-            'INSERT INTO messages (espace_name, user_email, user_name, user_role, message_text) VALUES (?, ?, ?, ?, ?)',
-            (espace_name, email, user_name, user_role, message_text)
+            'INSERT INTO messages (espace_name, user_email, user_name, user_role, message_text, file_url, file_name, file_type, file_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            (espace_name, email, user_name, user_role, message_text, file_url, file_name, file_type, file_size)
         )
     conn.commit()
     conn.close()
     
     return jsonify({'success': True})
+
+# Types de fichiers autorisés pour le partage dans les espaces
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx', 'txt'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/api/espaces/<espace_name>/upload', methods=['POST'])
+def api_upload_espace_file(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    is_admin = session.get('admin_logged_in', False) or (email and email.lower().strip() == 'yann.noukaze@ministereimpact.org')
+    
+    if not is_admin:
+        info = get_directory_member_info(email)
+        commissions = info['commissions'] if info else []
+        if espace_name not in commissions:
+            return jsonify({'error': 'Access denied'}), 403
+            
+    if 'file' not in request.files:
+        return jsonify({'error': 'Aucun fichier fourni'}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Aucun fichier sélectionné'}), 400
+        
+    if file and allowed_file(file.filename):
+        import werkzeug.utils
+        import uuid
+        filename = werkzeug.utils.secure_filename(file.filename)
+        # Assurer un nom de fichier unique pour éviter les collisions
+        unique_id = uuid.uuid4().hex[:8]
+        if '.' in filename:
+            name_parts = filename.rsplit('.', 1)
+            unique_filename = f"{name_parts[0]}_{unique_id}.{name_parts[1]}"
+            file_type = name_parts[1].lower()
+        else:
+            unique_filename = f"{filename}_{unique_id}"
+            file_type = 'unknown'
+            
+        upload_dir = os.path.join(app.static_folder, 'uploads', 'espaces', espace_name)
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        file_path = os.path.join(upload_dir, unique_filename)
+        file.save(file_path)
+        
+        file_url = f"/static/uploads/espaces/{espace_name}/{unique_filename}"
+        file_size = os.path.getsize(file_path)
+        
+        return jsonify({
+            'success': True,
+            'file_url': file_url,
+            'file_name': filename,
+            'file_type': file_type,
+            'file_size': file_size
+        })
+        
+    return jsonify({'error': 'Type de fichier non autorisé'}), 400
 
 @app.route('/api/espaces/<espace_name>/members', methods=['GET'])
 def api_get_espace_members(espace_name):
