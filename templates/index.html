@@ -3708,6 +3708,21 @@
                 // Add Ma Playlist pill
                 html += `<button class="pill-btn ${selectedCommission === 'playlist' ? 'active' : ''}" onclick="selectCommission('playlist')" style="border-color: rgba(232, 130, 12, 0.4); color: ${selectedCommission === 'playlist' ? '#fff' : '#e8820c'}">📁 Ma Playlist</button>`;
                 html += `<button class="pill-btn ${selectedCommission === 'offline' ? 'active' : ''}" onclick="selectCommission('offline')" style="border-color: rgba(76, 175, 80, 0.4); color: ${selectedCommission === 'offline' ? '#fff' : '#4caf50'}">📥 Téléchargements</button>`;
+                
+                // Add Shuffle Play pill if category is Musique or commission is Ma Playlist
+                if (currentCategory === 'Musique' || selectedCommission === 'playlist') {
+                    html += `<button class="pill-btn shuffle-play-btn" onclick="startShufflePlay()" title="Lancer une lecture aléatoire" style="border-color: rgba(232, 130, 12, 0.6); color: #fff; background: rgba(232, 130, 12, 0.25); display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8"></polyline>
+                            <line x1="4" y1="20" x2="21" y2="3"></line>
+                            <polyline points="21 16 21 21 16 21"></polyline>
+                            <line x1="15" y1="15" x2="21" y2="21"></line>
+                            <line x1="4" y1="4" x2="9" y2="9"></line>
+                        </svg>
+                        <span>Lecture Aléatoire</span>
+                    </button>`;
+                }
+                
                 pillsContainer.innerHTML = html;
             }
             
@@ -6660,6 +6675,21 @@
                         });
                         // Add Ma Playlist pill
                         html += `<button class="pill-btn" onclick="selectCommission('playlist')" style="border-color: rgba(232, 130, 12, 0.4); color: #e8820c;">📁 Ma Playlist</button>`;
+                        
+                        // Add Shuffle Play pill if category is Musique
+                        if (currentCategory === 'Musique') {
+                            html += `<button class="pill-btn shuffle-play-btn" onclick="startShufflePlay()" title="Lancer une lecture aléatoire" style="border-color: rgba(232, 130, 12, 0.6); color: #fff; background: rgba(232, 130, 12, 0.25); display: inline-flex; align-items: center; gap: 0.4rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="16 3 21 3 21 8"></polyline>
+                                    <line x1="4" y1="20" x2="21" y2="3"></line>
+                                    <polyline points="21 16 21 21 16 21"></polyline>
+                                    <line x1="15" y1="15" x2="21" y2="21"></line>
+                                    <line x1="4" y1="4" x2="9" y2="9"></line>
+                                </svg>
+                                <span>Lecture Aléatoire</span>
+                            </button>`;
+                        }
+                        
                         pillsContainer.innerHTML = html;
                         pillsContainer.style.display = 'flex';
                     } else {
@@ -6785,6 +6815,8 @@
             }
         }
 
+        window.isShuffleMode = false;
+
         function playNextMediaTrack(currentMediaId) {
             const mediaGrid = document.getElementById('media-grid');
             if (!mediaGrid) return;
@@ -6796,17 +6828,34 @@
 
             if (visibleCards.length === 0) return;
 
-            const currentIndex = visibleCards.findIndex(card => {
-                return card.id === `card-${currentMediaId}` || (card.getAttribute('onclick') && card.getAttribute('onclick').includes(`openPlayer(${currentMediaId})`));
-            });
-
-            if (currentIndex !== -1 && currentIndex + 1 < visibleCards.length) {
-                const nextCard = visibleCards[currentIndex + 1];
-                const nextMediaId = nextCard.id.replace('card-', '');
+            if (window.isShuffleMode) {
+                let availableCards = visibleCards.filter(card => {
+                    const mediaId = card.id.replace('card-', '');
+                    return Number(mediaId) !== Number(currentMediaId);
+                });
+                if (availableCards.length === 0) {
+                    availableCards = visibleCards;
+                }
+                const randomCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+                const nextMediaId = randomCard.id.replace('card-', '');
                 if (nextMediaId) {
                     openPlayer(nextMediaId);
                 } else {
-                    nextCard.click();
+                    randomCard.click();
+                }
+            } else {
+                const currentIndex = visibleCards.findIndex(card => {
+                    return card.id === `card-${currentMediaId}` || (card.getAttribute('onclick') && card.getAttribute('onclick').includes(`openPlayer(${currentMediaId})`));
+                });
+
+                if (currentIndex !== -1 && currentIndex + 1 < visibleCards.length) {
+                    const nextCard = visibleCards[currentIndex + 1];
+                    const nextMediaId = nextCard.id.replace('card-', '');
+                    if (nextMediaId) {
+                        openPlayer(nextMediaId);
+                    } else {
+                        nextCard.click();
+                    }
                 }
             }
         }
@@ -6822,20 +6871,95 @@
 
             if (visibleCards.length === 0) return;
 
-            const currentIndex = visibleCards.findIndex(card => {
-                return card.id === `card-${currentMediaId}` || (card.getAttribute('onclick') && card.getAttribute('onclick').includes(`openPlayer(${currentMediaId})`));
-            });
-
-            if (currentIndex !== -1 && currentIndex - 1 >= 0) {
-                const prevCard = visibleCards[currentIndex - 1];
-                const prevMediaId = prevCard.id.replace('card-', '');
+            if (window.isShuffleMode) {
+                let availableCards = visibleCards.filter(card => {
+                    const mediaId = card.id.replace('card-', '');
+                    return Number(mediaId) !== Number(currentMediaId);
+                });
+                if (availableCards.length === 0) {
+                    availableCards = visibleCards;
+                }
+                const randomCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+                const prevMediaId = randomCard.id.replace('card-', '');
                 if (prevMediaId) {
                     openPlayer(prevMediaId);
                 } else {
-                    prevCard.click();
+                    randomCard.click();
+                }
+            } else {
+                const currentIndex = visibleCards.findIndex(card => {
+                    return card.id === `card-${currentMediaId}` || (card.getAttribute('onclick') && card.getAttribute('onclick').includes(`openPlayer(${currentMediaId})`));
+                });
+
+                if (currentIndex !== -1 && currentIndex - 1 >= 0) {
+                    const prevCard = visibleCards[currentIndex - 1];
+                    const prevMediaId = prevCard.id.replace('card-', '');
+                    if (prevMediaId) {
+                        openPlayer(prevMediaId);
+                    } else {
+                        prevCard.click();
+                    }
                 }
             }
         }
+
+        window.toggleShuffleMode = function() {
+            window.isShuffleMode = !window.isShuffleMode;
+            window.updateShuffleButtonUI();
+        };
+
+        window.updateShuffleButtonUI = function() {
+            const btn = document.getElementById('modal-shuffle-toggle-btn');
+            const txt = document.getElementById('modal-shuffle-btn-text');
+            if (btn && txt) {
+                const isShuffle = !!window.isShuffleMode;
+                btn.style.background = isShuffle ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)';
+                btn.style.borderColor = isShuffle ? 'rgba(232, 130, 12, 0.4)' : 'rgba(237, 232, 223, 0.15)';
+                btn.style.color = isShuffle ? '#e8820c' : '#ede8df';
+                txt.textContent = isShuffle ? 'Aléatoire : ON' : 'Aléatoire';
+                btn.title = `Lecture Aléatoire : ${isShuffle ? 'Activée' : 'Désactivée'}`;
+                
+                btn.onmouseover = function() {
+                    btn.style.background = isShuffle ? 'rgba(232, 130, 12, 0.25)' : 'rgba(237, 232, 223, 0.12)';
+                    btn.style.transform = 'translateY(-2px)';
+                };
+                btn.onmouseout = function() {
+                    btn.style.background = isShuffle ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)';
+                    btn.style.transform = 'none';
+                };
+            }
+        };
+
+        window.startShufflePlay = function() {
+            const mediaGrid = document.getElementById('media-grid');
+            if (!mediaGrid) return;
+            
+            const cards = Array.from(mediaGrid.querySelectorAll('.media-card'));
+            const visibleCards = cards.filter(card => {
+                return card.offsetWidth > 0 && card.offsetHeight > 0;
+            });
+
+            if (visibleCards.length === 0) {
+                return;
+            }
+
+            // Enable shuffle mode
+            window.isShuffleMode = true;
+            
+            // Pick a random card
+            const randomCard = visibleCards[Math.floor(Math.random() * visibleCards.length)];
+            const mediaId = randomCard.id.replace('card-', '');
+            if (mediaId) {
+                openPlayer(mediaId);
+            } else {
+                randomCard.click();
+            }
+            
+            // Update modal UI after player opens
+            setTimeout(() => {
+                window.updateShuffleButtonUI();
+            }, 100);
+        };
 
         function openPlayer(mediaId) {
             // Stop live radio if playing
@@ -6964,6 +7088,20 @@
                 </button>
             `;
 
+            const isShuffle = !!window.isShuffleMode;
+            const shuffleBtnHtml = `
+                <button id="modal-shuffle-toggle-btn" onclick="toggleShuffleMode()" class="btn-shuffle-toggle" style="display: inline-flex; align-items: center; gap: 0.4rem; background: ${isShuffle ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)'}; border: 1px solid ${isShuffle ? 'rgba(232, 130, 12, 0.4)' : 'rgba(237, 232, 223, 0.15)'}; color: ${isShuffle ? '#e8820c' : '#ede8df'}; padding: 0.6rem 1.1rem; border-radius: 100px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='${isShuffle ? 'rgba(232, 130, 12, 0.25)' : 'rgba(237, 232, 223, 0.12)'}'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='${isShuffle ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237, 232, 223, 0.05)'}'; this.style.transform='none';" title="Activer/Désactiver la lecture aléatoire">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="16 3 21 3 21 8"></polyline>
+                        <line x1="4" y1="20" x2="21" y2="3"></line>
+                        <polyline points="21 16 21 21 16 21"></polyline>
+                        <line x1="15" y1="15" x2="21" y2="21"></line>
+                        <line x1="4" y1="4" x2="9" y2="9"></line>
+                    </svg>
+                    <span id="modal-shuffle-btn-text">${isShuffle ? 'Aléatoire : ON' : 'Aléatoire'}</span>
+                </button>
+            `;
+
             info.innerHTML = `
                 <h2>${media.titre}</h2>
                 <div class="modal-tags">
@@ -6976,6 +7114,7 @@
                 <div id="modal-actions-container" style="margin-top: 1.5rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
                     ${downloadBtnHtml}
                     ${playlistBtnHtml}
+                    ${shuffleBtnHtml}
                 </div>
             `;
 

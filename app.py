@@ -16,8 +16,13 @@ import secrets
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import io
+import re
+import hashlib
+import urllib.request
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Chargement des variables d'environnement (.env)
 try:
@@ -64,6 +69,16 @@ def generate_livekit_token(room_name, identity, display_name, can_publish=False)
 app = Flask(__name__)
 app.secret_key = 'impactstream-secret-key-2026-mai'
 
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 @app.after_request
 def add_header(response):
     """Empêcher le cache du navigateur pour éviter que l'historique ne re-connecte l'utilisateur après déconnexion."""
@@ -718,6 +733,7 @@ def redirect_missing_media_to_r2():
 
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def user_login():
     """Connexion utilisateur restreinte au domaine ministereimpact.org avec invitations."""
     if session.get('user_logged_in'):
@@ -1097,6 +1113,7 @@ def api_media_detail(media_id):
 # ─────────────────────────────────────────────
 
 @app.route('/admin/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def admin_login():
     """Page de connexion à l'espace admin."""
     if session.get('admin_logged_in'):
@@ -1498,7 +1515,36 @@ def admin_toggle_user_access():
 
     return jsonify({'success': True})
 
+def check_password_pwned(password):
+    try:
+        sha1_pwd = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
+        prefix, suffix = sha1_pwd[:5], sha1_pwd[5:]
+        url = f"https://api.pwnedpasswords.com/range/{prefix}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'ImpactStream-App'})
+        response = urllib.request.urlopen(req, timeout=5)
+        text = response.read().decode('utf-8')
+        for line in text.splitlines():
+            if line.split(':')[0] == suffix:
+                return True
+    except Exception as e:
+        print(f"Erreur HIBP: {e}")
+    return False
+
+def validate_password_complexity(password):
+    if len(password) < 8:
+        return False, "Le mot de passe doit faire au moins 8 caractères."
+    if not re.search(r'[A-Z]', password):
+        return False, "Le mot de passe doit contenir au moins une lettre majuscule."
+    if not re.search(r'[a-z]', password):
+        return False, "Le mot de passe doit contenir au moins une lettre minuscule."
+    if not re.search(r'\d', password):
+        return False, "Le mot de passe doit contenir au moins un chiffre."
+    if not re.search(r'[^A-Za-z0-9]', password):
+        return False, "Le mot de passe doit contenir au moins un caractère spécial."
+    return True, ""
+
 @app.route('/register', methods=['POST'])
+@limiter.limit("3 per minute")
 def user_register():
     """Inscription publique sur invitation, restreinte au domaine ministereimpact.org."""
     email = request.form.get('email', '').strip().lower()
@@ -1519,8 +1565,14 @@ def user_register():
         flash('Domaine non autorisé', 'error')
         return redirect(url_for('user_login', view='register', token=invite_token))
 
-    if len(password) < 6:
-        flash('Le mot de passe doit faire au moins 6 caractères.', 'error')
+    # Validation du mot de passe
+    is_valid, msg = validate_password_complexity(password)
+    if not is_valid:
+        flash(msg, 'error')
+        return redirect(url_for('user_login', view='register', token=invite_token))
+        
+    if check_password_pwned(password):
+        flash("Ce mot de passe a été compromis dans une fuite de données (Have I Been Pwned). Veuillez en choisir un autre.", 'error')
         return redirect(url_for('user_login', view='register', token=invite_token))
 
     # Étape 2 : Vérification du jeton d'invitation
