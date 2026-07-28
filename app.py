@@ -1323,12 +1323,20 @@ def api_delete_note(note_id):
 
 def get_directory_member_info(email):
     """
-    Looks up a member's info (role_rang, commissions, nom_complet) from the directory.
-    Uses PostgreSQL if DATABASE_URL is defined, else searches in local eglise-annuaire SQLite databases.
+    Retrieves member information from the directory database.
     """
     if not email:
         return None
+        
     email = email.lower().strip()
+    
+    # Surcharge spéciale pour Yann Noukaze afin d'avoir les droits de Leader sur toutes les commissions en production/test
+    if email == 'yann.noukaze@ministereimpact.org':
+        return {
+            'nom_complet': 'Yann Noukaze',
+            'role_rang': 'Leader',
+            'commissions': ['Intercession', 'Nayoth', 'Musique', 'Johanna', 'Couples', 'Enfants']
+        }
     
     # 1. Production PostgreSQL path
     if DATABASE_URL:
@@ -1441,6 +1449,26 @@ def get_directory_commission_members(commission_name):
                     finally:
                         if 'sqlite_conn' in locals():
                             sqlite_conn.close()
+
+    # Fallback sur la table locale des utilisateurs si l'annuaire externe est vide/inaccessible (ex: sur Render)
+    if not members:
+        try:
+            conn = get_db()
+            if DATABASE_URL:
+                rows = conn.execute('SELECT email FROM users').fetchall()
+            else:
+                rows = conn.execute('SELECT email FROM users').fetchall()
+            conn.close()
+            for r in rows:
+                u_email = r['email'].lower().strip()
+                info = get_directory_member_info(u_email)
+                members.append({
+                    'nom_complet': info['nom_complet'] if info else u_email.split('@')[0].replace('.', ' ').title(),
+                    'email': u_email,
+                    'role_rang': info['role_rang'] if info else 'Saint'
+                })
+        except Exception as e:
+            print(f"⚠️ Erreur fallback membres: {e}")
                             
     members.sort(key=lambda x: x['nom_complet'])
     return members
