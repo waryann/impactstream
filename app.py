@@ -357,6 +357,28 @@ def get_db():
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 ''')
+                # Création table pinned_messages pour PostgreSQL
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS pinned_messages (
+                        id SERIAL PRIMARY KEY,
+                        espace_name VARCHAR(100) NOT NULL,
+                        user_email VARCHAR(255) NOT NULL,
+                        user_name VARCHAR(255) NOT NULL,
+                        user_role VARCHAR(100),
+                        message_text TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                # Création table espace_moderators pour PostgreSQL
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS espace_moderators (
+                        id SERIAL PRIMARY KEY,
+                        espace_name VARCHAR(100) NOT NULL,
+                        user_email VARCHAR(255) NOT NULL,
+                        nominated_by VARCHAR(255) NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
                 # Nettoyage automatique des anciennes données de test au démarrage du serveur
                 try:
                     cur.execute("DELETE FROM webinaire_queue")
@@ -583,6 +605,28 @@ def get_db():
             user_name TEXT NOT NULL,
             user_role TEXT,
             message_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    # Création table pinned_messages pour SQLite
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS pinned_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            espace_name TEXT NOT NULL,
+            user_email TEXT NOT NULL,
+            user_name TEXT NOT NULL,
+            user_role TEXT,
+            message_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    # Création table espace_moderators pour SQLite
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS espace_moderators (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            espace_name TEXT NOT NULL,
+            user_email TEXT NOT NULL,
+            nominated_by TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -1532,6 +1576,265 @@ def api_get_espace_members(espace_name):
             
     members = get_directory_commission_members(espace_name)
     return jsonify(members)
+
+
+def is_moderator_or_leader(email, espace_name):
+    if not email:
+        return False
+    email = email.lower().strip()
+    
+    if email == 'yann.noukaze@ministereimpact.org':
+        return True
+        
+    if session.get('admin_logged_in'):
+        return True
+        
+    info = get_directory_member_info(email)
+    if info:
+        role = info.get('role_rang', 'Saint')
+        commissions = info.get('commissions', [])
+        if role in ['Pasteur', 'Responsable', 'Leader', 'Facilitateur'] and espace_name in commissions:
+            return True
+            
+    conn = get_db()
+    if DATABASE_URL:
+        row = conn.execute(
+            'SELECT id FROM espace_moderators WHERE espace_name = %s AND user_email = %s LIMIT 1',
+            (espace_name, email)
+        ).fetchone()
+    else:
+        row = conn.execute(
+            'SELECT id FROM espace_moderators WHERE espace_name = ? AND user_email = ? LIMIT 1',
+            (espace_name, email)
+        ).fetchone()
+    conn.close()
+    
+    return row is not None
+
+@app.route('/api/espaces/<espace_name>/pinned', methods=['GET'])
+def api_get_pinned_messages(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    is_admin = session.get('admin_logged_in', False) or (email and email.lower().strip() == 'yann.noukaze@ministereimpact.org')
+    
+    if not is_admin:
+        info = get_directory_member_info(email)
+        commissions = info['commissions'] if info else []
+        if espace_name not in commissions:
+            return jsonify({'error': 'Access denied'}), 403
+            
+    conn = get_db()
+    if DATABASE_URL:
+        rows = conn.execute(
+            'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM pinned_messages WHERE espace_name = %s ORDER BY id DESC',
+            (espace_name,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            'SELECT id, espace_name, user_email, user_name, user_role, message_text, created_at FROM pinned_messages WHERE espace_name = ? ORDER BY id DESC',
+            (espace_name,)
+        ).fetchall()
+    conn.close()
+    
+    pinned = []
+    for r in rows:
+        pinned.append({
+            'id': r['id'],
+            'user_email': r['user_email'],
+            'user_name': r['user_name'],
+            'user_role': r['user_role'],
+            'message_text': r['message_text'],
+            'created_at': r['created_at'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(r['created_at'], 'strftime') else r['created_at']
+        })
+    return jsonify(pinned)
+
+@app.route('/api/espaces/<espace_name>/pinned', methods=['POST'])
+def api_create_pinned_message(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    
+    if not is_moderator_or_leader(email, espace_name):
+        return jsonify({'error': 'Only leaders or nominated moderators can pin messages'}), 403
+        
+    data = request.get_json() or {}
+    message_text = data.get('message_text', '').strip()
+    if not message_text:
+        return jsonify({'error': 'Empty message'}), 400
+        
+    info = get_directory_member_info(email)
+    user_name = info['nom_complet'] if info else email.split('@')[0].replace('.', ' ').title()
+    user_role = info['role_rang'] if info else 'Saint'
+    
+    conn = get_db()
+    if DATABASE_URL:
+        conn.execute(
+            'INSERT INTO pinned_messages (espace_name, user_email, user_name, user_role, message_text) VALUES (%s, %s, %s, %s, %s)',
+            (espace_name, email, user_name, user_role, message_text)
+        )
+    else:
+        conn.execute(
+            'INSERT INTO pinned_messages (espace_name, user_email, user_name, user_role, message_text) VALUES (?, ?, ?, ?, ?)',
+            (espace_name, email, user_name, user_role, message_text)
+        )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/espaces/<espace_name>/pinned/<int:pinned_id>', methods=['DELETE'])
+def api_delete_pinned_message(espace_name, pinned_id):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    
+    if not is_moderator_or_leader(email, espace_name):
+        return jsonify({'error': 'Only leaders or nominated moderators can delete pinned messages'}), 403
+        
+    conn = get_db()
+    if DATABASE_URL:
+        conn.execute(
+            'DELETE FROM pinned_messages WHERE id = %s AND espace_name = %s',
+            (pinned_id, espace_name)
+        )
+    else:
+        conn.execute(
+            'DELETE FROM pinned_messages WHERE id = ? AND espace_name = ?',
+            (pinned_id, espace_name)
+        )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/espaces/<espace_name>/moderators', methods=['GET'])
+def api_get_espace_moderators(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    is_admin = session.get('admin_logged_in', False) or (email and email.lower().strip() == 'yann.noukaze@ministereimpact.org')
+    
+    if not is_admin:
+        info = get_directory_member_info(email)
+        commissions = info['commissions'] if info else []
+        if espace_name not in commissions:
+            return jsonify({'error': 'Access denied'}), 403
+            
+    conn = get_db()
+    if DATABASE_URL:
+        rows = conn.execute(
+            'SELECT user_email FROM espace_moderators WHERE espace_name = %s',
+            (espace_name,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            'SELECT user_email FROM espace_moderators WHERE espace_name = ?',
+            (espace_name,)
+        ).fetchall()
+    conn.close()
+    
+    mods = [r['user_email'].lower().strip() for r in rows]
+    return jsonify(mods)
+
+@app.route('/api/espaces/<espace_name>/moderators', methods=['POST'])
+def api_add_espace_moderator(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    
+    info = get_directory_member_info(email)
+    is_admin = session.get('admin_logged_in', False) or (email and email.lower().strip() == 'yann.noukaze@ministereimpact.org')
+    is_leader = False
+    if info:
+        role = info.get('role_rang', 'Saint')
+        commissions = info.get('commissions', [])
+        if role in ['Pasteur', 'Responsable', 'Leader', 'Facilitateur'] and espace_name in commissions:
+            is_leader = True
+            
+    if not is_admin and not is_leader:
+        return jsonify({'error': 'Only leaders of this commission can nominate moderators'}), 403
+        
+    data = request.get_json() or {}
+    target_email = data.get('user_email', '').strip().lower()
+    if not target_email:
+        return jsonify({'error': 'Empty target email'}), 400
+        
+    conn = get_db()
+    if DATABASE_URL:
+        existing = conn.execute(
+            'SELECT id FROM espace_moderators WHERE espace_name = %s AND user_email = %s',
+            (espace_name, target_email)
+        ).fetchone()
+    else:
+        existing = conn.execute(
+            'SELECT id FROM espace_moderators WHERE espace_name = ? AND user_email = ?',
+            (espace_name, target_email)
+        ).fetchone()
+        
+    if existing:
+        conn.close()
+        return jsonify({'success': True, 'message': 'Already moderator'})
+        
+    if DATABASE_URL:
+        conn.execute(
+            'INSERT INTO espace_moderators (espace_name, user_email, nominated_by) VALUES (%s, %s, %s)',
+            (espace_name, target_email, email)
+        )
+    else:
+        conn.execute(
+            'INSERT INTO espace_moderators (espace_name, user_email, nominated_by) VALUES (?, ?, ?)',
+            (espace_name, target_email, email)
+        )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/espaces/<espace_name>/moderators/revoke', methods=['POST'])
+def api_revoke_espace_moderator(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    
+    info = get_directory_member_info(email)
+    is_admin = session.get('admin_logged_in', False) or (email and email.lower().strip() == 'yann.noukaze@ministereimpact.org')
+    is_leader = False
+    if info:
+        role = info.get('role_rang', 'Saint')
+        commissions = info.get('commissions', [])
+        if role in ['Pasteur', 'Responsable', 'Leader', 'Facilitateur'] and espace_name in commissions:
+            is_leader = True
+            
+    if not is_admin and not is_leader:
+        return jsonify({'error': 'Only leaders of this commission can revoke moderators'}), 403
+        
+    data = request.get_json() or {}
+    target_email = data.get('user_email', '').strip().lower()
+    if not target_email:
+        return jsonify({'error': 'Empty target email'}), 400
+        
+    conn = get_db()
+    if DATABASE_URL:
+        conn.execute(
+            'DELETE FROM espace_moderators WHERE espace_name = %s AND user_email = %s',
+            (espace_name, target_email)
+        )
+    else:
+        conn.execute(
+            'DELETE FROM espace_moderators WHERE espace_name = ? AND user_email = ?',
+            (espace_name, target_email)
+        )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
 
 
 # ─────────────────────────────────────────────
