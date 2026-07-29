@@ -504,6 +504,7 @@ def get_db():
     ''')
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('radio_enabled', '0'))
     cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('radio_stream_url', 'https://icecast.radiofrance.fr/fip-midfi.mp3'))
+    cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('podcast_enabled', '1'))
     
     # Création table live_streams
     cursor.execute('''
@@ -1131,6 +1132,10 @@ def index():
     meet_row = conn.execute("SELECT value FROM settings WHERE key = 'meet_enabled'").fetchone()
     meet_enabled = int(meet_row['value']) if meet_row else 0
     
+    # Récupérer la configuration Podcast
+    podcast_row = conn.execute("SELECT value FROM settings WHERE key = 'podcast_enabled'").fetchone()
+    podcast_enabled = (podcast_row['value'] == '1') if podcast_row else True
+
     conn.close()
 
     # Filtrer dynamiquement la liste des sous-sections d'enseignements visibles
@@ -1151,7 +1156,8 @@ def index():
         langues=[l['langue'] for l in langues],
         has_nayoth=has_nayoth,
         has_intercession=has_intercession,
-        meet_enabled=meet_enabled
+        meet_enabled=meet_enabled,
+        podcast_enabled=podcast_enabled
     )
 
 
@@ -2179,6 +2185,12 @@ def admin_dashboard():
         'enabled': meet_enabled_row['value'] if meet_enabled_row else '0'
     }
 
+    # Configuration Podcast
+    podcast_enabled_row = conn.execute("SELECT value FROM settings WHERE key = 'podcast_enabled'").fetchone()
+    podcast_config = {
+        'enabled': podcast_enabled_row['value'] if podcast_enabled_row else '1'
+    }
+
     conn.close()
 
     return render_template(
@@ -2196,6 +2208,7 @@ def admin_dashboard():
         waiting_room_config=waiting_room_config,
         waiting_room_pending_count=waiting_room_pending_count,
         meet_config=meet_config,
+        podcast_config=podcast_config,
         stats=stats,
         commissions_enseignement=COMMISSIONS_ENSEIGNEMENT,
         commissions_musique=COMMISSIONS_MUSIQUE,
@@ -3285,6 +3298,18 @@ def public_api_radio():
     })
 
 
+@app.route('/api/podcast', methods=['GET'])
+def public_api_podcast():
+    """Récupérer le statut de la catégorie podcast."""
+    conn = get_db()
+    podcast_enabled = conn.execute("SELECT value FROM settings WHERE key = 'podcast_enabled'").fetchone()
+    conn.close()
+    
+    return jsonify({
+        'podcast_enabled': podcast_enabled['value'] == '1' if podcast_enabled else True
+    })
+
+
 @app.route('/admin/radio/config', methods=['POST'])
 @login_required
 def admin_save_radio_config():
@@ -3304,6 +3329,21 @@ def admin_save_radio_config():
     
     flash("✅ La configuration de la radio a été mise à jour.", "success")
     return redirect(url_for('admin_dashboard', tab='radio'))
+
+
+@app.route('/admin/podcast/config', methods=['POST'])
+@login_required
+def admin_save_podcast_config():
+    """Enregistrer la configuration de la visibilité des podcasts."""
+    podcast_enabled = request.form.get('podcast_enabled', '0').strip()
+    
+    conn = get_db()
+    conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('podcast_enabled', ?)", (podcast_enabled,))
+    conn.commit()
+    conn.close()
+    
+    flash("✅ La configuration des podcasts a été mise à jour.", "success")
+    return redirect(url_for('admin_dashboard', tab='podcast'))
 
 
 @app.route('/api/lives', methods=['GET'])

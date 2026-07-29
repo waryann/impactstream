@@ -700,6 +700,17 @@
                     <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer le direct &rarr;</span>
                 </div>
 
+                <!-- Card Podcast (Direct to Podcast configuration section) -->
+                <div onclick="showPodcastSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(232, 130, 12, 0.4)'; this.style.boxShadow='0 25px 60px rgba(232,130,12,0.2), 0 0 40px rgba(232,130,12,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(232, 130, 12, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
+                    <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(232, 130, 12, 0.1); border: 1px solid rgba(232, 130, 12, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">🎙️</div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem;">Podcasts</h3>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #e8820c; background: rgba(232, 130, 12, 0.12); padding: 0.2rem 0.8rem; border-radius: 100px; margin-bottom: 1rem;">
+                        {% if podcast_config.enabled == '1' %}Visibles{% else %}Masqués{% endif %}
+                    </div>
+                    <p style="font-size: 0.82rem; color: rgba(237, 232, 223, 0.45); line-height: 1.6; max-width: 240px;">Activer ou masquer la rubrique Podcasts pour les saints sur le portail public.</p>
+                    <span style="display: inline-block; margin-top: 1.75rem; font-size: 0.8rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.05em;">Gérer la visibilité &rarr;</span>
+                </div>
+
                 <!-- Card Lives (Direct to Live Stream configuration section) -->
                 <div onclick="showLivesSection()" style="cursor: pointer; position: relative; overflow: hidden; border-radius: 24px; background: linear-gradient(145deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(239, 83, 80, 0.15); padding: 3rem 2rem; text-align: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" onmouseover="this.style.transform='translateY(-10px) scale(1.03)'; this.style.borderColor='rgba(239, 83, 80, 0.4)'; this.style.boxShadow='0 25px 60px rgba(239,83,80,0.2), 0 0 40px rgba(239,83,80,0.1)';" onmouseout="this.style.transform='none'; this.style.borderColor='rgba(239, 83, 80, 0.15)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.5)';">
                     <div style="width: 80px; height: 80px; border-radius: 20px; background: rgba(239, 83, 80, 0.1); border: 1px solid rgba(239, 83, 80, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;">🎥</div>
@@ -1433,6 +1444,58 @@
                         <label class="form-label" for="form-radio-url">URL du flux audio en direct *</label>
                         <input type="url" class="form-input" name="radio_stream_url" id="form-radio-url" value="{{ radio_config.stream_url }}" placeholder="ex: https://mon-serveur-icecast/stream.mp3" required style="font-family: monospace; font-size: 0.9rem;">
                         <span style="font-size: 0.76rem; color: rgba(237,232,223,0.35); display: block; margin-top: 0.25rem;">Entrez le lien direct HTTP/HTTPS vers votre flux radio (format MP3, AAC ou OGG).</span>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 2rem;">
+                        <button type="button" class="btn-cancel" onclick="showCategories()">Annuler</button>
+                        <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #e8820c, #d4770a); box-shadow: 0 4px 15px rgba(232, 130, 12, 0.2);">Sauvegarder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ─── 1.8.5. Podcast Section ─── -->
+        <div class="admin-detail-view fade-in" id="podcast-section" style="display: none; max-width: 650px; margin: 0 auto;">
+            <div class="detail-header" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-cancel" onclick="showCategories()" style="padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid rgba(62,59,46,0.3); background: rgba(237,232,223,0.06);">
+                        &larr; Retour
+                    </button>
+                    <h2 class="action-title" style="font-size: 1.8rem; font-weight: 900; color: #fff;">Configuration des Podcasts</h2>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(165deg, rgba(27, 26, 20, 0.7), rgba(14, 14, 10, 0.9)); border: 1px solid rgba(232, 130, 12, 0.15); border-radius: 24px; padding: 2.5rem; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                <form action="/admin/podcast/config" method="POST">
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                            <span>Activer la rubrique Podcasts sur le portail public</span>
+                            <div style="position: relative;">
+                                <input type="checkbox" name="podcast_enabled" value="1" {% if podcast_config.enabled == '1' %}checked{% endif %} style="display: none;" id="toggle-podcast-input" onchange="
+                                    const label = document.getElementById('toggle-podcast-label');
+                                    const knob = document.getElementById('toggle-podcast-knob');
+                                    const bg = this.nextElementSibling;
+                                    if(this.checked) {
+                                        label.textContent = 'Actif (Visible)';
+                                        label.style.color = '#81c784';
+                                        knob.style.left = '26px';
+                                        bg.style.background = '#4caf50';
+                                    } else {
+                                        label.textContent = 'Inactif (Masqué)';
+                                        label.style.color = 'rgba(237,232,223,0.4)';
+                                        knob.style.left = '2px';
+                                        bg.style.background = 'rgba(255,255,255,0.15)';
+                                    }
+                                ">
+                                <div style="width: 50px; height: 26px; background: {% if podcast_config.enabled == '1' %}#4caf50{% else %}rgba(255,255,255,0.15){% endif %}; border-radius: 100px; position: relative; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.08);">
+                                    <div style="width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: {% if podcast_config.enabled == '1' %}26px{% else %}2px{% endif %}; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);" id="toggle-podcast-knob"></div>
+                                </div>
+                            </div>
+                        </label>
+                        <span id="toggle-podcast-label" style="font-size: 0.8rem; font-weight: 700; color: {% if podcast_config.enabled == '1' %}#81c784{% else %}rgba(237,232,223,0.4){% endif %}; margin-top: 0.5rem; display: inline-block;">
+                            {% if podcast_config.enabled == '1' %}Actif (Visible){% else %}Inactif (Masqué){% endif %}
+                        </span>
+                        <span style="font-size: 0.76rem; color: rgba(237,232,223,0.35); display: block; margin-top: 0.25rem;">Permet d'afficher ou masquer l'onglet et les contenus \"Podcasts\" pour les saints sur le portail public.</span>
                     </div>
 
                     <div class="form-actions" style="margin-top: 2rem;">
@@ -2304,6 +2367,7 @@
             document.getElementById('communiques-section').style.display = 'none';
             document.getElementById('series-section').style.display = 'none';
             document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('podcast-section').style.display = 'none';
             document.getElementById('lives-section').style.display = 'none';
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
@@ -2324,6 +2388,7 @@
             document.getElementById('communiques-section').style.display = 'none';
             document.getElementById('series-section').style.display = 'none';
             document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('podcast-section').style.display = 'none';
             document.getElementById('lives-section').style.display = 'none';
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
@@ -2722,6 +2787,22 @@
             document.getElementById('communiques-section').style.display = 'none';
             document.getElementById('series-section').style.display = 'none';
             document.getElementById('radio-section').style.display = 'block';
+            document.getElementById('podcast-section').style.display = 'none';
+            document.getElementById('lives-section').style.display = 'none';
+            document.getElementById('quizzes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'none';
+            document.getElementById('meet-section').style.display = 'none';
+        }
+
+        function showPodcastSection() {
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-commissions').style.display = 'none';
+            document.getElementById('view-detail').style.display = 'none';
+            document.getElementById('comptes-section').style.display = 'none';
+            document.getElementById('communiques-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('podcast-section').style.display = 'block';
             document.getElementById('lives-section').style.display = 'none';
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
@@ -2736,6 +2817,7 @@
             document.getElementById('communiques-section').style.display = 'none';
             document.getElementById('series-section').style.display = 'none';
             document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('podcast-section').style.display = 'none';
             document.getElementById('lives-section').style.display = 'block';
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
@@ -2750,6 +2832,7 @@
             document.getElementById('communiques-section').style.display = 'none';
             document.getElementById('series-section').style.display = 'none';
             document.getElementById('radio-section').style.display = 'none';
+            document.getElementById('podcast-section').style.display = 'none';
             document.getElementById('lives-section').style.display = 'none';
             document.getElementById('quizzes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'block';
@@ -3450,6 +3533,10 @@
             }
             if (tabParam === 'radio') {
                 showRadioSection();
+                return;
+            }
+            if (tabParam === 'podcast') {
+                showPodcastSection();
                 return;
             }
             if (tabParam === 'lives') {

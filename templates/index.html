@@ -1531,7 +1531,7 @@
                 <a href="#" class="nav-link active" data-category="" id="nav-accueil">Accueil</a>
                 <a href="#" class="nav-link" data-category="Enseignement" id="nav-enseignements">Enseignements</a>
                 <a href="#" class="nav-link" data-category="Musique" id="nav-musique">Musique</a>
-                <a href="#" class="nav-link" data-category="Podcast" id="nav-podcasts">Podcasts</a>
+                <a href="#" class="nav-link" data-category="Podcast" id="nav-podcasts" {% if not podcast_enabled %}style="display: none;"{% endif %}>Podcasts</a>
                 <a href="#" class="nav-link" data-category="Communique" id="nav-communiques">Communiqués</a>
                 <a href="#" class="nav-link" data-category="Bible" id="nav-bible">Bible</a>
                 <a href="#" class="nav-link" data-category="Espaces" id="nav-espaces">Espaces</a>
@@ -2219,7 +2219,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
                     <span>Musique</span>
                 </a>
-                <a href="#" onclick="switchCategory('Podcast', this); toggleMobileMoreMenu();" data-category="Podcast" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none;">
+                <a href="#" onclick="switchCategory('Podcast', this); toggleMobileMoreMenu();" data-category="Podcast" id="mobile-nav-podcasts" class="mobile-more-item flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-accent/10 transition-all duration-300" style="color: rgba(237, 232, 223, 0.8); text-decoration: none; {% if not podcast_enabled %}display: none;{% endif %}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
                     <span>Podcasts</span>
                 </a>
@@ -8915,6 +8915,23 @@
                 .catch(err => console.error("Erreur de chargement radio status :", err));
         }
 
+        function checkPodcastStatus() {
+            fetch('/api/podcast')
+                .then(r => r.json())
+                .then(data => {
+                    const navPodcasts = document.getElementById('nav-podcasts');
+                    const mobileNavPodcasts = document.getElementById('mobile-nav-podcasts');
+                    if (data.podcast_enabled) {
+                        if (navPodcasts) navPodcasts.style.display = '';
+                        if (mobileNavPodcasts) mobileNavPodcasts.style.display = 'flex';
+                    } else {
+                        if (navPodcasts) navPodcasts.style.display = 'none';
+                        if (mobileNavPodcasts) mobileNavPodcasts.style.display = 'none';
+                    }
+                })
+                .catch(err => console.error("Erreur de chargement podcast status :", err));
+        }
+
         function toggleRadioPlay() {
             const btnPlay = document.getElementById('btn-radio-play');
             const playIcon = document.getElementById('radio-play-icon');
@@ -9836,6 +9853,9 @@
 
         // Check live radio status
         checkRadioStatus();
+
+        // Check podcast status
+        checkPodcastStatus();
 
         // Check live streams status
         checkLivesStatus();
