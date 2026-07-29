@@ -1354,29 +1354,57 @@
             gap: 0.5rem;
             border-left: 2px solid rgba(237, 232, 223, 0.08);
             padding-left: 1.5rem;
+            max-height: 580px;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .comm-timeline-container::-webkit-scrollbar {
+            display: none;
         }
         .comm-timeline-node {
             cursor: pointer;
             position: relative;
-            padding: 0.75rem 0;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
             display: flex;
-            align-items: center;
-            transition: all 0.3s ease;
+            flex-direction: column;
+            gap: 0.25rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .comm-timeline-node:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(6px);
         }
         .comm-timeline-node .dot {
             position: absolute;
-            left: -29px;
-            width: 10px;
-            height: 10px;
+            left: -31px;
+            top: calc(50% - 6px);
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            background: rgba(237, 232, 223, 0.2);
-            border: 2px solid #090907;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2.5px solid #090907;
             transition: all 0.3s ease;
+            z-index: 2;
+        }
+        .comm-timeline-node.active {
+            background: rgba(232, 130, 12, 0.08) !important;
+            border-color: #e8820c !important;
+            box-shadow: 0 8px 25px rgba(232, 130, 12, 0.15);
         }
         .comm-timeline-node.active .dot {
             background: #e8820c;
             border-color: #e8820c;
             box-shadow: 0 0 10px #e8820c;
+            width: 14px;
+            height: 14px;
+            left: -32px;
+            top: calc(50% - 7px);
         }
         .comm-timeline-node.highlighted .dot {
             background: rgba(232, 130, 12, 0.7);
@@ -8179,19 +8207,30 @@
                 
                 const highlights = JSON.parse(localStorage.getItem('communique_highlights') || '[]');
                 const isHighlighted = highlights.includes(c.id);
-                const starHtml = isHighlighted ? `<span style="color: #e8820c; font-size: 0.85rem; margin-right: 0.25rem;">★</span>` : '';
+                const starHtml = isHighlighted ? `<span style="color: #e8820c; font-size: 0.85rem; line-height: 1;">★</span>` : '';
 
                 const activeClass = isActive ? 'active' : '';
                 const highClass = isHighlighted ? 'highlighted' : '';
 
+                const titleStr = c.titre || 'Communiqué';
+                const bodyText = (c.contenu_fr || '').replace(/<[^>]*>/g, '');
+                const previewText = bodyText.length > 55 ? bodyText.substring(0, 55) + '...' : bodyText;
+
                 html += `
                     <div onclick="selectCommunique(${idx})" class="comm-timeline-node ${activeClass} ${highClass}">
-                        <!-- Dot -->
                         <div class="dot"></div>
-                        <!-- Date Text -->
-                        <span style="font-size: 0.88rem; font-weight: ${isActive ? '800' : '500'}; color: ${isActive ? '#fff' : (isHighlighted ? 'rgba(232, 130, 12, 0.85)' : 'rgba(237,232,223,0.45)')}; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.3s ease; display: inline-flex; align-items: center;">
-                            ${starHtml} ${dateStr}
-                        </span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <span style="font-size: 0.7rem; font-weight: 700; color: ${isActive ? '#e8820c' : 'rgba(255,255,255,0.4)'}; font-family: 'Plus Jakarta Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.3s;">
+                                ${dateStr}
+                            </span>
+                            ${isHighlighted ? starHtml : ''}
+                        </div>
+                        <h4 style="margin: 0.15rem 0 0.1rem 0; font-family: 'Outfit', sans-serif; font-size: 0.92rem; font-weight: ${isActive ? '800' : '700'}; color: ${isActive ? '#fff' : 'rgba(255,255,255,0.85)'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.3s; width: 100%;">
+                            ${titleStr}
+                        </h4>
+                        <p style="margin: 0; font-size: 0.76rem; color: rgba(255,255,255,0.45); font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; text-align: left; width: 100%;">
+                            ${previewText}
+                        </p>
                     </div>
                 `;
             });
@@ -8224,12 +8263,14 @@
             // Build Language selection buttons
             let langSelectorHtml = '';
             if (langs.length > 1) {
-                langSelectorHtml += `<div style="display: flex; gap: 0.35rem; align-items: center;">`;
+                langSelectorHtml += `<div style="display: flex; gap: 0.4rem; align-items: center; background: rgba(0,0,0,0.2); padding: 0.25rem; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05);">`;
                 langs.forEach(l => {
                     const isActive = l.code === activeCommuniqueLang;
                     langSelectorHtml += `
                         <button onclick="changeCommuniqueLang('${l.code}')" 
-                                style="border: 1px solid ${isActive ? '#e8820c' : 'rgba(237,232,223,0.1)'}; background: ${isActive ? 'rgba(232,130,12,0.15)' : 'rgba(0,0,0,0.3)'}; color: ${isActive ? '#e8820c' : 'rgba(237,232,223,0.6)'}; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 100px; cursor: pointer; transition: all 0.3s ease;">
+                                style="border: 1px solid ${isActive ? 'rgba(232,130,12,0.3)' : 'transparent'}; background: ${isActive ? '#e8820c' : 'transparent'}; color: ${isActive ? '#fff' : 'rgba(255,255,255,0.5)'}; font-size: 0.72rem; font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 100px; cursor: pointer; transition: all 0.25s ease;"
+                                onmouseover="if(!${isActive}) this.style.color='#fff';"
+                                onmouseout="if(!${isActive}) this.style.color='rgba(255,255,255,0.5)';">
                             ${l.label}
                         </button>
                     `;
@@ -8244,8 +8285,8 @@
             const hasReminder = reminders[c.id] && !reminders[c.id].notified;
 
             const cardStyle = isHighlighted
-                ? `background: linear-gradient(135deg, rgba(37,36,25,0.75) 0%, rgba(14,14,10,0.95) 100%); border: 1.5px solid rgba(232, 130, 12, 0.55); box-shadow: 0 20px 50px rgba(232, 130, 12, 0.12);`
-                : `background: linear-gradient(135deg, rgba(27,26,20,0.6) 0%, rgba(14,14,10,0.85) 100%); border: 1px solid rgba(232, 130, 12, 0.15); box-shadow: 0 20px 50px rgba(0,0,0,0.5);`;
+                ? `background: linear-gradient(145deg, rgba(42, 38, 28, 0.55) 0%, rgba(18, 18, 14, 0.85) 100%); border: 1.5px solid rgba(232, 130, 12, 0.6); box-shadow: 0 30px 60px rgba(232, 130, 12, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);`
+                : `background: linear-gradient(145deg, rgba(30, 28, 22, 0.45) 0%, rgba(15, 15, 11, 0.75) 100%); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);`;
 
             // Split body text by paragraph newlines and wrap them to make them highlights-ready
             const paragraphs = displayBody.split('\n');
@@ -8278,53 +8319,61 @@
             });
 
             // Add the small hint at the bottom
-            formattedBody += `<div style="margin-top: 1.5rem; border-top: 1px dashed rgba(237, 232, 223, 0.08); padding-top: 1rem; font-size: 0.78rem; color: rgba(237, 232, 223, 0.35); text-align: center; font-family: sans-serif; pointer-events: none;">💡 Astuce : Cliquez sur n'importe quel paragraphe pour le surligner (fluoter) ou effacer.</div>`;
+            formattedBody += `<div style="margin-top: 1.5rem; border-top: 1px dashed rgba(255, 255, 255, 0.06); padding-top: 1rem; font-size: 0.78rem; color: rgba(255, 255, 255, 0.3); text-align: center; font-family: sans-serif; pointer-events: none;">💡 Astuce : Cliquez sur n'importe quel paragraphe pour le surligner (fluoter) ou effacer.</div>`;
 
             wrapper.innerHTML = `
                 <div style="${cardStyle} border-radius: 24px; padding: 2.5rem; transition: all 0.4s ease; opacity: 0; transform: translateY(10px);" id="active-comm-card">
                     
                     <!-- Header -->
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; border-bottom: 1px solid rgba(237,232,223,0.08); padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 1.5rem; margin-bottom: 1.75rem;">
                         <div>
-                            <span style="font-size: 0.75rem; font-weight: 700; color: #e8820c; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.35rem;">
-                                Publication du ${formatDate(c.date_creation)}
-                            </span>
-                            <h3 style="font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0; line-height: 1.3;">${c.titre}</h3>
+                            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                                <span style="font-size: 0.7rem; font-weight: 800; color: #e8820c; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(232,130,12,0.1); border: 1px solid rgba(232,130,12,0.2); padding: 0.2rem 0.6rem; border-radius: 100px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    PUBLICATION DU ${formatDate(c.date_creation)}
+                                </span>
+                                ${isHighlighted ? `
+                                <span style="display: inline-flex; align-items: center; gap: 0.3rem; background: rgba(239, 83, 80, 0.12); border: 1px solid rgba(239, 83, 80, 0.25); color: #ef5350; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 100px; animation: pulse 2s infinite;">
+                                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #ef5350; display: inline-block;"></span>
+                                    IMPORTANT
+                                </span>` : ''}
+                            </div>
+                            <h3 style="font-size: 1.75rem; font-weight: 900; color: #fff; margin: 0; line-height: 1.3; font-family: 'Outfit', sans-serif; letter-spacing: -0.01em;">${c.titre}</h3>
                         </div>
                         ${langSelectorHtml}
                     </div>
 
                     <!-- Body -->
-                    <div style="font-size: 0.95rem; line-height: 1.8; color: rgba(237, 232, 223, 0.85); font-family: 'Plus Jakarta Sans', sans-serif; max-height: 380px; overflow-y: auto; margin-bottom: 1.5rem;" id="active-comm-body">
+                    <div style="font-size: 0.95rem; line-height: 1.8; color: rgba(255, 255, 255, 0.85); font-family: 'Plus Jakarta Sans', sans-serif; max-height: 380px; overflow-y: auto; margin-bottom: 1.5rem;" id="active-comm-body">
                         ${formattedBody}
                     </div>
 
                     <!-- Footer / Actions -->
-                    <div class="card-actions-wrapper" style="display: flex; gap: 0.75rem; align-items: center; border-top: 1px solid rgba(237,232,223,0.06); padding-top: 1.5rem; margin-top: 1.5rem; flex-wrap: wrap;">
-                        <button onclick="openCommuniqueReader()" style="background: linear-gradient(135deg, #e8820c, #d4770a); border: none; border-radius: 100px; color: #fff; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.25rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <div class="card-actions-wrapper" style="display: flex; gap: 0.75rem; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1.5rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                        <button onclick="openCommuniqueReader()" style="background: linear-gradient(135deg, #e8820c, #d4770a); border: none; border-radius: 100px; color: #fff; font-size: 0.8rem; font-weight: 700; padding: 0.65rem 1.4rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 4px 15px rgba(232, 130, 12, 0.25);" onmouseover="this.style.transform='translateY(-2.5px) scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(232,130,12,0.45)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(232, 130, 12, 0.25)';">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                             Lire en plein écran
                         </button>
 
-                        <button onclick="toggleCommuniqueHighlight(${c.id})" style="background: ${isHighlighted ? 'rgba(232,130,12,0.15)' : 'rgba(237,232,223,0.06)'}; border: 1px solid ${isHighlighted ? '#e8820c' : 'rgba(237,232,223,0.15)'}; border-radius: 100px; color: ${isHighlighted ? '#fff' : '#ede8df'}; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.25rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(232, 130, 12, 0.2)'" onmouseout="this.style.background='${isHighlighted ? 'rgba(232, 130, 12, 0.15)' : 'rgba(237,232,223,0.06)'}'">
+                        <button onclick="toggleCommuniqueHighlight(${c.id})" style="background: ${isHighlighted ? 'rgba(232,130,12,0.12)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isHighlighted ? '#e8820c' : 'rgba(255,255,255,0.1)'}; border-radius: 100px; color: ${isHighlighted ? '#fff' : '#ede8df'}; font-size: 0.8rem; font-weight: 700; padding: 0.65rem 1.4rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);" onmouseover="this.style.transform='translateY(-2.5px) scale(1.02)'; this.style.background='rgba(255,255,255,0.08)';" onmouseout="this.style.transform='none'; this.style.background='${isHighlighted ? 'rgba(232,130,12,0.12)' : 'rgba(255,255,255,0.03)'}';">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="${isHighlighted ? '#e8820c' : 'none'}" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                             <span>Important</span>
                         </button>
 
                         <div class="reminder-wrapper" style="position: relative; display: inline-block;">
-                            <button onclick="toggleReminderPopover(event)" id="btn-comm-reminder" style="background: ${hasReminder ? 'rgba(232,130,12,0.15)' : 'rgba(237,232,223,0.06)'}; border: 1px solid ${hasReminder ? '#e8820c' : 'rgba(237,232,223,0.15)'}; border-radius: 100px; color: ${hasReminder ? '#fff' : '#ede8df'}; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.25rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(237,232,223,0.12)'" onmouseout="this.style.background='${hasReminder ? 'rgba(232,130,12,0.15)' : 'rgba(237,232,223,0.06)'}'">
+                            <button onclick="toggleReminderPopover(event)" id="btn-comm-reminder" style="background: ${hasReminder ? 'rgba(232,130,12,0.12)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${hasReminder ? '#e8820c' : 'rgba(255,255,255,0.1)'}; border-radius: 100px; color: ${hasReminder ? '#fff' : '#ede8df'}; font-size: 0.8rem; font-weight: 700; padding: 0.65rem 1.4rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);" onmouseover="this.style.transform='translateY(-2.5px) scale(1.02)'; this.style.background='rgba(255,255,255,0.08)';" onmouseout="this.style.transform='none'; this.style.background='${hasReminder ? 'rgba(232,130,12,0.12)' : 'rgba(255,255,255,0.03)'}';">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="${hasReminder ? '#e8820c' : 'none'}" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                                 <span>${hasReminder ? 'Rappel programmé' : 'Planifier rappel'}</span>
                             </button>
                             <div id="reminder-popover" style="display: none; position: absolute; bottom: 125%; left: 0; background: #1b1a14; border: 1px solid rgba(232, 130, 12, 0.4); border-radius: 12px; padding: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 100; min-width: 255px;" onclick="event.stopPropagation()">
-                                <label style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: rgba(237,232,223,0.5); display: block; margin-bottom: 0.35rem;">Planifier un rappel :</label>
+                                <label style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: rgba(255,255,255,0.5); display: block; margin-bottom: 0.35rem;">Planifier un rappel :</label>
                                 <div style="display: flex; gap: 0.4rem; margin-bottom: 0.5rem;">
                                     <input type="datetime-local" id="reminder-datetime" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(232, 130, 12, 0.25); border-radius: 6px; color: #fff; padding: 0.4rem; font-size: 0.8rem; outline: none; flex: 1;">
                                     <button onclick="event.stopPropagation(); saveCommuniqueReminder(${c.id}, '${encodeURIComponent(c.titre).replace(/'/g, "%27")}')" style="background: #e8820c; border: none; border-radius: 6px; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 0.4rem 0.75rem; cursor: pointer;">OK</button>
                                 </div>
                                 <div id="active-reminder-info" style="font-size: 0.72rem; color: #81c784; line-height: 1.3; display: none;"></div>
                                 ${hasReminder ? `
-                                    <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid rgba(237,232,223,0.08); padding-top: 0.5rem;">
+                                    <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.5rem;">
                                         <button onclick="event.stopPropagation(); deleteCommuniqueReminder(${c.id})" style="background: rgba(239, 83, 80, 0.15); border: 1px solid rgba(239, 83, 80, 0.3); border-radius: 6px; color: #ef5350; font-size: 0.72rem; font-weight: 700; padding: 0.4rem; cursor: pointer; transition: all 0.2s; text-align: center; width: 100%;" onmouseover="this.style.background='rgba(239, 83, 80, 0.25)'" onmouseout="this.style.background='rgba(239, 83, 80, 0.15)'">🗑️ Supprimer le rappel</button>
                                         <button onclick="event.stopPropagation(); downloadCommuniqueCalendarEvent('${encodeURIComponent(c.titre).replace(/'/g, "%27")}', '${reminders[c.id].datetime}')" style="background: rgba(76, 175, 80, 0.15); border: 1px solid rgba(76, 175, 80, 0.3); border-radius: 6px; color: #4caf50; font-size: 0.72rem; font-weight: 700; padding: 0.4rem; cursor: pointer; transition: all 0.2s; text-align: center; width: 100%;" onmouseover="this.style.background='rgba(76, 175, 80, 0.25)'" onmouseout="this.style.background='rgba(76, 175, 80, 0.15)'">📅 Calendrier du téléphone</button>
                                     </div>
