@@ -379,6 +379,14 @@ def get_db():
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 ''')
+                # Création table espace_visions pour PostgreSQL
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS espace_visions (
+                        espace_name VARCHAR(100) PRIMARY KEY,
+                        vision_text TEXT NOT NULL,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
                 # Auto-migration des colonnes de partage de fichiers dans messages pour PostgreSQL
                 try:
                     cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url VARCHAR(500)")
@@ -637,6 +645,15 @@ def get_db():
             user_email TEXT NOT NULL,
             nominated_by TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Création table espace_visions pour SQLite
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS espace_visions (
+            espace_name TEXT PRIMARY KEY,
+            vision_text TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
@@ -1622,6 +1639,61 @@ def api_send_espace_message(espace_name):
             'INSERT INTO messages (espace_name, user_email, user_name, user_role, message_text, file_url, file_name, file_type, file_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             (espace_name, email, user_name, user_role, message_text, file_url, file_name, file_type, file_size)
         )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/espaces/<espace_name>/vision', methods=['GET'])
+def api_get_espace_vision(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    conn = get_db()
+    if DATABASE_URL:
+        row = conn.execute('SELECT vision_text FROM espace_visions WHERE espace_name = %s', (espace_name,)).fetchone()
+    else:
+        row = conn.execute('SELECT vision_text FROM espace_visions WHERE espace_name = ?', (espace_name,)).fetchone()
+    conn.close()
+    
+    if row:
+        row_dict = dict(row) if hasattr(row, 'keys') else row
+        return jsonify({'vision_text': row_dict.get('vision_text', '')})
+    return jsonify({'vision_text': ''})
+
+@app.route('/api/espaces/<espace_name>/vision', methods=['POST'])
+def api_set_espace_vision(espace_name):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    
+    # Check if the user is moderator or leader of this space
+    if not is_moderator_or_leader(email, espace_name):
+        return jsonify({'error': 'Accès refusé. Seuls les leaders et modérateurs peuvent modifier la vision.'}), 403
+        
+    data = request.get_json() or {}
+    vision_text = data.get('vision_text', '').strip()
+    if not vision_text:
+        return jsonify({'error': 'La vision ne peut pas être vide.'}), 400
+        
+    conn = get_db()
+    if DATABASE_URL:
+        # PostgreSQL UPSERT
+        conn.execute('''
+            INSERT INTO espace_visions (espace_name, vision_text, updated_at)
+            VALUES (%s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (espace_name)
+            DO UPDATE SET vision_text = EXCLUDED.vision_text, updated_at = CURRENT_TIMESTAMP
+        ''', (espace_name, vision_text))
+    else:
+        # SQLite UPSERT
+        conn.execute('''
+            INSERT INTO espace_visions (espace_name, vision_text)
+            VALUES (?, ?)
+            ON CONFLICT(espace_name)
+            DO UPDATE SET vision_text = excluded.vision_text, updated_at = CURRENT_TIMESTAMP
+        ''', (espace_name, vision_text))
     conn.commit()
     conn.close()
     

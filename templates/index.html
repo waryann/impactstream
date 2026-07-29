@@ -5241,11 +5241,12 @@
                     <div style="width: 48px; height: 48px; border-radius: 50%; background: ${theme.primary}15; display: flex; align-items: center; justify-content: center; color: ${theme.primary}; border: 1px solid ${theme.primary}30; flex-shrink: 0; overflow: hidden;">
                         ${s.icon}
                     </div>
-                    <div>
-                        <h4 style="margin: 0 0 0.25rem 0; font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <div id="espace-vision-container" data-vision="${theme.vision.replace(/"/g, '&quot;')}" style="flex-grow: 1; z-index: 2;">
+                        <h4 style="margin: 0 0 0.25rem 0; font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
                             Vision & Mission — Commission ${s.name}
+                            <span id="vision-edit-badge" style="display: none; font-size: 0.7rem; color: ${theme.primary}; font-weight: normal; text-transform: none; background: ${theme.primary}15; padding: 0.1rem 0.4rem; border-radius: 4px; cursor: pointer; transition: opacity 0.2s;" onclick="editEspaceVision('${s.name}')">✏️ Modifier</span>
                         </h4>
-                        <p style="margin: 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.75); line-height: 1.5; font-style: italic;">
+                        <p id="espace-vision-text" style="margin: 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.75); line-height: 1.5; font-style: italic; transition: color 0.2s;" onclick="if(window.currentChatPermissions && window.currentChatPermissions.canPin) editEspaceVision('${s.name}')" onmouseover="if(window.currentChatPermissions && window.currentChatPermissions.canPin) { this.style.color='#fff'; this.style.cursor='pointer'; }" onmouseout="this.style.color='rgba(255, 255, 255, 0.75)'" title="Cliquez pour modifier la vision (leaders et modérateurs)">
                             "${theme.vision}"
                         </p>
                     </div>
@@ -5356,15 +5357,32 @@
 
                             window.currentChatPermissions = {
                                 canPin: canPin,
-                                email: currentUserEmail
+                                email: currentUserEmail,
+                                primaryColor: theme.primary
                             };
 
                             if (canPin) {
                                 const chkContainer = document.getElementById('chat-pin-checkbox-container');
                                 if (chkContainer) chkContainer.style.display = 'flex';
+                                const editBadge = document.getElementById('vision-edit-badge');
+                                if (editBadge) editBadge.style.display = 'inline-block';
                             }
                         });
                 });
+
+            // Charger la vision personnalisée depuis la base de données
+            fetch(`/api/espaces/${encodeURIComponent(s.name)}/vision`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.vision_text) {
+                        theme.vision = data.vision_text;
+                        const textEl = document.getElementById('espace-vision-text');
+                        if (textEl) textEl.textContent = `"${data.vision_text}"`;
+                        const containerEl = document.getElementById('espace-vision-container');
+                        if (containerEl) containerEl.dataset.vision = data.vision_text;
+                    }
+                })
+                .catch(err => console.error("Error fetching space vision:", err));
         };
 
         let lastChatMessageId = 0;
@@ -5911,6 +5929,86 @@
             .catch(err => {
                 console.error("Error deleting message:", err);
             });
+        };
+
+        window.editEspaceVision = function(espaceName) {
+            const container = document.getElementById('espace-vision-container');
+            if (!container) return;
+            
+            // Si on est déjà en cours d'édition
+            if (document.getElementById('edit-vision-input')) return;
+            
+            const currentVision = container.dataset.vision || '';
+            const primaryColor = (window.currentChatPermissions && window.currentChatPermissions.primaryColor) || '#e8820c';
+            
+            container.innerHTML = `
+                <h4 style="margin: 0 0 0.25rem 0; font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.05em;">
+                    Modifier la Vision & Mission
+                </h4>
+                <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; margin-top: 0.5rem;">
+                    <textarea id="edit-vision-input" style="width: 100%; background: rgba(0,0,0,0.5); border: 1px solid ${primaryColor}; border-radius: 12px; color: #fff; padding: 0.75rem; font-size: 0.85rem; outline: none; font-family: sans-serif; resize: vertical; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);" rows="3">${currentVision}</textarea>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="saveEspaceVision('${espaceName}')" style="background: ${primaryColor}; border: none; border-radius: 8px; color: #fff; padding: 0.4rem 1rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">Enregistrer</button>
+                        <button onclick="cancelEspaceVision('${espaceName}', \`${currentVision.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; padding: 0.4rem 1rem; font-size: 0.78rem; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">Annuler</button>
+                    </div>
+                </div>
+            `;
+        };
+
+        window.cancelEspaceVision = function(espaceName, originalVision) {
+            renderVisionDisplay(espaceName, originalVision);
+        };
+
+        window.saveEspaceVision = function(espaceName) {
+            const textarea = document.getElementById('edit-vision-input');
+            if (!textarea) return;
+            
+            const newVision = textarea.value.trim();
+            if (!newVision) {
+                alert("La vision ne peut pas être vide.");
+                return;
+            }
+            
+            fetch(`/api/espaces/${encodeURIComponent(espaceName)}/vision`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vision_text: newVision })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderVisionDisplay(espaceName, newVision);
+                    // Mettre à jour l'objet global
+                    const currentSpace = globalEspaces.find(e => e.name === espaceName);
+                    if (currentSpace && currentSpace.theme) {
+                        currentSpace.theme.vision = newVision;
+                    }
+                } else {
+                    alert(data.error || "Erreur lors de la mise à jour de la vision.");
+                }
+            })
+            .catch(err => {
+                console.error("Error saving vision:", err);
+                alert("Erreur de sauvegarde.");
+            });
+        };
+
+        window.renderVisionDisplay = function(espaceName, visionText) {
+            const container = document.getElementById('espace-vision-container');
+            if (!container) return;
+            
+            container.dataset.vision = visionText;
+            const primaryColor = (window.currentChatPermissions && window.currentChatPermissions.primaryColor) || '#e8820c';
+            
+            container.innerHTML = `
+                <h4 style="margin: 0 0 0.25rem 0; font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                    Vision & Mission — Commission ${espaceName}
+                    <span id="vision-edit-badge" style="font-size: 0.7rem; color: ${primaryColor}; font-weight: normal; text-transform: none; background: ${primaryColor}15; padding: 0.1rem 0.4rem; border-radius: 4px; cursor: pointer; transition: opacity 0.2s;" onclick="editEspaceVision('${espaceName}')">✏️ Modifier</span>
+                </h4>
+                <p id="espace-vision-text" style="margin: 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.75); line-height: 1.5; font-style: italic; transition: color 0.2s;" onclick="if(window.currentChatPermissions && window.currentChatPermissions.canPin) editEspaceVision('${espaceName}')" onmouseover="if(window.currentChatPermissions && window.currentChatPermissions.canPin) { this.style.color='#fff'; this.style.cursor='pointer'; }" onmouseout="this.style.color='rgba(255, 255, 255, 0.75)'" title="Cliquez pour modifier la vision (leaders et modérateurs)">
+                    "${visionText}"
+                </p>
+            `;
         };
 
         window.renderEspaceEnfants = function(s, container) {
