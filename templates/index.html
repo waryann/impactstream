@@ -5340,6 +5340,7 @@
             }, 3000);
 
             // Vérifier si l'utilisateur a le droit d'épingler (pour afficher la case à cocher)
+            window.currentChatPermissions = { canPin: false, email: '' };
             fetch(`/api/espaces/${encodeURIComponent(s.name)}/moderators`)
                 .then(res => res.json())
                 .then(mods => {
@@ -5352,6 +5353,11 @@
                             const isLeader = ['Pasteur', 'Responsable', 'Leader', 'Facilitateur'].includes(userRole);
                             const isMod = mods.includes(currentUserEmail);
                             const canPin = is_admin || isLeader || isMod;
+
+                            window.currentChatPermissions = {
+                                canPin: canPin,
+                                email: currentUserEmail
+                            };
 
                             if (canPin) {
                                 const chkContainer = document.getElementById('chat-pin-checkbox-container');
@@ -5478,10 +5484,17 @@
                             }
                         }
 
+                        const showDeleteBtn = isMe || (window.currentChatPermissions && window.currentChatPermissions.canPin);
+                        const deleteBtnHtml = showDeleteBtn 
+                            ? `<button onclick="deleteChatMessage('${espaceName}', ${msg.id})" style="background: none; border: none; color: #ef4444; font-size: 0.72rem; cursor: pointer; padding: 0 0.2rem; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" title="Supprimer définitivement le message">Supprimer</button>` 
+                            : '';
+
                         if (isMe) {
                             html += `
                                 <div class="chat-bubble-wrapper" style="display: flex; flex-direction: column; align-items: flex-end; width: 100%; animation: fadeIn 0.3s ease;">
                                     <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem;">
+                                        ${deleteBtnHtml}
+                                        ${deleteBtnHtml ? `<span style="color: rgba(255,255,255,0.15); font-size: 0.7rem; user-select: none;">•</span>` : ''}
                                         <span style="font-size: 0.72rem; color: ${currentSpace.theme.primary}; font-weight: 700; background: rgba(255,255,255,0.06); padding: 0.1rem 0.4rem; border-radius: 100px;">Vous</span>
                                         <span style="font-size: 0.72rem; color: rgba(255,255,255,0.4);">${timeStr}</span>
                                     </div>
@@ -5498,6 +5511,7 @@
                                         <span style="font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.85);">${msg.user_name}</span>
                                         <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 0.05rem 0.4rem; border-radius: 100px; ${badgeStyle}">${msg.user_role}</span>
                                         <span style="font-size: 0.72rem; color: rgba(255,255,255,0.3);">${timeStr}</span>
+                                        ${deleteBtnHtml ? `<span style="color: rgba(255,255,255,0.15); font-size: 0.7rem; user-select: none;">•</span>` + deleteBtnHtml : ''}
                                     </div>
                                     <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px 18px 18px 2px; padding: 0.75rem 1rem; max-width: 75%; word-break: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
                                         ${msg.message_text ? `<p style="margin: 0; font-size: 0.88rem; color: rgba(255,255,255,0.9); line-height: 1.4;">${msg.message_text}</p>` : ''}
@@ -5874,6 +5888,29 @@
                 lightbox.style.opacity = '0';
                 lightbox.style.pointerEvents = 'none';
             }
+        };
+
+        window.deleteChatMessage = function(espaceName, messageId) {
+            if (!confirm("Voulez-vous supprimer définitivement ce message ?")) return;
+
+            fetch(`/api/espaces/${encodeURIComponent(espaceName)}/messages/${messageId}`, {
+                method: 'DELETE'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Réinitialiser l'ID et rafraîchir
+                    lastChatMessageId = 0;
+                    const container = document.getElementById('chat-messages-container');
+                    if (container) container.innerHTML = '';
+                    loadChatMessages(espaceName);
+                } else {
+                    alert(data.error || "Erreur de suppression.");
+                }
+            })
+            .catch(err => {
+                console.error("Error deleting message:", err);
+            });
         };
 
         window.renderEspaceEnfants = function(s, container) {

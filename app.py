@@ -1627,6 +1627,59 @@ def api_send_espace_message(espace_name):
     
     return jsonify({'success': True})
 
+@app.route('/api/espaces/<espace_name>/messages/<int:message_id>', methods=['DELETE'])
+def api_delete_espace_message(espace_name, message_id):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    email = session.get('user_email')
+    
+    conn = get_db()
+    if DATABASE_URL:
+        msg = conn.execute(
+            'SELECT user_email, file_url FROM messages WHERE id = %s AND espace_name = %s',
+            (message_id, espace_name)
+        ).fetchone()
+    else:
+        msg = conn.execute(
+            'SELECT user_email, file_url FROM messages WHERE id = ? AND espace_name = ?',
+            (message_id, espace_name)
+        ).fetchone()
+        
+    if not msg:
+        conn.close()
+        return jsonify({'error': 'Message non trouvé'}), 404
+        
+    # Standardize access check
+    row_dict = dict(msg) if hasattr(msg, 'keys') else msg
+    msg_author = row_dict.get('user_email', '').lower().strip()
+    is_author = (email and email.lower().strip() == msg_author)
+    is_mod = is_moderator_or_leader(email, espace_name)
+    
+    if not is_author and not is_mod:
+        conn.close()
+        return jsonify({'error': 'Accès refusé'}), 403
+        
+    # Supprimer le fichier physique s'il existe
+    file_url = row_dict.get('file_url')
+    if file_url and file_url.startswith('/static/uploads/'):
+        try:
+            filename = file_url.replace('/static/', '')
+            file_path = os.path.join(app.static_folder, filename)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            print(f"⚠️ Erreur suppression fichier physique: {e}")
+            
+    if DATABASE_URL:
+        conn.execute('DELETE FROM messages WHERE id = %s', (message_id,))
+    else:
+        conn.execute('DELETE FROM messages WHERE id = ?', (message_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
 # Types de fichiers autorisés pour le partage dans les espaces
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx', 'txt'}
 
