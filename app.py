@@ -308,8 +308,130 @@ def get_db():
                     )
                 ''')
                 # Garantir la présence de la configuration de la salle d'attente
+
+                # Full auto-migration pour les tables principales manquantes
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS medias (
+                        id SERIAL PRIMARY KEY,
+                        titre VARCHAR(255) NOT NULL,
+                        description TEXT,
+                        categorie VARCHAR(100),
+                        commission VARCHAR(100),
+                        langue VARCHAR(50),
+                        url_miniature VARCHAR(500),
+                        url_video VARCHAR(500),
+                        url_video_en VARCHAR(500),
+                        url_video_es VARCHAR(500),
+                        url_video_nl VARCHAR(500),
+                        url_video_ln VARCHAR(500),
+                        paroles_keywords TEXT,
+                        position_banniere INTEGER DEFAULT 15,
+                        series_id INTEGER,
+                        chapitre VARCHAR(100),
+                        ordre_episode INTEGER,
+                        date_ajout TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        email VARCHAR(255) UNIQUE NOT NULL,
+                        password_hash VARCHAR(255) NOT NULL,
+                        acces_nayoth INTEGER DEFAULT 0,
+                        acces_intercession INTEGER DEFAULT 0,
+                        is_verified INTEGER DEFAULT 0,
+                        verification_token VARCHAR(255),
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS invitations (
+                        id SERIAL PRIMARY KEY,
+                        email VARCHAR(255) UNIQUE NOT NULL,
+                        token VARCHAR(255) UNIQUE NOT NULL,
+                        used INTEGER DEFAULT 0,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS communiques (
+                        id SERIAL PRIMARY KEY,
+                        titre VARCHAR(255) NOT NULL,
+                        contenu_fr TEXT NOT NULL,
+                        contenu_en TEXT,
+                        contenu_es TEXT,
+                        contenu_nl TEXT,
+                        contenu_ln TEXT,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS series (
+                        id SERIAL PRIMARY KEY,
+                        titre VARCHAR(255) NOT NULL,
+                        description TEXT,
+                        categorie VARCHAR(100) NOT NULL,
+                        commission VARCHAR(100),
+                        url_miniature VARCHAR(500),
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS live_streams (
+                        id SERIAL PRIMARY KEY,
+                        titre VARCHAR(255) NOT NULL,
+                        description TEXT,
+                        url_direct VARCHAR(500),
+                        type_diffusion VARCHAR(50) DEFAULT 'standard',
+                        is_active INTEGER DEFAULT 0,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS quizzes (
+                        id SERIAL PRIMARY KEY,
+                        titre VARCHAR(255) NOT NULL,
+                        description TEXT,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS quiz_questions (
+                        id SERIAL PRIMARY KEY,
+                        quiz_id INTEGER REFERENCES quizzes(id) ON DELETE CASCADE,
+                        question_text TEXT NOT NULL,
+                        option_a VARCHAR(255) NOT NULL,
+                        option_b VARCHAR(255) NOT NULL,
+                        option_c VARCHAR(255) NOT NULL,
+                        correct_option INTEGER NOT NULL
+                    )
+                ''')
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS commentaires (
+                        id SERIAL PRIMARY KEY,
+                        media_id INTEGER,
+                        user_email VARCHAR(255) NOT NULL,
+                        nom_complet VARCHAR(255) NOT NULL,
+                        contenu TEXT NOT NULL,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+
+                # Création table settings pour PostgreSQL
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS settings (
+                        key VARCHAR(100) PRIMARY KEY,
+                        value TEXT
+                    )
+                ''')
                 cur.execute("INSERT INTO settings (key, value) VALUES ('waiting_room_enabled', '0') ON CONFLICT (key) DO NOTHING")
                 cur.execute("INSERT INTO settings (key, value) VALUES ('meet_enabled', '0') ON CONFLICT (key) DO NOTHING")
+                cur.execute("INSERT INTO settings (key, value) VALUES ('radio_enabled', '0') ON CONFLICT (key) DO NOTHING")
+                cur.execute("INSERT INTO settings (key, value) VALUES ('radio_stream_url', 'https://icecast.radiofrance.fr/fip-midfi.mp3') ON CONFLICT (key) DO NOTHING")
+                cur.execute("INSERT INTO settings (key, value) VALUES ('podcast_enabled', '1') ON CONFLICT (key) DO NOTHING")
+                cur.execute("INSERT INTO settings (key, value) VALUES ('attendance_enabled', '0') ON CONFLICT (key) DO NOTHING")
+                cur.execute("INSERT INTO settings (key, value) VALUES ('attendance_target_hour', '09:00') ON CONFLICT (key) DO NOTHING")
+
                 # Ajouter la colonne is_evicted à la table attendance si elle n'existe pas
                 cur.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS is_evicted INTEGER DEFAULT 0")
                 # Auto-migration live_streams & webinaire_queue pour PostgreSQL
@@ -379,6 +501,7 @@ def get_db():
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 ''')
+
                 # Création table espace_visions pour PostgreSQL
                 cur.execute('''
                     CREATE TABLE IF NOT EXISTS espace_visions (
@@ -395,6 +518,11 @@ def get_db():
                     cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_size INTEGER")
                 except Exception as e:
                     print(f"⚠️ Erreur auto-migration PostgreSQL colonnes messages: {e}")
+
+                try:
+                    cur.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS is_evicted INTEGER DEFAULT 0")
+                except Exception as e:
+                    print(f"⚠️ Erreur auto-migration PostgreSQL colonne is_evicted: {e}")
 
                 # Nettoyage automatique des anciennes données de test au démarrage du serveur
                 try:
