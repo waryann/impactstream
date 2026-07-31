@@ -11641,8 +11641,6 @@
         window.customReact = function() {
             const em = prompt("Entrez l'emoji que vous souhaitez ajouter :");
             if (em && em.trim().length > 0) {
-                // Ensure it's just the first character/emoji
-                const match = em.match(/\\p{Emoji}/u); // Basic check, but let's just send what they put
                 reactMsg(activeReactionEspace, activeReactionMsgId, em.trim().substring(0,2));
             }
         };
