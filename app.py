@@ -477,6 +477,7 @@ def get_db():
                         user_role VARCHAR(100),
                         message_text TEXT NOT NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
                 ''')
                 # Création table message_reactions pour PostgreSQL
                 cur.execute('''
