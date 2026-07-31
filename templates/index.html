@@ -5783,7 +5783,7 @@
                         }
 
                         if (isMe) {
-                            html += `<div class="wa-bwrap wa-bout${isFirst?' gfirst':''}" data-email="${msg.user_email}" data-date="${dateStr}">`;
+                            html += `<div id="msg-${msg.id}" class="wa-bwrap wa-bout${isFirst?' gfirst':''}" data-email="${msg.user_email}" data-date="${dateStr}">`;
                             if (isFirst) {
                                 html += `<div class="wa-bmeta" style="justify-content:flex-end;">${delBtn}<span style="font-size:.72rem;color:${primaryColor};font-weight:700;background:rgba(255,255,255,.06);padding:.1rem .45rem;border-radius:100px;">Vous</span></div>`;
                             } else if (canDel) {
@@ -5796,7 +5796,7 @@
                                 ${reactionsHtml}
                             </div></div>`;
                         } else {
-                            html += `<div class="wa-bwrap wa-bin${isFirst?' gfirst':''}" data-email="${msg.user_email}" data-date="${dateStr}">`;
+                            html += `<div id="msg-${msg.id}" class="wa-bwrap wa-bin${isFirst?' gfirst':''}" data-email="${msg.user_email}" data-date="${dateStr}">`;
                             if (isFirst) {
                                 html += `<div class="wa-bmeta">
                                     <div style="width:22px;height:22px;border-radius:50%;background:${avColor};display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#fff;flex-shrink:0;">${initials}</div>
@@ -11653,17 +11653,53 @@
             recentEmojis = [emoji, ...recentEmojis.filter(e => e !== emoji)].slice(0, 7);
             localStorage.setItem('waRecentEmojis', JSON.stringify(recentEmojis));
 
+            // Optimistic UI update
+            const msgEl = document.getElementById('msg-' + msgId);
+            if (msgEl) {
+                let bubble = msgEl.querySelector('.wa-bubble');
+                if (bubble) {
+                    let reactionsContainer = bubble.querySelector('.wa-reactions');
+                    if (!reactionsContainer) {
+                        reactionsContainer = document.createElement('div');
+                        reactionsContainer.className = 'wa-reactions';
+                        bubble.appendChild(reactionsContainer);
+                    }
+                    let pill = Array.from(reactionsContainer.children).find(el => el.textContent.includes(emoji));
+                    if (pill) {
+                        const isReacted = pill.classList.contains('reacted');
+                        let countStr = pill.textContent.replace(emoji, '').trim();
+                        let count = countStr ? parseInt(countStr) : 1;
+                        if (isReacted) {
+                            pill.classList.remove('reacted');
+                            count--;
+                            if (count <= 0) {
+                                pill.remove();
+                                if (reactionsContainer.children.length === 0) reactionsContainer.remove();
+                            } else {
+                                pill.innerHTML = `<span>${emoji}</span> ${count > 1 ? count : ''}`;
+                            }
+                        } else {
+                            pill.classList.add('reacted');
+                            count++;
+                            pill.innerHTML = `<span>${emoji}</span> ${count}`;
+                        }
+                    } else {
+                        pill = document.createElement('div');
+                        pill.className = 'wa-react-pill reacted';
+                        pill.setAttribute('onclick', `reactMsg('${espaceName}', ${msgId}, '${emoji}')`);
+                        pill.innerHTML = `<span>${emoji}</span>`;
+                        reactionsContainer.appendChild(pill);
+                    }
+                }
+            }
+
             fetch(`/api/messages/${msgId}/react`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ emoji: emoji })
             })
             .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    loadChatMessages(espaceName, true); // silent refresh
-                }
-            })
+            .then(data => {})
             .catch(console.error);
         };
     </script>
