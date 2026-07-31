@@ -477,6 +477,16 @@ def get_db():
                         user_role VARCHAR(100),
                         message_text TEXT NOT NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ''')
+                # Création table message_reactions pour PostgreSQL
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS message_reactions (
+                        id SERIAL PRIMARY KEY,
+                        message_id INTEGER NOT NULL,
+                        user_email VARCHAR(255) NOT NULL,
+                        emoji VARCHAR(50) NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(message_id, user_email)
                     )
                 ''')
                 # Création table pinned_messages pour PostgreSQL
@@ -754,6 +764,19 @@ def get_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Création table message_reactions pour SQLite
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS message_reactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            message_id INTEGER NOT NULL,
+            user_email TEXT NOT NULL,
+            emoji TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(message_id, user_email)
+        )
+    ''')
+    
     # Création table pinned_messages pour SQLite
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS pinned_messages (
@@ -1724,13 +1747,41 @@ def api_get_espace_messages(espace_name):
                 (espace_name,)
             ).fetchall()
         
+    message_ids = []
+    for r in rows:
+        row_dict = dict(r) if hasattr(r, 'keys') else r
+        message_ids.append(row_dict.get('id'))
+        
+    reactions_dict = {}
+    if message_ids:
+        if DATABASE_URL:
+            placeholders = ','.join(['%s'] * len(message_ids))
+            cur = conn.cursor()
+            cur.execute(f"SELECT message_id, user_email, emoji FROM message_reactions WHERE message_id IN ({placeholders})", tuple(message_ids))
+            reaction_rows = cur.fetchall()
+            cur.close()
+        else:
+            placeholders = ','.join(['?'] * len(message_ids))
+            reaction_rows = conn.execute(f"SELECT message_id, user_email, emoji FROM message_reactions WHERE message_id IN ({placeholders})", tuple(message_ids)).fetchall()
+            
+        for rr in reaction_rows:
+            rr_dict = dict(rr) if hasattr(rr, 'keys') else {'message_id': rr[0], 'user_email': rr[1], 'emoji': rr[2]}
+            m_id = rr_dict['message_id']
+            if m_id not in reactions_dict:
+                reactions_dict[m_id] = []
+            reactions_dict[m_id].append({
+                'user_email': rr_dict['user_email'],
+                'emoji': rr_dict['emoji']
+            })
+            
     conn.close()
     
     messages = []
     for r in rows:
         row_dict = dict(r) if hasattr(r, 'keys') else r
+        msg_id = row_dict.get('id')
         messages.append({
-            'id': row_dict.get('id'),
+            'id': msg_id,
             'user_email': row_dict.get('user_email'),
             'user_name': row_dict.get('user_name'),
             'user_role': row_dict.get('user_role'),
@@ -1739,11 +1790,55 @@ def api_get_espace_messages(espace_name):
             'file_name': row_dict.get('file_name'),
             'file_type': row_dict.get('file_type'),
             'file_size': row_dict.get('file_size'),
-            'created_at': row_dict.get('created_at').strftime('%Y-%m-%d %H:%M:%S') if hasattr(row_dict.get('created_at'), 'strftime') else row_dict.get('created_at')
+            'created_at': row_dict.get('created_at').strftime('%Y-%m-%d %H:%M:%S') if hasattr(row_dict.get('created_at'), 'strftime') else row_dict.get('created_at'),
+            'reactions': reactions_dict.get(msg_id, [])
         })
         
     messages.reverse()
     return jsonify(messages)
+
+@app.route('/api/messages/<int:message_id>/react', methods=['POST'])
+def api_react_message(message_id):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.json
+    emoji = data.get('emoji')
+    if not emoji:
+        return jsonify({'error': 'Missing emoji'}), 400
+        
+    user_email = session.get('user_email')
+    conn = get_db()
+    
+    if DATABASE_URL:
+        cur = conn.cursor()
+        cur.execute("SELECT emoji FROM message_reactions WHERE message_id = %s AND user_email = %s", (message_id, user_email))
+        row = cur.fetchone()
+        
+        if row:
+            current_emoji = row[0] if isinstance(row, tuple) else row.get('emoji')
+            if current_emoji == emoji:
+                cur.execute("DELETE FROM message_reactions WHERE message_id = %s AND user_email = %s", (message_id, user_email))
+            else:
+                cur.execute("UPDATE message_reactions SET emoji = %s WHERE message_id = %s AND user_email = %s", (emoji, message_id, user_email))
+        else:
+            cur.execute("INSERT INTO message_reactions (message_id, user_email, emoji) VALUES (%s, %s, %s)", (message_id, user_email, emoji))
+        conn.commit()
+        cur.close()
+    else:
+        row = conn.execute("SELECT emoji FROM message_reactions WHERE message_id = ? AND user_email = ?", (message_id, user_email)).fetchone()
+        if row:
+            current_emoji = row['emoji'] if hasattr(row, 'keys') else row[0]
+            if current_emoji == emoji:
+                conn.execute("DELETE FROM message_reactions WHERE message_id = ? AND user_email = ?", (message_id, user_email))
+            else:
+                conn.execute("UPDATE message_reactions SET emoji = ? WHERE message_id = ? AND user_email = ?", (emoji, message_id, user_email))
+        else:
+            conn.execute("INSERT INTO message_reactions (message_id, user_email, emoji) VALUES (?, ?, ?)", (message_id, user_email, emoji))
+        conn.commit()
+        
+    conn.close()
+    return jsonify({'success': True})
 
 @app.route('/api/espaces/<espace_name>/messages', methods=['POST'])
 def api_send_espace_message(espace_name):
