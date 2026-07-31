@@ -1046,6 +1046,19 @@ def user_login():
         # Étape 2 : Recherche en base
         conn = get_db()
         user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+        
+        # Auto-inscription si le membre vient de l'Annuaire mais n'a pas encore de compte ImpactStream
+        if not user:
+            membre = conn.execute('SELECT * FROM membres WHERE email = ?', (email,)).fetchone()
+            if membre:
+                hashed_pw = generate_password_hash(password)
+                v_token = str(uuid.uuid4())
+                conn.execute(
+                    'INSERT INTO users (email, password_hash, is_verified, verification_token) VALUES (?, ?, 1, ?)',
+                    (email, hashed_pw, v_token)
+                )
+                conn.commit()
+                user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
 
         # Étape 3 : Comparaison mot de passe
         if user and check_password_hash(user['password_hash'], password):
