@@ -3586,6 +3586,69 @@
         // ═══════════════════════════════════════════
         // Render Media Grid
         // ═══════════════════════════════════════════
+        function generateMediaCardHtml(m, index) {
+            const emoji = categoryEmojis[m.categorie] || '🎬';
+            const gradient = categoryGradients[m.categorie] || 'linear-gradient(135deg, #1b1a14, #24231a)';
+            const isAudio = m.url_video && m.url_video.toLowerCase().endsWith('.mp3') && !m.url_video.toLowerCase().includes('youtube.com') && !m.url_video.toLowerCase().includes('youtu.be') && !m.url_video.toLowerCase().includes('vimeo.com');
+            
+            const thumbnailHtml = m.url_miniature 
+                ? `<img src="${m.url_miniature}" alt="${m.titre}">`
+                : `<div class="placeholder-thumb" style="background: ${gradient};">
+                       <span>${emoji}</span>
+                   </div>`;
+
+            const isInPlaylist = getPlaylist(m.categorie).map(Number).includes(Number(m.id));
+            const playlistIconHtml = isInPlaylist
+                ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="#e8820c" stroke="#e8820c" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`
+                : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`;
+
+            const showPlaylistBtn = currentCategory !== "";
+            const playlistBtnHtml = showPlaylistBtn
+                ? `<button class="card-playlist-btn" onclick="togglePlaylistItem(event, ${m.id})" title="${isInPlaylist ? 'Retirer de ma playlist' : 'Ajouter à ma playlist'}" style="position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(20, 20, 16, 0.7); border: 1px solid rgba(237, 232, 223, 0.15); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(20, 20, 16, 0.95)';" onmouseout="this.style.transform='none'; this.style.background='rgba(20, 20, 16, 0.7)';">
+                        ${playlistIconHtml}
+                   </button>`
+                : '';
+
+            const isDownloaded = window.downloadedMedias ? (window.downloadedMedias.has(m.url_video) || window.downloadedMedias.has(new URL(m.url_video, window.location.origin).href)) : false;
+            const showOfflineBtn = (currentCategory === "Musique" || currentCategory === "Enseignement");
+            const offlineBtnHtml = (isAudio && showOfflineBtn)
+                ? `<button class="card-download-btn" onclick="toggleOfflineMedia(event, ${m.id}, '${m.url_video}', '${m.url_miniature || ''}')" title="${isDownloaded ? 'Supprimer du mode hors-ligne' : 'Télécharger pour le mode hors-ligne'}" style="position: absolute; top: 10px; right: ${showPlaylistBtn ? '50px' : '10px'}; z-index: 10; background: rgba(20, 20, 16, 0.7); border: 1px solid rgba(237, 232, 223, 0.15); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(20, 20, 16, 0.95)';" onmouseout="this.style.transform='none'; this.style.background='rgba(20, 20, 16, 0.7)';">
+                        ${isDownloaded 
+                            ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>` 
+                            : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`
+                        }
+                   </button>`
+                : '';
+
+            return `
+                <article class="media-card" onclick="openPlayer(${m.id})" style="animation-delay: ${index * 0.07}s; min-width: 260px; max-width: 300px; flex-shrink: 0;" id="card-${m.id}">
+                    <div class="card-thumbnail">
+                        ${thumbnailHtml}
+                        <div class="card-thumbnail-overlay"></div>
+                        
+                        ${playlistBtnHtml}
+                        ${offlineBtnHtml}
+
+                        <div class="card-play-icon">
+                            ${isAudio
+                                ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3" fill="white"/><circle cx="18" cy="16" r="3" fill="white"/></svg>'
+                                : '<svg width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-tags">
+                            <span class="card-tag tag-categorie">${m.categorie}</span>
+                            <span class="card-tag tag-commission">${m.commission || 'Général'}</span>
+                            <span class="card-tag tag-langue">${m.langue || 'Français'}</span>
+                        </div>
+                        <h3 class="card-title">${m.titre}</h3>
+                        <p class="card-description">${m.description}</p>
+                    </div>
+                </article>
+            `;
+        }
+
         function renderGrid(medias) {
             const grid = document.getElementById('media-grid');
             const noResults = document.getElementById('no-results');
@@ -3603,68 +3666,57 @@
 
             noResults.style.display = 'none';
 
-            grid.innerHTML = medias.map((m, index) => {
-                const emoji = categoryEmojis[m.categorie] || '🎬';
-                const gradient = categoryGradients[m.categorie] || 'linear-gradient(135deg, #1b1a14, #24231a)';
-                const isAudio = m.url_video && m.url_video.toLowerCase().endsWith('.mp3') && !m.url_video.toLowerCase().includes('youtube.com') && !m.url_video.toLowerCase().includes('youtu.be') && !m.url_video.toLowerCase().includes('vimeo.com');
-                
-                const thumbnailHtml = m.url_miniature 
-                    ? `<img src="${m.url_miniature}" alt="${m.titre}">`
-                    : `<div class="placeholder-thumb" style="background: ${gradient};">
-                           <span>${emoji}</span>
-                       </div>`;
+            if (currentCategory === '') {
+                // Page d'Accueil - Style Netflix
+                grid.className = ""; // Retirer la grille pour faire des rangées horizontales pleines largeurs
+                grid.style.padding = "0";
 
-                const isInPlaylist = getPlaylist(m.categorie).map(Number).includes(Number(m.id));
-                const playlistIconHtml = isInPlaylist
-                    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="#e8820c" stroke="#e8820c" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`
-                    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`;
+                const enseignements = medias.filter(m => m.categorie === 'Enseignement');
+                const musiquesMP3 = medias.filter(m => {
+                    if (m.categorie !== 'Musique') return false;
+                    const url = (m.url_video || '').toLowerCase();
+                    return url.endsWith('.mp3') || url.includes('audio');
+                });
+                const musiquesMP4 = medias.filter(m => {
+                    if (m.categorie !== 'Musique') return false;
+                    const url = (m.url_video || '').toLowerCase();
+                    return !url.endsWith('.mp3') && !url.includes('audio');
+                });
+                const autres = medias.filter(m => m.categorie !== 'Enseignement' && m.categorie !== 'Musique');
 
-                const showPlaylistBtn = currentCategory !== "";
-                const playlistBtnHtml = showPlaylistBtn
-                    ? `<button class="card-playlist-btn" onclick="togglePlaylistItem(event, ${m.id})" title="${isInPlaylist ? 'Retirer de ma playlist' : 'Ajouter à ma playlist'}" style="position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(20, 20, 16, 0.7); border: 1px solid rgba(237, 232, 223, 0.15); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(20, 20, 16, 0.95)';" onmouseout="this.style.transform='none'; this.style.background='rgba(20, 20, 16, 0.7)';">
-                            ${playlistIconHtml}
-                       </button>`
-                    : '';
-
-                const isDownloaded = window.downloadedMedias ? (window.downloadedMedias.has(m.url_video) || window.downloadedMedias.has(new URL(m.url_video, window.location.origin).href)) : false;
-                const showOfflineBtn = (currentCategory === "Musique" || currentCategory === "Enseignement");
-                const offlineBtnHtml = (isAudio && showOfflineBtn)
-                    ? `<button class="card-download-btn" onclick="toggleOfflineMedia(event, ${m.id}, '${m.url_video}', '${m.url_miniature || ''}')" title="${isDownloaded ? 'Supprimer du mode hors-ligne' : 'Télécharger pour le mode hors-ligne'}" style="position: absolute; top: 10px; right: ${showPlaylistBtn ? '50px' : '10px'}; z-index: 10; background: rgba(20, 20, 16, 0.7); border: 1px solid rgba(237, 232, 223, 0.15); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(20, 20, 16, 0.95)';" onmouseout="this.style.transform='none'; this.style.background='rgba(20, 20, 16, 0.7)';">
-                            ${isDownloaded 
-                                ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>` 
-                                : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(237,232,223,0.7);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`
-                            }
-                       </button>`
-                    : '';
-
-                return `
-                    <article class="media-card" onclick="openPlayer(${m.id})" style="animation-delay: ${index * 0.07}s" id="card-${m.id}">
-                        <div class="card-thumbnail">
-                            ${thumbnailHtml}
-                            <div class="card-thumbnail-overlay"></div>
-                            
-                            ${playlistBtnHtml}
-                            ${offlineBtnHtml}
-
-                            <div class="card-play-icon">
-                                ${isAudio
-                                    ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3" fill="white"/><circle cx="18" cy="16" r="3" fill="white"/></svg>'
-                                    : '<svg width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
-                                }
+                function buildRow(title, icon, items) {
+                    if (items.length === 0) return '';
+                    let cards = items.map((m, i) => generateMediaCardHtml(m, i)).join('');
+                    return `
+                        <div style="margin-bottom: 2.5rem; padding: 0 2.5rem;">
+                            <h3 style="font-size: 1.35rem; font-weight: 800; color: #ede8df; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">
+                                <span style="color: #e8820c;">${icon}</span> ${title}
+                            </h3>
+                            <div class="series-row" style="display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 1rem; scrollbar-width: thin;">
+                                ${cards}
                             </div>
                         </div>
-                        <div class="card-body">
-                            <div class="card-tags">
-                                <span class="card-tag tag-categorie">${m.categorie}</span>
-                                <span class="card-tag tag-commission">${m.commission || 'Général'}</span>
-                                <span class="card-tag tag-langue">${m.langue || 'Français'}</span>
-                            </div>
-                            <h3 class="card-title">${m.titre}</h3>
-                            <p class="card-description">${m.description}</p>
-                        </div>
-                    </article>
-                `;
-            }).join('');
+                    `;
+                }
+
+                let finalHtml = '';
+                finalHtml += buildRow('Enseignements Récents', '📖', enseignements);
+                finalHtml += buildRow('Musique (Audio MP3)', '🎵', musiquesMP3);
+                finalHtml += buildRow('Clips Vidéos (MP4)', '🎬', musiquesMP4);
+                if (autres.length > 0) finalHtml += buildRow('Nouveautés', '✨', autres);
+
+                grid.innerHTML = finalHtml;
+            } else {
+                // Onglet spécifique - Style Grille
+                grid.className = "media-grid";
+                grid.style.padding = "0 2.5rem";
+
+                grid.innerHTML = medias.map((m, index) => {
+                    const html = generateMediaCardHtml(m, index);
+                    // Rétablir la largeur 100% pour la vue grille, car generateMediaCardHtml a mis un flex-shrink et min-width
+                    return html.replace('min-width: 260px; max-width: 300px; flex-shrink: 0;', 'width: 100%;');
+                }).join('');
+            }
         }
 
         // ═══════════════════════════════════════════
