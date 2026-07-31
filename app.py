@@ -1841,6 +1841,29 @@ def api_react_message(message_id):
     conn.close()
     return jsonify({'success': True})
 
+@app.route('/api/messages/<int:message_id>/reactions', methods=['GET'])
+def api_get_message_reactions(message_id):
+    if not session.get('user_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    conn = get_db()
+    try:
+        if DATABASE_URL:
+            rx = conn.execute(
+                'SELECT user_email, emoji FROM message_reactions WHERE message_id = %s',
+                (message_id,)
+            ).fetchall()
+        else:
+            rx = conn.execute(
+                'SELECT user_email, emoji FROM message_reactions WHERE message_id = ?',
+                (message_id,)
+            ).fetchall()
+        
+        reactions = [{'user_email': r['user_email'], 'emoji': r['emoji']} for r in (rx if rx else [])]
+        return jsonify({'success': True, 'reactions': reactions, 'my_email': session.get('user_email')})
+    finally:
+        conn.close()
+
+
 @app.route('/api/espaces/<espace_name>/messages', methods=['POST'])
 def api_send_espace_message(espace_name):
     if not session.get('user_logged_in'):

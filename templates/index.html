@@ -11653,65 +11653,66 @@
             recentEmojis = [emoji, ...recentEmojis.filter(e => e !== emoji)].slice(0, 7);
             localStorage.setItem('waRecentEmojis', JSON.stringify(recentEmojis));
 
-            // Optimistic UI update
-            let msgEl = document.getElementById('msg-' + msgId);
-            if (!msgEl) {
-                // Fallback for cached HTML versions without msg-id
-                const allBubbles = document.querySelectorAll('.wa-bubble');
-                for (let i = 0; i < allBubbles.length; i++) {
-                    const attrDbl = allBubbles[i].getAttribute('ondblclick');
-                    const attrTouch = allBubbles[i].getAttribute('ontouchstart');
-                    if ((attrDbl && attrDbl.includes(msgId)) || (attrTouch && attrTouch.includes(msgId))) {
-                        msgEl = allBubbles[i].parentElement;
-                        break;
-                    }
-                }
-            }
-            if (msgEl) {
-                let bubble = msgEl.querySelector('.wa-bubble');
-                if (bubble) {
-                    let reactionsContainer = bubble.querySelector('.wa-reactions');
-                    if (!reactionsContainer) {
-                        reactionsContainer = document.createElement('div');
-                        reactionsContainer.className = 'wa-reactions';
-                        bubble.appendChild(reactionsContainer);
-                    }
-                    let pill = Array.from(reactionsContainer.children).find(el => el.textContent.includes(emoji));
-                    if (pill) {
-                        const isReacted = pill.classList.contains('reacted');
-                        let countStr = pill.textContent.replace(emoji, '').trim();
-                        let count = countStr ? parseInt(countStr) : 1;
-                        if (isReacted) {
-                            pill.classList.remove('reacted');
-                            count--;
-                            if (count <= 0) {
-                                pill.remove();
-                                if (reactionsContainer.children.length === 0) reactionsContainer.remove();
-                            } else {
-                                pill.innerHTML = `<span>${emoji}</span> ${count > 1 ? count : ''}`;
-                            }
-                        } else {
-                            pill.classList.add('reacted');
-                            count++;
-                            pill.innerHTML = `<span>${emoji}</span> ${count}`;
-                        }
-                    } else {
-                        pill = document.createElement('div');
-                        pill.className = 'wa-react-pill reacted';
-                        pill.setAttribute('onclick', `reactMsg('${espaceName}', ${msgId}, '${emoji}')`);
-                        pill.innerHTML = `<span>${emoji}</span>`;
-                        reactionsContainer.appendChild(pill);
-                    }
-                }
-            }
-
             fetch(`/api/messages/${msgId}/react`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ emoji: emoji })
             })
             .then(res => res.json())
-            .then(data => {})
+            .then(data => {
+                if (data.success) {
+                    // Fetch updated reactions and rebuild UI for this message
+                    fetch(`/api/messages/${msgId}/reactions`)
+                    .then(r => r.json())
+                    .then(rData => {
+                        if (rData.success) {
+                            const myEmail = rData.my_email;
+                            const counts = {};
+                            const myReactions = new Set();
+                            rData.reactions.forEach(rx => {
+                                counts[rx.emoji] = (counts[rx.emoji] || 0) + 1;
+                                if (rx.user_email === myEmail) myReactions.add(rx.emoji);
+                            });
+                            const sortedEmojis = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+                            let reactionsHtml = '';
+                            if (sortedEmojis.length > 0) {
+                                reactionsHtml = '<div class="wa-reactions">';
+                                sortedEmojis.forEach(em => {
+                                    const count = counts[em];
+                                    const hasReacted = myReactions.has(em);
+                                    reactionsHtml += `<div class="wa-react-pill ${hasReacted?'reacted':''}" onclick="reactMsg('${espaceName}', ${msgId}, '${em}')"><span>${em}</span> ${count>1?count:''}</div>`;
+                                });
+                                reactionsHtml += '</div>';
+                            }
+                            
+                            let msgEl = document.getElementById('msg-' + msgId);
+                            if (!msgEl) {
+                                const allBubbles = document.querySelectorAll('.wa-bubble');
+                                for (let i = 0; i < allBubbles.length; i++) {
+                                    const attrDbl = allBubbles[i].getAttribute('ondblclick');
+                                    const attrTouch = allBubbles[i].getAttribute('ontouchstart');
+                                    if ((attrDbl && attrDbl.includes(msgId)) || (attrTouch && attrTouch.includes(msgId))) {
+                                        msgEl = allBubbles[i].parentElement;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (msgEl) {
+                                let bubble = msgEl.querySelector('.wa-bubble');
+                                if (bubble) {
+                                    let oldContainer = bubble.querySelector('.wa-reactions');
+                                    if (oldContainer) oldContainer.remove();
+                                    if (reactionsHtml !== '') {
+                                        bubble.insertAdjacentHTML('beforeend', reactionsHtml);
+                                    }
+                                }
+                            }
+                        }
+                    })
+                    .catch(console.error);
+                }
+            })
             .catch(console.error);
         };
     </script>
