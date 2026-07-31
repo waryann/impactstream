@@ -1534,23 +1534,19 @@ def get_directory_member_info(email):
     # 1. Production PostgreSQL path
     if DATABASE_URL:
         try:
-            import psycopg2
-            from psycopg2.extras import RealDictCursor
-            pg_conn = psycopg2.connect(DATABASE_URL)
-            with pg_conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute("SELECT nom_complet, role_rang, commissions FROM membres WHERE email = %s LIMIT 1", (email,))
-                row = cur.fetchone()
-                if row:
-                    return {
-                        'nom_complet': row['nom_complet'],
-                        'role_rang': row['role_rang'] or 'Saint',
-                        'commissions': [c.strip() for c in (row['commissions'] or '').split(',') if c.strip()]
-                    }
+            conn = get_db()
+            row = conn.execute("SELECT nom_complet, role_rang, commissions FROM membres WHERE email = %s LIMIT 1", (email,)).fetchone()
+            if row:
+                return {
+                    'nom_complet': row['nom_complet'],
+                    'role_rang': row['role_rang'] or 'Saint',
+                    'commissions': [c.strip() for c in (row['commissions'] or '').split(',') if c.strip()]
+                }
         except Exception as e:
             app.logger.error(f"Error querying Postgres directory: {e}")
         finally:
-            if 'pg_conn' in locals():
-                pg_conn.close()
+            if 'conn' in locals():
+                conn.close()
 
     # 2. Local SQLite path
     else:
