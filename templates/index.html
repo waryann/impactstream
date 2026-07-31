@@ -3700,10 +3700,10 @@
                 }
 
                 let finalHtml = '';
-                finalHtml += buildRow('Enseignements Récents', '📖', enseignements);
-                finalHtml += buildRow('Musique (Audio MP3)', '🎵', musiquesMP3);
-                finalHtml += buildRow('Clips Vidéos (MP4)', '🎬', musiquesMP4);
-                if (autres.length > 0) finalHtml += buildRow('Nouveautés', '✨', autres);
+                finalHtml += buildRow('Nos Enseignements Récents', '📖', enseignements);
+                finalHtml += buildRow('Notre Musique (Audio MP3)', '🎵', musiquesMP3);
+                finalHtml += buildRow('Nos Clips Vidéos (MP4)', '🎬', musiquesMP4);
+                if (autres.length > 0) finalHtml += buildRow('Nos Nouveautés', '✨', autres);
 
                 grid.innerHTML = finalHtml;
             } else {
@@ -3748,7 +3748,7 @@
                 .catch(err => console.error('Erreur de chargement :', err));
 
             // Fetch series if applicable
-            if (currentCategory && currentCategory !== 'Communique') {
+            if (currentCategory !== 'Communique') {
                 fetchSeries();
             } else {
                 const sSec = document.getElementById('series-section');
@@ -8987,7 +8987,7 @@
                         'Podcast': 'de Podcasts'
                     };
                     const suffix = categoryPlurals[currentCategory] || '';
-                    titleEl.innerHTML = `<span style="color: #e8820c;">📚</span> Les Séries ${suffix}`;
+                    titleEl.innerHTML = `<span style="color: #e8820c;">📚</span> Nos Séries ${suffix}`;
                     
                     section.style.display = 'block';
                     row.innerHTML = seriesList.map(s => {
