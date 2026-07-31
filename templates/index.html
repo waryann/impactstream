@@ -11654,7 +11654,19 @@
             localStorage.setItem('waRecentEmojis', JSON.stringify(recentEmojis));
 
             // Optimistic UI update
-            const msgEl = document.getElementById('msg-' + msgId);
+            let msgEl = document.getElementById('msg-' + msgId);
+            if (!msgEl) {
+                // Fallback for cached HTML versions without msg-id
+                const allBubbles = document.querySelectorAll('.wa-bubble');
+                for (let i = 0; i < allBubbles.length; i++) {
+                    const attrDbl = allBubbles[i].getAttribute('ondblclick');
+                    const attrTouch = allBubbles[i].getAttribute('ontouchstart');
+                    if ((attrDbl && attrDbl.includes(msgId)) || (attrTouch && attrTouch.includes(msgId))) {
+                        msgEl = allBubbles[i].parentElement;
+                        break;
+                    }
+                }
+            }
             if (msgEl) {
                 let bubble = msgEl.querySelector('.wa-bubble');
                 if (bubble) {
