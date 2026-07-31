@@ -5235,139 +5235,265 @@
             // Structure HTML de la Chatroom de l'Espace avec Vision Banner
             container.innerHTML = `
                 <style>
-                @keyframes slideDown {
-                    from { transform: translateY(-15px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes pulse {
-                    0% { transform: scale(1); opacity: 1; }
-                    100% { transform: scale(2.2); opacity: 0; }
-                }
-                .chat-bubble-wrapper {
-                    margin-bottom: 0.75rem;
-                }
-                @media (max-width: 768px) {
-                    .chat-layout-grid {
-                        display: flex !important;
-                        flex-direction: column !important;
-                        height: auto !important;
-                    }
-                    .chat-main-panel {
-                        height: 550px !important;
-                        min-height: 550px !important;
-                        max-height: 550px !important;
-                    }
+                @keyframes wa-slideDown{from{transform:translateY(-10px);opacity:0}to{transform:translateY(0);opacity:1}}
+                @keyframes wa-fadeInUp{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+                @keyframes wa-pulse{0%{transform:scale(1);opacity:1}100%{transform:scale(2.4);opacity:0}}
+                @keyframes wa-spin{to{transform:rotate(360deg)}}
+
+                /* Vision banner */
+                .wa-vision{background:${theme.bg};border:1px solid ${theme.primary}35;border-radius:16px;margin-bottom:1rem;overflow:hidden;animation:wa-slideDown .4s ease;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+                .wa-vh{display:flex;align-items:center;gap:1rem;padding:.85rem 1.25rem;cursor:pointer;user-select:none;transition:background .2s}
+                .wa-vh:hover{background:rgba(255,255,255,.02)}
+                .wa-vico{width:42px;height:42px;border-radius:50%;background:${theme.primary}18;display:flex;align-items:center;justify-content:center;color:${theme.primary};border:1px solid ${theme.primary}25;flex-shrink:0;overflow:hidden}
+                .wa-vtitle-text{flex:1;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:.5rem}
+                .wa-veditbtn{font-size:.68rem;color:${theme.primary};background:${theme.primary}12;border:1px solid ${theme.primary}25;border-radius:6px;padding:.1rem .45rem;cursor:pointer;font-style:normal;transition:background .2s;display:none;white-space:nowrap}
+                .wa-veditbtn:hover{background:${theme.primary}25}
+                .wa-vchev{color:rgba(255,255,255,.4);transition:transform .3s;flex-shrink:0}
+                .wa-vchev.open{transform:rotate(180deg)}
+                .wa-vbody{overflow:hidden;transition:max-height .35s ease,opacity .3s ease,padding .3s ease;max-height:200px;opacity:1}
+                .wa-vbody.collapsed{max-height:0;opacity:0}
+                .wa-vbody-inner{padding:.1rem 1.25rem .85rem 4.75rem}
+
+                /* Main layout */
+                .wa-layout{display:grid;grid-template-columns:285px 1fr;height:calc(100vh - 250px);min-height:580px;max-height:820px;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.05);animation:wa-fadeInUp .4s ease}
+
+                /* Sidebar */
+                .wa-sb{background:#111827;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.06)}
+                .wa-sbh{padding:.85rem 1.1rem;background:#1a2332;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+                .wa-sbtitle{font-size:.88rem;font-weight:800;color:#fff;letter-spacing:.03em}
+                .wa-sbcount{font-size:.72rem;color:${theme.primary};background:${theme.primary}15;border:1px solid ${theme.primary}25;border-radius:20px;padding:.1rem .55rem;font-weight:700}
+                .wa-sbsearch{padding:.6rem .9rem;border-bottom:1px solid rgba(255,255,255,.04);flex-shrink:0}
+                .wa-sbsearch input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:.45rem .9rem;color:#fff;font-size:.8rem;outline:none;transition:border-color .2s;font-family:inherit;box-sizing:border-box}
+                .wa-sbsearch input:focus{border-color:${theme.primary}50}
+                .wa-sbsearch input::placeholder{color:rgba(255,255,255,.35)}
+                .wa-mblist{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+                .wa-mbrow{display:flex;align-items:flex-start;gap:.65rem;padding:.65rem 1rem;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s}
+                .wa-mbrow:hover{background:rgba(255,255,255,.03)}
+                .wa-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:#fff;flex-shrink:0;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+                .wa-mbi{flex:1;min-width:0}
+                .wa-mbn{font-size:.82rem;font-weight:700;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+                .wa-rbd{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;padding:.05rem .35rem;border-radius:4px;margin-top:.15rem;letter-spacing:.03em}
+                .wa-modbadge{font-size:.6rem;color:#fbbf24;font-weight:700;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);border-radius:4px;padding:.05rem .3rem;display:inline-flex;align-items:center;gap:.15rem;margin-top:.2rem}
+                .wa-modact{background:none;border:1px dashed rgba(255,255,255,.15);border-radius:6px;color:rgba(255,255,255,.4);font-size:.62rem;padding:.15rem .4rem;cursor:pointer;transition:all .2s;font-family:inherit;margin-top:.25rem;width:100%;text-align:center}
+                .wa-modact:hover{border-color:${theme.primary};color:${theme.primary};background:${theme.primary}08}
+                .wa-modrev{background:none;border:none;color:#ef4444;font-size:.65rem;cursor:pointer;padding:0;font-weight:700;font-family:inherit;margin-left:.35rem}
+
+                /* Chat panel */
+                .wa-chat{display:flex;flex-direction:column;background:#0d1117;background-image:radial-gradient(${theme.primary}06 1px,transparent 1px);background-size:24px 24px}
+                .wa-chdr{background:#1a2332;border-bottom:1px solid rgba(255,255,255,.06);padding:.8rem 1.25rem;display:flex;align-items:center;gap:.85rem;flex-shrink:0}
+                .wa-dot{position:relative;width:10px;height:10px;flex-shrink:0}
+                .wa-dot::after{content:'';position:absolute;inset:0;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e}
+                .wa-dot::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:#22c55e;opacity:.25;animation:wa-pulse 2s cubic-bezier(0,0,.2,1) infinite}
+                .wa-cname{font-size:1rem;font-weight:800;color:#fff}
+                .wa-csub{font-size:.72rem;color:rgba(255,255,255,.4);margin-top:.05rem}
+
+                /* Pinned */
+                #chat-pinned-container{display:none;background:rgba(255,255,255,.02);border-bottom:1.5px solid ${theme.primary}40;padding:.65rem 1.25rem;flex-shrink:0;animation:wa-slideDown .3s ease}
+                .wa-pin-inner{display:flex;align-items:stretch;gap:.85rem;cursor:default}
+                .wa-pin-bar{width:3.5px;min-height:38px;border-radius:3px;background:${theme.primary};flex-shrink:0}
+                .wa-pin-body{flex:1;min-width:0}
+                .wa-pin-lbl{font-size:.62rem;font-weight:700;text-transform:uppercase;color:${theme.primary};letter-spacing:.06em;margin-bottom:.15rem;display:flex;align-items:center;gap:.3rem}
+                .wa-pin-txt{font-size:.8rem;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+                .wa-pin-del{background:none;border:none;color:rgba(255,255,255,.35);font-size:1rem;cursor:pointer;padding:.2rem;transition:color .2s;flex-shrink:0;line-height:1;align-self:center}
+                .wa-pin-del:hover{color:#ef4444}
+
+                /* Messages area */
+                .wa-msgs{flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+                .wa-datesep{text-align:center;margin:1.25rem 0 .75rem;font-size:.7rem;color:rgba(255,255,255,.3);display:flex;align-items:center;gap:.75rem}
+                .wa-datesep::before,.wa-datesep::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
+                .wa-datesep span{background:rgba(255,255,255,.05);border-radius:20px;padding:.15rem .75rem}
+                .wa-bwrap{display:flex;flex-direction:column;margin-bottom:.12rem;animation:wa-fadeInUp .25s ease}
+                .wa-bwrap.gfirst{margin-top:.9rem}
+                .wa-bout{align-items:flex-end}
+                .wa-bin{align-items:flex-start}
+                .wa-bmeta{display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem;padding:0 .4rem}
+                .wa-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;padding:.05rem .35rem;border-radius:4px;letter-spacing:.03em}
+                .wa-bubble{max-width:68%;padding:.6rem .85rem;word-break:break-word;box-shadow:0 2px 10px rgba(0,0,0,.25);position:relative}
+                .wa-bubble p{margin:0;font-size:.875rem;line-height:1.45;color:#fff;white-space:pre-wrap}
+                .wa-bout .wa-bubble{background:${theme.primary};border-radius:14px 14px 2px 14px}
+                .wa-bin .wa-bubble{background:#1e293b;border:1px solid rgba(255,255,255,.06);border-radius:14px 14px 14px 2px}
+                .wa-bfooter{display:flex;align-items:center;justify-content:flex-end;gap:.3rem;margin-top:.2rem}
+                .wa-btime{font-size:.62rem;color:rgba(255,255,255,.4)}
+                .wa-tick{font-size:.7rem;color:rgba(255,255,255,.5)}
+                .wa-delbtn{background:none;border:none;color:#ef4444;font-size:.7rem;cursor:pointer;opacity:0;transition:opacity .15s;padding:0 .15rem;font-family:inherit;line-height:1}
+                .wa-bwrap:hover .wa-delbtn{opacity:.6}
+                .wa-delbtn:hover{opacity:1!important}
+                .wa-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem;color:rgba(255,255,255,.25);font-size:.875rem;padding:3rem 1rem;text-align:center}
+
+                /* Attachments */
+                .wa-imgat{max-width:240px;border-radius:10px;overflow:hidden;cursor:pointer;margin-top:.4rem;border:1px solid rgba(255,255,255,.08)}
+                .wa-imgat img{width:100%;max-height:180px;object-fit:cover;display:block;transition:transform .3s}
+                .wa-imgat:hover img{transform:scale(1.02)}
+                .wa-fileat{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:.6rem .75rem;display:flex;align-items:center;gap:.7rem;max-width:260px;margin-top:.4rem}
+                .wa-ficon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+                .wa-finfo{flex:1;min-width:0}
+                .wa-fname{font-size:.78rem;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+                .wa-fsize{font-size:.65rem;color:rgba(255,255,255,.4);margin-top:.05rem}
+                .wa-fdl{background:rgba(255,255,255,.08);border:none;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;text-decoration:none;flex-shrink:0;transition:background .2s}
+                .wa-fdl:hover{background:rgba(255,255,255,.18)}
+
+                /* Input bar */
+                .wa-ibar{background:#1a2332;border-top:1px solid rgba(255,255,255,.06);padding:.75rem 1rem;flex-shrink:0;position:relative}
+                .wa-irow{display:flex;align-items:flex-end;gap:.55rem}
+                .wa-ibtn{background:rgba(255,255,255,.06);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);cursor:pointer;flex-shrink:0;transition:background .2s,color .2s;font-size:1.05rem;line-height:1}
+                .wa-ibtn:hover{background:rgba(255,255,255,.1);color:#fff}
+                .wa-msgbox{flex:1;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.08);border-radius:22px;padding:.6rem 1rem;display:flex;align-items:center;transition:border-color .2s,background .2s;min-height:42px}
+                .wa-msgbox:focus-within{border-color:${theme.primary}55;background:rgba(255,255,255,.08)}
+                .wa-msgta{flex:1;background:none;border:none;outline:none;color:#fff;font-size:.88rem;line-height:1.4;resize:none;max-height:120px;overflow-y:auto;font-family:inherit;scrollbar-width:none}
+                .wa-msgta::placeholder{color:rgba(255,255,255,.3)}
+                .wa-sendbtn{background:${theme.primary};border:none;border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;flex-shrink:0;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 14px ${theme.primary}45}
+                .wa-sendbtn:hover{transform:scale(1.07);box-shadow:0 6px 18px ${theme.primary}60}
+                .wa-sendbtn:active{transform:scale(.93)}
+                .wa-extras{display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem 0;font-size:.73rem;color:rgba(255,255,255,.45)}
+
+                /* Emoji picker */
+                #wa-emoji-panel{position:absolute;bottom:calc(100% + 8px);left:1rem;background:#1e293b;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.75rem;width:272px;display:none;grid-template-columns:repeat(8,1fr);gap:.2rem;z-index:200;box-shadow:0 -12px 36px rgba(0,0,0,.4);animation:wa-slideDown .2s ease}
+                #wa-emoji-panel.open{display:grid}
+                .wa-epbtn{background:none;border:none;font-size:1.15rem;cursor:pointer;border-radius:6px;padding:.2rem;text-align:center;transition:background .15s;line-height:1}
+                .wa-epbtn:hover{background:rgba(255,255,255,.08)}
+
+                @media(max-width:768px){
+                  .wa-layout{grid-template-columns:1fr!important;height:620px!important;max-height:620px!important}
+                  .wa-sb{display:none!important}
                 }
                 </style>
 
                 <!-- Bouton Retour -->
-                <button onclick="renderEspacesGrid(); if(activeChatInterval) { clearInterval(activeChatInterval); activeChatInterval=null; }" 
-                        style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 100px; color: #ede8df; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.25rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 1.5rem; transition: all 0.3s;" 
-                        onmouseover="this.style.background='${theme.primary}20'; this.style.borderColor='${theme.primary}';" 
-                        onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.15)';">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <button onclick="renderEspacesGrid(); if(activeChatInterval){clearInterval(activeChatInterval);activeChatInterval=null;}"
+                        style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:100px;color:#ede8df;font-size:.8rem;font-weight:700;padding:.55rem 1.2rem;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;margin-bottom:1rem;transition:all .25s;"
+                        onmouseover="this.style.background='${theme.primary}20';this.style.borderColor='${theme.primary}';"
+                        onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.12)';">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                     Retour aux Espaces
                 </button>
 
-                <!-- Bannière de Vision/Mission de la Commission -->
-                <div style="background: ${theme.bg}; border: 1px solid ${theme.primary}40; border-radius: 20px; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; animation: slideDown 0.4s ease;">
-                    <div style="position: absolute; right: -20px; bottom: -20px; opacity: 0.05; color: ${theme.primary}; transform: rotate(-15deg); width: 150px; height: 150px; display: flex; align-items: center; justify-content: center;">
-                        ${s.icon.includes('img') ? s.icon.replace('border-radius: 50%', 'border-radius: 20px') : s.icon.replace('width="24"', 'width="150"').replace('height="24"', 'height="150"')}
+                <!-- Vision Banner — Collapsible -->
+                <div class="wa-vision">
+                    <div class="wa-vh" onclick="toggleWaVision(this)">
+                        <div class="wa-vico">${s.icon}</div>
+                        <div class="wa-vtitle-text">
+                            Vision &amp; Mission — Commission ${s.name}
+                            <span id="vision-edit-badge" class="wa-veditbtn" onclick="event.stopPropagation();editEspaceVision('${s.name}')">✏️ Modifier</span>
+                        </div>
+                        <svg class="wa-vchev open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
                     </div>
-                    <div style="width: 48px; height: 48px; border-radius: 50%; background: ${theme.primary}15; display: flex; align-items: center; justify-content: center; color: ${theme.primary}; border: 1px solid ${theme.primary}30; flex-shrink: 0; overflow: hidden;">
-                        ${s.icon}
-                    </div>
-                    <div id="espace-vision-container" data-vision="${theme.vision.replace(/"/g, '&quot;')}" style="flex-grow: 1; z-index: 2;">
-                        <h4 style="margin: 0 0 0.25rem 0; font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
-                            Vision & Mission — Commission ${s.name}
-                            <span id="vision-edit-badge" style="display: none; font-size: 0.7rem; color: ${theme.primary}; font-weight: normal; text-transform: none; background: ${theme.primary}15; padding: 0.1rem 0.4rem; border-radius: 4px; cursor: pointer; transition: opacity 0.2s;" onclick="editEspaceVision('${s.name}')">✏️ Modifier</span>
-                        </h4>
-                        <p id="espace-vision-text" style="margin: 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.75); line-height: 1.5; font-style: italic; transition: color 0.2s;" onclick="if(window.currentChatPermissions && window.currentChatPermissions.canPin) editEspaceVision('${s.name}')" onmouseover="if(window.currentChatPermissions && window.currentChatPermissions.canPin) { this.style.color='#fff'; this.style.cursor='pointer'; }" onmouseout="this.style.color='rgba(255, 255, 255, 0.75)'" title="Cliquez pour modifier la vision (leaders et modérateurs)">
-                            "${theme.vision}"
-                        </p>
+                    <div class="wa-vbody">
+                        <div class="wa-vbody-inner">
+                            <div id="espace-vision-container" data-vision="${theme.vision.replace(/"/g, '&quot;')}" style="flex-grow:1;z-index:2;">
+                                <p id="espace-vision-text" style="margin:0;font-size:.82rem;color:rgba(255,255,255,.65);line-height:1.55;font-style:italic;transition:color .2s;cursor:default;" onclick="if(window.currentChatPermissions&&window.currentChatPermissions.canPin)editEspaceVision('${s.name}')" onmouseover="if(window.currentChatPermissions&&window.currentChatPermissions.canPin){this.style.color='#fff';this.style.cursor='pointer';}" onmouseout="this.style.color='rgba(255,255,255,.65)'" title="Cliquez pour modifier la vision">&ldquo;${theme.vision}&rdquo;</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Grille principale de la chatroom -->
-                <div class="chat-layout-grid" style="display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; height: 600px; animation: fadeIn 0.5s ease; max-width: 100%;">
-                    
-                    <!-- Panneau de Chat -->
-                    <div class="chat-main-panel" style="display: flex; flex-direction: column; background: rgba(14, 14, 10, 0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); position: relative;">
-                        <!-- En-tête -->
-                        <div style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 0.6rem;">
-                                <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e;"></span>
-                                <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #fff;">Discussion Générale</h3>
+                <!-- WhatsApp Layout -->
+                <div class="wa-layout">
+
+                    <!-- Sidebar Membres -->
+                    <div class="wa-sb">
+                        <div class="wa-sbh">
+                            <span class="wa-sbtitle">🙏 Membres</span>
+                            <span id="wa-members-count" class="wa-sbcount">…</span>
+                        </div>
+                        <div class="wa-sbsearch">
+                            <input type="text" id="wa-member-search" placeholder="Rechercher un membre…" oninput="filterWaMembers(this.value)">
+                        </div>
+                        <div class="wa-mblist" id="chat-members-container">
+                            <div style="text-align:center;color:rgba(255,255,255,.3);font-size:.8rem;padding:2rem 0;">Chargement…</div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Principal -->
+                    <div class="wa-chat">
+                        <!-- Header -->
+                        <div class="wa-chdr">
+                            <div class="wa-dot"></div>
+                            <div>
+                                <div class="wa-cname">Discussion Générale</div>
+                                <div class="wa-csub">Commission ${s.name}</div>
                             </div>
                         </div>
 
-                        <!-- Pinned Messages Banner -->
-                        <div id="chat-pinned-container" style="display: none; background: rgba(255, 255, 255, 0.02); border-bottom: 1.5px solid ${theme.primary}50; padding: 0.8rem 1.25rem; max-height: 120px; overflow-y: auto; animation: slideDown 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; color: ${theme.primary}; font-weight: 800; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;">
-                                <span style="position: relative; display: inline-flex; height: 8px; width: 8px;">
-                                    <span style="position: absolute; display: inline-flex; height: 8px; width: 8px; border-radius: 50%; background-color: ${theme.primary}; opacity: 0.75; animation: pulse 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>
-                                    <span style="position: relative; display: inline-flex; border-radius: 50%; height: 8px; width: 8px; background-color: ${theme.primary};"></span>
-                                </span>
-                                📌 Message Épinglé / Annonce
-                            </div>
-                            <div id="chat-pinned-messages-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                <!-- Annonces list -->
+                        <!-- Pinned Messages -->
+                        <div id="chat-pinned-container"></div>
+
+                        <!-- Messages -->
+                        <div class="wa-msgs" id="chat-messages-container">
+                            <div class="wa-empty">
+                                <div style="font-size:2.5rem;opacity:.5;">💬</div>
+                                <div>Chargement de la discussion…</div>
                             </div>
                         </div>
 
-                        <!-- Liste de Messages -->
-                        <div id="chat-messages-container" style="flex-grow: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; background: radial-gradient(circle at top right, ${theme.primary}05 0%, transparent 70%);">
-                            <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="sr-only">Chargement de la discussion...</span>
+                        <!-- Input Bar -->
+                        <form id="chat-input-form" onsubmit="sendChatMessage(event,'${s.name}')" class="wa-ibar">
+                            <!-- Emoji panel -->
+                            <div id="wa-emoji-panel">${['😊','😂','🙏','❤️','🔥','👏','🎉','✨','💪','🤝','😇','🎶','📖','✝️','🕊️','🌟','💡','👑','🙌','💬','😁','🤗','😍','🥳','🎁','🌈','⭐','💎'].map(e=>`<button type="button" class="wa-epbtn" onclick="insertEmoji('${e}')">${e}</button>`).join('')}</div>
+                            <div class="wa-irow">
+                                <button type="button" class="wa-ibtn" onclick="toggleWaEmojiPanel()" title="Émojis">😊</button>
+                                <input type="file" id="chat-file-input" style="display:none;" onchange="handleChatFileSelected('${s.name}')" accept=".png,.jpg,.jpeg,.gif,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.txt">
+                                <button type="button" class="wa-ibtn" onclick="triggerChatFileUpload()" title="Partager un fichier">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                </button>
+                                <div class="wa-msgbox">
+                                    <textarea id="chat-message-input" class="wa-msgta" placeholder="Écrire un message…" autocomplete="off" rows="1"
+                                        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();document.getElementById('chat-input-form').requestSubmit();}"
+                                        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';"></textarea>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Pied de page Input -->
-                        <form id="chat-input-form" onsubmit="sendChatMessage(event, '${s.name}')" style="background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255,255,255,0.06); padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
-                                <!-- Attachment Button -->
-                                <button type="button" onclick="triggerChatFileUpload()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='rgba(255,255,255,0.7)';" title="Partager une photo, PowerPoint ou autre fichier">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-                                </button>
-                                <input type="file" id="chat-file-input" style="display: none;" onchange="handleChatFileSelected('${s.name}')" accept=".png,.jpg,.jpeg,.gif,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.txt">
-
-                                <input type="text" id="chat-message-input" placeholder="Écrire un message pour la commission ${s.name}..." autocomplete="off" required
-                                       style="flex-grow: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.75rem 1rem; color: #fff; font-size: 0.88rem; outline: none; transition: border-color 0.3s;"
-                                       onfocus="this.style.borderColor='${theme.primary}'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
-                                <button type="submit" style="background: ${theme.primary}; border: none; border-radius: 12px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: transform 0.2s;"
-                                        onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transform: rotate(45deg);"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                <button type="submit" class="wa-sendbtn" title="Envoyer">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                                 </button>
                             </div>
-                            
-                            <!-- Uploading status -->
-                            <div id="chat-upload-status" style="display: none; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: ${theme.primary}; padding-left: 0.25rem;">
-                            </div>
-
-                            <div id="chat-pin-checkbox-container" style="display: none; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-left: 0.25rem;">
-                                <input type="checkbox" id="chat-pin-checkbox" style="accent-color: ${theme.primary}; cursor: pointer;">
-                                <label for="chat-pin-checkbox" style="cursor: pointer; display: flex; align-items: center; gap: 0.2rem;">📢 Épingler ce message en en-tête (Annonce)</label>
+                            <div id="chat-upload-status" style="display:none;"></div>
+                            <div id="chat-pin-checkbox-container" style="display:none;" class="wa-extras">
+                                <input type="checkbox" id="chat-pin-checkbox" style="accent-color:${theme.primary};cursor:pointer;">
+                                <label for="chat-pin-checkbox" style="cursor:pointer;display:flex;align-items:center;gap:.25rem;">📢 Épingler en annonce</label>
                             </div>
                         </form>
                     </div>
-
-                    <!-- Panneau de l'équipe (Membres) -->
-                    <div style="display: flex; flex-direction: column; background: rgba(14, 14, 10, 0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-                        <div style="background: rgba(255,255,255,0.01); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 1rem 1.25rem;">
-                            <h3 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em;">Saints de l'Équipe</h3>
-                        </div>
-                        <div id="chat-members-container" style="flex-grow: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
-                            <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 2rem 0;">Chargement de l'équipe...</div>
-                        </div>
-                    </div>
                 </div>
             `;
+
+            // === Helpers WhatsApp UI ===
+            window.toggleWaVision = function(hdr) {
+                const body = hdr.closest('.wa-vision').querySelector('.wa-vbody');
+                const chevron = hdr.querySelector('.wa-vchev');
+                if (!body) return;
+                body.classList.toggle('collapsed');
+                if (chevron) chevron.classList.toggle('open');
+            };
+            window.toggleWaEmojiPanel = function() {
+                const panel = document.getElementById('wa-emoji-panel');
+                if (!panel) return;
+                panel.classList.toggle('open');
+            };
+            window.insertEmoji = function(emoji) {
+                const ta = document.getElementById('chat-message-input');
+                if (!ta) return;
+                const ss = ta.selectionStart, ee = ta.selectionEnd;
+                ta.value = ta.value.substring(0, ss) + emoji + ta.value.substring(ee);
+                ta.focus();
+                ta.setSelectionRange(ss + emoji.length, ss + emoji.length);
+                const panel = document.getElementById('wa-emoji-panel');
+                if (panel) panel.classList.remove('open');
+            };
+            window.filterWaMembers = function(q) {
+                const rows = document.querySelectorAll('#chat-members-container .wa-mbrow');
+                const ql = q.toLowerCase().trim();
+                rows.forEach(row => { row.style.display = (!ql || (row.dataset.name||'').toLowerCase().includes(ql)) ? '' : 'none'; });
+            };
+            // Close emoji panel on outside click
+            if (!window._waEmojiCloseAttached) {
+                window._waEmojiCloseAttached = true;
+                document.addEventListener('click', function(e) {
+                    const panel = document.getElementById('wa-emoji-panel');
+                    if (!panel || !panel.classList.contains('open')) return;
+                    if (!panel.contains(e.target) && !e.target.closest('.wa-ibtn')) {
+                        panel.classList.remove('open');
+                    }
+                }, true);
+            }
+
 
             // Charger les messages, les membres et les annonces
             loadChatMessages(s.name);
@@ -5440,159 +5566,147 @@
                 .then(res => res.json())
                 .then(messages => {
                     if (messages.error) {
-                        container.innerHTML = `<p style="color: red; text-align: center; padding: 2rem;">${messages.error}</p>`;
+                        container.innerHTML = `<div class="wa-empty"><div style="font-size:2rem;">⚠️</div><div style="color:#ef4444;">${messages.error}</div></div>`;
                         if (activeChatInterval) clearInterval(activeChatInterval);
                         return;
                     }
 
                     if (messages.length === 0) {
                         if (!isSilent) {
-                            container.innerHTML = `
-                                <div id="chat-empty-state" style="text-align: center; color: rgba(255,255,255,0.3); font-size: 0.85rem; padding: 4rem 1rem;">
-                                    🕊️ Aucun message pour l'instant. Soyez le premier à envoyer une parole d'édification !
-                                </div>
-                            `;
+                            container.innerHTML = `<div class="wa-empty"><div style="font-size:2.5rem;">🕊️</div><div>Aucun message pour l'instant.<br><span style="font-size:.8rem;opacity:.6;">Soyez le premier à envoyer une parole d'édification !</span></div></div>`;
                         }
                         return;
                     }
 
-                    const emptyState = document.getElementById('chat-empty-state');
-                    if (emptyState) {
-                        emptyState.remove();
-                    }
+                    // Clear loading/empty state on first load
+                    if (!isSilent) { container.innerHTML = ''; }
+                    const emptyEl = container.querySelector('.wa-empty');
+                    if (emptyEl) emptyEl.remove();
 
                     const currentUserEmail = "{{ session.get('user_email', '') }}".toLowerCase().trim();
                     const currentSpace = globalEspaces.find(e => e.name === espaceName);
-                    
-                    let html = '';
-                    
-                    // Helper de formatage de taille
-                    function formatBytes(bytes, decimals = 2) {
-                        if (bytes === 0) return '0 Octet';
-                        const k = 1024;
-                        const dm = decimals < 0 ? 0 : decimals;
-                        const sizes = ['Octets', 'Ko', 'Mo', 'Go'];
-                        const i = Math.floor(Math.log(bytes) / Math.log(k));
-                        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+                    const primaryColor = currentSpace ? currentSpace.theme.primary : '#e8820c';
+
+                    function fmtBytes(bytes) {
+                        if (!bytes || bytes === 0) return '0 o';
+                        const k = 1024, sz = ['o','Ko','Mo','Go'], i = Math.floor(Math.log(bytes)/Math.log(k));
+                        return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + sz[i];
                     }
+
+                    function getFileHtml(msg) {
+                        if (!msg.file_url) return '';
+                        const ext = (msg.file_type||'').toLowerCase();
+                        if (['png','jpg','jpeg','gif'].includes(ext)) {
+                            return `<div class="wa-imgat" onclick="openImageLightbox('${msg.file_url}')"><img src="${msg.file_url}" loading="lazy" alt="${msg.file_name||'image'}"></div>`;
+                        }
+                        let ic='#94a3b8';
+                        if(['ppt','pptx'].includes(ext)) ic='#ea580c';
+                        else if(ext==='pdf') ic='#ef4444';
+                        else if(['doc','docx'].includes(ext)) ic='#3b82f6';
+                        else if(['xls','xlsx'].includes(ext)) ic='#10b981';
+                        const ico=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+                        return `<div class="wa-fileat">
+                            <div class="wa-ficon" style="background:${ic}20;color:${ic};">${ico}</div>
+                            <div class="wa-finfo"><div class="wa-fname" title="${msg.file_name}">${msg.file_name}</div><div class="wa-fsize">${fmtBytes(msg.file_size)}</div></div>
+                            <a href="${msg.file_url}" download="${msg.file_name}" class="wa-fdl" title="Télécharger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+                        </div>`;
+                    }
+
+                    function getRoleBadge(role) {
+                        if (!role) return '';
+                        let st='background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);';
+                        if(role==='Pasteur') st='background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.25);';
+                        else if(role.startsWith('Responsable')) st='background:rgba(236,72,153,.15);color:#f472b6;border:1px solid rgba(236,72,153,.25);';
+                        else if(role.startsWith('Leader')) st='background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.25);';
+                        return `<span class="wa-badge" style="${st}">${role}</span>`;
+                    }
+
+                    function getAvColor(name) {
+                        const cols=['#e8820c','#8b5cf6','#ec4899','#3b82f6','#10b981','#f59e0b','#06b6d4','#ef4444'];
+                        let h=0; for(const c of (name||'?')) h=(h*31+c.charCodeAt(0))%cols.length;
+                        return cols[Math.abs(h)%cols.length];
+                    }
+
+                    // Determine grouping context from existing DOM (for silent appends)
+                    let prevEmail = null, prevDate = null;
+                    if (isSilent) {
+                        const prevBubbles = container.querySelectorAll('.wa-bwrap');
+                        const last = prevBubbles[prevBubbles.length - 1];
+                        if (last) { prevEmail = last.dataset.email||null; prevDate = last.dataset.date||null; }
+                    }
+
+                    let html = '';
+                    const today = new Date().toISOString().slice(0,10);
+                    const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
 
                     messages.forEach(msg => {
-                        if (msg.id > lastChatMessageId) {
-                            lastChatMessageId = msg.id;
-                        }
+                        if (msg.id > lastChatMessageId) lastChatMessageId = msg.id;
 
                         const isMe = msg.user_email.toLowerCase().trim() === currentUserEmail;
-                        const timeStr = msg.created_at ? msg.created_at.substring(11, 16) : '';
+                        const timeStr = msg.created_at ? msg.created_at.substring(11,16) : '';
+                        const dateStr = msg.created_at ? msg.created_at.substring(0,10) : '';
 
-                        // Rangs colorés
-                        let badgeStyle = "background: rgba(232, 130, 12, 0.12); border: 1px solid rgba(232, 130, 12, 0.25); color: #e8820c;";
-                        if (msg.user_role === 'Pasteur') {
-                            badgeStyle = "background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: #a78bfa;";
-                        } else if (msg.user_role && msg.user_role.startsWith('Responsable')) {
-                            badgeStyle = "background: rgba(236, 72, 153, 0.15); border: 1px solid rgba(236, 72, 153, 0.3); color: #f472b6;";
-                        } else if (msg.user_role && msg.user_role.startsWith('Leader')) {
-                            badgeStyle = "background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa;";
+                        // Date separator
+                        if (dateStr && dateStr !== prevDate) {
+                            let lbl = new Date(dateStr+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+                            if(dateStr===today) lbl="Aujourd'hui";
+                            else if(dateStr===yesterday) lbl='Hier';
+                            html += `<div class="wa-datesep"><span>${lbl}</span></div>`;
+                            prevEmail = null;
                         }
 
-                        // Code HTML de la pièce jointe
-                        let fileHtml = '';
-                        if (msg.file_url) {
-                            const ext = msg.file_type || '';
-                            const isImg = ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
-                            
-                            if (isImg) {
-                                fileHtml = `
-                                    <div style="margin-top: 0.5rem; max-width: 280px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="openImageLightbox('${msg.file_url}')">
-                                        <img src="${msg.file_url}" style="width: 100%; max-height: 200px; object-fit: cover; transition: transform 0.3s; display: block;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='none'">
-                                    </div>
-                                `;
-                            } else {
-                                let icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`;
-                                let iconColor = '#94a3b8';
-                                
-                                if (['ppt', 'pptx'].includes(ext)) {
-                                    icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`;
-                                    iconColor = '#ea580c';
-                                } else if (ext === 'pdf') {
-                                    icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>`;
-                                    iconColor = '#ef4444';
-                                } else if (['doc', 'docx'].includes(ext)) {
-                                    icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`;
-                                    iconColor = '#3b82f6';
-                                } else if (['xls', 'xlsx'].includes(ext)) {
-                                    icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`;
-                                    iconColor = '#10b981';
-                                }
-                                
-                                const sizeStr = formatBytes(msg.file_size || 0);
-                                fileHtml = `
-                                    <div style="margin-top: 0.5rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 0.65rem 0.75rem; display: flex; align-items: center; gap: 0.75rem; width: 280px; max-width: 100%;">
-                                        <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: ${iconColor}; flex-shrink: 0;">
-                                            ${icon}
-                                        </div>
-                                        <div style="flex-grow: 1; min-width: 0;">
-                                            <div style="font-size: 0.78rem; font-weight: 700; color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${msg.file_name}">${msg.file_name}</div>
-                                            <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4); margin-top: 0.1rem;">${sizeStr}</div>
-                                        </div>
-                                        <a href="${msg.file_url}" download="${msg.file_name}" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; flex-shrink: 0; transition: all 0.2s;" onmouseover="this.style.background='${currentSpace.theme.primary}20'; this.style.borderColor='${currentSpace.theme.primary}';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.1)';">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                        </a>
-                                    </div>
-                                `;
-                            }
-                        }
-
-                        const showDeleteBtn = isMe || (window.currentChatPermissions && window.currentChatPermissions.canPin);
-                        const deleteBtnHtml = showDeleteBtn 
-                            ? `<button onclick="deleteChatMessage('${espaceName}', ${msg.id})" style="background: none; border: none; color: #ef4444; font-size: 0.72rem; cursor: pointer; padding: 0 0.2rem; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" title="Supprimer définitivement le message">Supprimer</button>` 
-                            : '';
+                        const sameAuthor = prevEmail === msg.user_email;
+                        const isFirst = !sameAuthor;
+                        const canDel = isMe || (window.currentChatPermissions && window.currentChatPermissions.canPin);
+                        const delBtn = canDel ? `<button class="wa-delbtn" onclick="deleteChatMessage('${espaceName}',${msg.id})" title="Supprimer">✕</button>` : '';
+                        const fileHtml = getFileHtml(msg);
+                        const avColor = getAvColor(msg.user_name||'?');
+                        const initials = (msg.user_name||'?').substring(0,2).toUpperCase();
 
                         if (isMe) {
-                            html += `
-                                <div class="chat-bubble-wrapper" style="display: flex; flex-direction: column; align-items: flex-end; width: 100%; animation: fadeIn 0.3s ease;">
-                                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem;">
-                                        ${deleteBtnHtml}
-                                        ${deleteBtnHtml ? `<span style="color: rgba(255,255,255,0.15); font-size: 0.7rem; user-select: none;">•</span>` : ''}
-                                        <span style="font-size: 0.72rem; color: ${currentSpace.theme.primary}; font-weight: 700; background: rgba(255,255,255,0.06); padding: 0.1rem 0.4rem; border-radius: 100px;">Vous</span>
-                                        <span style="font-size: 0.72rem; color: rgba(255,255,255,0.4);">${timeStr}</span>
-                                    </div>
-                                    <div style="background: ${currentSpace.theme.primary}25; border: 1px solid ${currentSpace.theme.primary}40; border-radius: 18px 18px 2px 18px; padding: 0.75rem 1rem; max-width: 75%; word-break: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                                        ${msg.message_text ? `<p style="margin: 0; font-size: 0.88rem; color: #fff; line-height: 1.4;">${msg.message_text}</p>` : ''}
-                                        ${fileHtml}
-                                    </div>
-                                </div>
-                            `;
+                            html += `<div class="wa-bwrap wa-bout${isFirst?' gfirst':''}" data-email="${msg.user_email}" data-date="${dateStr}">`;
+                            if (isFirst) {
+                                html += `<div class="wa-bmeta" style="justify-content:flex-end;">${delBtn}<span style="font-size:.72rem;color:${primaryColor};font-weight:700;background:rgba(255,255,255,.06);padding:.1rem .45rem;border-radius:100px;">Vous</span></div>`;
+                            } else if (canDel) {
+                                html += `<div style="display:flex;justify-content:flex-end;padding:0 .4rem .05rem;">${delBtn}</div>`;
+                            }
+                            html += `<div class="wa-bubble">${msg.message_text?`<p>${msg.message_text}</p>`:''}
+                                ${fileHtml}
+                                <div class="wa-bfooter"><span class="wa-btime">${timeStr}</span><span class="wa-tick">✓✓</span></div>
+                            </div></div>`;
                         } else {
-                            html += `
-                                <div class="chat-bubble-wrapper" style="display: flex; flex-direction: column; align-items: flex-start; width: 100%; animation: fadeIn 0.3s ease;">
-                                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem;">
-                                        <span style="font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.85);">${msg.user_name}</span>
-                                        <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 0.05rem 0.4rem; border-radius: 100px; ${badgeStyle}">${msg.user_role}</span>
-                                        <span style="font-size: 0.72rem; color: rgba(255,255,255,0.3);">${timeStr}</span>
-                                        ${deleteBtnHtml ? `<span style="color: rgba(255,255,255,0.15); font-size: 0.7rem; user-select: none;">•</span>` + deleteBtnHtml : ''}
-                                    </div>
-                                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px 18px 18px 2px; padding: 0.75rem 1rem; max-width: 75%; word-break: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                                        ${msg.message_text ? `<p style="margin: 0; font-size: 0.88rem; color: rgba(255,255,255,0.9); line-height: 1.4;">${msg.message_text}</p>` : ''}
-                                        ${fileHtml}
-                                    </div>
-                                </div>
-                            `;
+                            html += `<div class="wa-bwrap wa-bin${isFirst?' gfirst':''}" data-email="${msg.user_email}" data-date="${dateStr}">`;
+                            if (isFirst) {
+                                html += `<div class="wa-bmeta">
+                                    <div style="width:22px;height:22px;border-radius:50%;background:${avColor};display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#fff;flex-shrink:0;">${initials}</div>
+                                    <span style="font-size:.78rem;font-weight:800;color:rgba(255,255,255,.85);">${msg.user_name}</span>
+                                    ${getRoleBadge(msg.user_role)}${delBtn}
+                                </div>`;
+                            } else if (canDel) {
+                                html += `<div style="padding:0 .4rem .05rem;">${delBtn}</div>`;
+                            }
+                            html += `<div class="wa-bubble">${msg.message_text?`<p>${msg.message_text}</p>`:''}
+                                ${fileHtml}
+                                <div class="wa-bfooter"><span class="wa-btime">${timeStr}</span></div>
+                            </div></div>`;
                         }
+
+                        prevEmail = msg.user_email;
+                        prevDate = dateStr;
                     });
 
-                    if (!isSilent && container.querySelector('.spinner-border')) {
-                        container.innerHTML = '';
+                    if (!isSilent) {
+                        container.innerHTML = html;
+                    } else {
+                        container.insertAdjacentHTML('beforeend', html);
                     }
 
-                    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
-                    
-                    container.insertAdjacentHTML('beforeend', html);
-
-                    if (isNearBottom || !isSilent) {
-                        container.scrollTop = container.scrollHeight;
-                    }
+                    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+                    if (atBottom || !isSilent) container.scrollTop = container.scrollHeight;
                 });
         };
+
+
 
         window.sendChatMessage = function(event, espaceName) {
             event.preventDefault();
@@ -5604,6 +5718,9 @@
             if (!text) return;
 
             input.value = '';
+            input.style.height = 'auto';
+            const emojiPanel = document.getElementById('wa-emoji-panel');
+            if (emojiPanel) emojiPanel.classList.remove('open');
             
             const pinMessage = pinCheckbox && pinCheckbox.checked;
             if (pinCheckbox) pinCheckbox.checked = false;
@@ -5651,7 +5768,6 @@
             const container = document.getElementById('chat-members-container');
             if (!container) return;
 
-            // Chargement parallèle des membres, des modérateurs et des droits
             Promise.all([
                 fetch(`/api/espaces/${encodeURIComponent(espaceName)}/members`).then(res => res.json()),
                 fetch(`/api/espaces/${encodeURIComponent(espaceName)}/moderators`).then(res => res.json()),
@@ -5659,12 +5775,15 @@
             ])
             .then(([members, moderators, user_info]) => {
                 if (members.error) {
-                    container.innerHTML = `<div style="text-align: center; color: red; font-size: 0.8rem;">Erreur.</div>`;
+                    container.innerHTML = `<div style="text-align:center;color:rgba(255,0,0,.7);font-size:.8rem;padding:1rem;">Erreur de chargement.</div>`;
                     return;
                 }
 
+                const countEl = document.getElementById('wa-members-count');
+                if (countEl) countEl.textContent = members.length;
+
                 if (members.length === 0) {
-                    container.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; padding: 2rem 0;">Aucun membre.</div>`;
+                    container.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,.3);font-size:.8rem;padding:2rem 0;">Aucun membre.</div>`;
                     return;
                 }
 
@@ -5673,67 +5792,55 @@
                 const userRole = user_info.role_rang;
                 const isLeader = ['Pasteur', 'Responsable', 'Leader', 'Facilitateur'].includes(userRole);
                 const canNominate = is_admin || isLeader;
-
-                let html = '';
                 const currentSpace = globalEspaces.find(e => e.name === espaceName);
 
+                function getAvColor(name) {
+                    const cols=['#e8820c','#8b5cf6','#ec4899','#3b82f6','#10b981','#f59e0b','#06b6d4','#ef4444'];
+                    let h=0; for(const c of (name||'?')) h=(h*31+c.charCodeAt(0))%cols.length;
+                    return cols[Math.abs(h)%cols.length];
+                }
+
+                function getRoleBadge(role) {
+                    if (!role) return '';
+                    let st='background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);';
+                    if(role==='Pasteur') st='background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.25);';
+                    else if(role.startsWith('Responsable')) st='background:rgba(236,72,153,.15);color:#f472b6;border:1px solid rgba(236,72,153,.25);';
+                    else if(role.startsWith('Leader')) st='background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.25);';
+                    return `<div class="wa-rbd" style="${st}">${role}</div>`;
+                }
+
+                let html = '';
                 members.forEach(member => {
-                    const init = member.nom_complet.substring(0, 2).toUpperCase();
-                    const mEmail = member.email.toLowerCase().trim();
+                    const mEmail = (member.email||'').toLowerCase().trim();
                     const isMod = moderators.includes(mEmail);
-                    const isTargetLeader = ['Pasteur', 'Responsable', 'Leader', 'Facilitateur'].includes(member.role_rang);
-                    
-                    let badgeStyle = "background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);";
-                    if (member.role_rang === 'Pasteur') {
-                        badgeStyle = "background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.25); color: #a78bfa;";
-                    } else if (member.role_rang && member.role_rang.startsWith('Responsable')) {
-                        badgeStyle = "background: rgba(236, 72, 153, 0.12); border: 1px solid rgba(236, 72, 153, 0.25); color: #f472b6;";
-                    } else if (member.role_rang && member.role_rang.startsWith('Leader')) {
-                        badgeStyle = "background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.25); color: #60a5fa;";
-                    }
+                    const isTargetLeader = ['Pasteur','Responsable','Leader','Facilitateur'].includes(member.role_rang);
+                    const avColor = getAvColor(member.nom_complet||'?');
+                    const init = (member.nom_complet||'?').substring(0,2).toUpperCase();
 
-                    // Section actions modérateurs
-                    let modActionHtml = '';
+                    let modHtml = '';
                     if (isMod) {
-                        modActionHtml = `
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem; width: 100%;">
-                                <span style="font-size: 0.65rem; color: #fbbf24; font-weight: 700; background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.25); padding: 0.05rem 0.35rem; border-radius: 4px;">📌 Modérateur</span>
-                                ${canNominate && !isTargetLeader && mEmail !== currentUserEmail ? `<button onclick="revokeModerator('${espaceName}', '${member.email}')" style="background: none; border: none; color: #ef4444; font-size: 0.68rem; cursor: pointer; padding: 0; font-weight: 700;">Retirer</button>` : ''}
-                            </div>
-                        `;
-                    } else {
-                        if (canNominate && !isTargetLeader && mEmail !== currentUserEmail) {
-                            modActionHtml = `
-                                <div style="margin-top: 0.25rem; width: 100%;">
-                                    <button onclick="nominateModerator('${espaceName}', '${member.email}')" style="background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15); border-radius: 4px; color: rgba(255,255,255,0.6); font-size: 0.65rem; padding: 0.15rem 0.4rem; cursor: pointer; font-weight: 600; width: 100%; text-align: center; transition: all 0.2s;" onmouseover="this.style.borderColor='${currentSpace.theme.primary}'; this.style.color='${currentSpace.theme.primary}'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'; this.style.color='rgba(255,255,255,0.6)';">☆ Nommer Modérateur</button>
-                                </div>
-                            `;
-                        }
+                        const revokeBtn = (canNominate && !isTargetLeader && mEmail !== currentUserEmail)
+                            ? `<button class="wa-modrev" onclick="revokeModerator('${espaceName}','${member.email}')" title="Retirer">×</button>`
+                            : '';
+                        modHtml = `<div class="wa-modbadge">🛡️ Modérateur${revokeBtn}</div>`;
+                    } else if (canNominate && !isTargetLeader && mEmail !== currentUserEmail) {
+                        modHtml = `<button class="wa-modact" onclick="nominateModerator('${espaceName}','${member.email}')">☆ Nommer Modérateur</button>`;
                     }
 
-                    html += `
-                        <div style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; flex-direction: column; width: 100%;">
-                            <div style="display: flex; align-items: center; gap: 0.6rem; width: 100%;">
-                                <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, ${currentSpace.theme.primary}20 0%, rgba(27,26,20,0.8) 100%); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #fff; border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0;">
-                                    ${init}
-                                </div>
-                                <div style="overflow: hidden; flex-grow: 1;">
-                                    <div style="font-size: 0.82rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${member.nom_complet}</div>
-                                    <div style="display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 0.05rem 0.3rem; border-radius: 4px; margin-top: 0.1rem; ${badgeStyle}">
-                                        ${member.role_rang}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="width: 100%;">
-                                ${modActionHtml}
-                            </div>
+                    html += `<div class="wa-mbrow" data-name="${(member.nom_complet||'').toLowerCase()}">
+                        <div class="wa-av" style="background:${avColor};">${init}</div>
+                        <div class="wa-mbi">
+                            <div class="wa-mbn" title="${member.nom_complet}">${member.nom_complet}</div>
+                            ${getRoleBadge(member.role_rang)}
+                            ${modHtml}
                         </div>
-                    `;
+                    </div>`;
                 });
 
                 container.innerHTML = html;
             });
         };
+
 
         window.nominateModerator = function(espaceName, email) {
             if (!confirm(`Voulez-vous désigner ${email} comme modérateur pour l'espace ${espaceName} ? Il aura la capacité d'épingler et de retirer des annonces.`)) return;
@@ -5777,60 +5884,46 @@
 
         window.loadPinnedMessages = function(espaceName) {
             const container = document.getElementById('chat-pinned-container');
-            const list = document.getElementById('chat-pinned-messages-list');
-            if (!container || !list) return;
+            if (!container) return;
 
             fetch(`/api/espaces/${encodeURIComponent(espaceName)}/pinned`)
                 .then(res => res.json())
                 .then(pinnedList => {
                     if (pinnedList.length === 0) {
                         container.style.display = 'none';
+                        container.innerHTML = '';
                         return;
                     }
 
-                    container.style.display = 'block';
-                    
-                    // Fetch moderators to check delete permissions
-                    fetch(`/api/espaces/${encodeURIComponent(espaceName)}/moderators`)
-                        .then(res => res.json())
-                        .then(mods => {
-                            fetch('/api/user/commissions')
-                                .then(res => res.json())
-                                .then(user_info => {
-                                    const currentUserEmail = "{{ session.get('user_email', '') }}".toLowerCase().trim();
-                                    const is_admin = {% if session.get('admin_logged_in') %}true{% else %}false{% endif %} || (currentUserEmail === 'yann.noukaze@ministereimpact.org');
-                                    const userRole = user_info.role_rang;
-                                    const isLeader = ['Pasteur', 'Responsable', 'Leader', 'Facilitateur'].includes(userRole);
-                                    const isMod = mods.includes(currentUserEmail);
-                                    const canDelete = is_admin || isLeader || isMod;
+                    Promise.all([
+                        fetch(`/api/espaces/${encodeURIComponent(espaceName)}/moderators`).then(r=>r.json()),
+                        fetch('/api/user/commissions').then(r=>r.json())
+                    ])
+                    .then(([mods, user_info]) => {
+                        const currentUserEmail = "{{ session.get('user_email', '') }}".toLowerCase().trim();
+                        const is_admin = {% if session.get('admin_logged_in') %}true{% else %}false{% endif %} || (currentUserEmail === 'yann.noukaze@ministereimpact.org');
+                        const isLeader = ['Pasteur','Responsable','Leader','Facilitateur'].includes(user_info.role_rang);
+                        const isMod = mods.includes(currentUserEmail);
+                        const canDel = is_admin || isLeader || isMod;
 
-                                    let html = '';
-                                    const currentSpace = globalEspaces.find(e => e.name === espaceName);
-                                    
-                                    pinnedList.forEach(msg => {
-                                        const deleteBtn = canDelete 
-                                            ? `<button onclick="deletePinnedMessage('${espaceName}', ${msg.id})" style="background: none; border: none; color: #ef4444; font-size: 0.95rem; cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center; opacity: 0.7; hover:opacity: 1;" title="Retirer l'annonce">✕</button>`
-                                            : '';
-                                            
-                                        html += `
-                                            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; background: rgba(255,255,255,0.02); padding: 0.5rem 0.75rem; border-radius: 10px; border-left: 3px solid ${currentSpace.theme.primary};">
-                                                <div style="flex: 1;">
-                                                    <div style="font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-bottom: 0.15rem; display: flex; align-items: center; gap: 0.4rem;">
-                                                        <strong style="color: rgba(255,255,255,0.85);">${msg.user_name}</strong>
-                                                        <span style="background: ${currentSpace.theme.primary}20; color: ${currentSpace.theme.primary}; padding: 0.05rem 0.30rem; border-radius: 4px; font-weight: 700; font-size: 0.65rem;">${msg.user_role}</span>
-                                                    </div>
-                                                    <p style="margin: 0; font-size: 0.85rem; color: #fff; line-height: 1.4; white-space: pre-line;">${msg.message_text}</p>
-                                                </div>
-                                                ${deleteBtn}
-                                            </div>
-                                        `;
-                                    });
+                        let html = pinnedList.map((msg, idx) => {
+                            const delBtn = canDel ? `<button class="wa-pin-del" onclick="deletePinnedMessage('${espaceName}',${msg.id})" title="Retirer">✕</button>` : '';
+                            return `<div class="wa-pin-inner"${idx > 0 ? ' style="margin-top:.5rem;"' : ''}>
+                                <div class="wa-pin-bar"></div>
+                                <div class="wa-pin-body">
+                                    <div class="wa-pin-lbl">📌 Annonce${pinnedList.length > 1 ? ` ${idx+1}/${pinnedList.length}` : ''}</div>
+                                    <div class="wa-pin-txt" title="${msg.message_text}">${msg.message_text}</div>
+                                </div>
+                                ${delBtn}
+                            </div>`;
+                        }).join('');
 
-                                    list.innerHTML = html;
-                                });
-                        });
+                        container.style.display = 'block';
+                        container.innerHTML = html;
+                    });
                 });
         };
+
 
         window.deletePinnedMessage = function(espaceName, pinnedId) {
             if (!confirm("Voulez-vous détacher ce message de l'en-tête de la discussion ?")) return;
