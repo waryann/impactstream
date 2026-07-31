@@ -5933,6 +5933,7 @@
                         if (container.style.display !== 'none') {
                             container.style.display = 'none';
                             container.innerHTML = '';
+                            container.dataset.lastHtml = '';
                         }
                         return;
                     }
@@ -5960,9 +5961,10 @@
                             </div>`;
                         }).join('');
 
-                        if (container.innerHTML !== html) {
+                        if (container.dataset.lastHtml !== html) {
                             container.style.display = 'block';
                             container.innerHTML = html;
+                            container.dataset.lastHtml = html;
                         }
                     });
                 });
