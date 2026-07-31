@@ -5250,6 +5250,16 @@
                 .chat-bubble-wrapper {
                     margin-bottom: 0.75rem;
                 }
+                @media (max-width: 768px) {
+                    .chat-layout-grid {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        height: auto !important;
+                    }
+                    .chat-main-panel {
+                        min-height: 500px;
+                    }
+                }
                 </style>
 
                 <!-- Bouton Retour -->
@@ -5281,10 +5291,10 @@
                 </div>
 
                 <!-- Grille principale de la chatroom -->
-                <div style="display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; height: 600px; animation: fadeIn 0.5s ease; max-width: 100%;">
+                <div class="chat-layout-grid" style="display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; height: 600px; animation: fadeIn 0.5s ease; max-width: 100%;">
                     
                     <!-- Panneau de Chat -->
-                    <div style="display: flex; flex-direction: column; background: rgba(14, 14, 10, 0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); position: relative;">
+                    <div class="chat-main-panel" style="display: flex; flex-direction: column; background: rgba(14, 14, 10, 0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); position: relative;">
                         <!-- En-tête -->
                         <div style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 0.6rem;">
