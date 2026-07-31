@@ -5646,6 +5646,7 @@
                         if(role==='Pasteur') st='background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.25);';
                         else if(role.startsWith('Responsable')) st='background:rgba(236,72,153,.15);color:#f472b6;border:1px solid rgba(236,72,153,.25);';
                         else if(role.startsWith('Leader')) st='background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.25);';
+                        else if(role==='Modérateur') st='background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.25);';
                         return `<span class="wa-badge" style="${st}">${role}</span>`;
                     }
 
@@ -5691,6 +5692,11 @@
                         const avColor = getAvColor(msg.user_name||'?');
                         const initials = (msg.user_name||'?').substring(0,2).toUpperCase();
 
+                        let roleForBadge = msg.user_role;
+                        if (msg.user_email && msg.user_email.toLowerCase().includes('yann.noukaze')) {
+                            roleForBadge = 'Modérateur';
+                        }
+
                         if (isMe) {
                             html += `<div class="wa-bwrap wa-bout${isFirst?' gfirst':''}" data-email="${msg.user_email}" data-date="${dateStr}">`;
                             if (isFirst) {
@@ -5708,7 +5714,7 @@
                                 html += `<div class="wa-bmeta">
                                     <div style="width:22px;height:22px;border-radius:50%;background:${avColor};display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#fff;flex-shrink:0;">${initials}</div>
                                     <span style="font-size:.78rem;font-weight:800;color:rgba(255,255,255,.85);">${msg.user_name}</span>
-                                    ${getRoleBadge(msg.user_role)}${delBtn}
+                                    ${getRoleBadge(roleForBadge)}${delBtn}
                                 </div>`;
                             } else if (canDel) {
                                 html += `<div style="padding:0 .4rem .05rem;">${delBtn}</div>`;
@@ -5725,7 +5731,7 @@
 
                     if (!isSilent) {
                         container.innerHTML = html;
-                    } else {
+                    } else if (html !== '') {
                         container.insertAdjacentHTML('beforeend', html);
                     }
 
@@ -5834,6 +5840,7 @@
                     if(role==='Pasteur') st='background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.25);';
                     else if(role.startsWith('Responsable')) st='background:rgba(236,72,153,.15);color:#f472b6;border:1px solid rgba(236,72,153,.25);';
                     else if(role.startsWith('Leader')) st='background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.25);';
+                    else if(role==='Modérateur') st='background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.25);';
                     return `<div class="wa-rbd" style="${st}">${role}</div>`;
                 }
 
@@ -5855,11 +5862,16 @@
                         modHtml = `<button class="wa-modact" onclick="nominateModerator('${espaceName}','${member.email}')">☆ Nommer Modérateur</button>`;
                     }
 
+                    let roleForBadge = member.role_rang;
+                    if (mEmail && mEmail.includes('yann.noukaze')) {
+                        roleForBadge = 'Modérateur';
+                    }
+
                     html += `<div class="wa-mbrow" data-name="${(member.nom_complet||'').toLowerCase()}">
                         <div class="wa-av" style="background:${avColor};">${init}</div>
                         <div class="wa-mbi">
                             <div class="wa-mbn" title="${member.nom_complet}">${member.nom_complet}</div>
-                            ${getRoleBadge(member.role_rang)}
+                            ${getRoleBadge(roleForBadge)}
                             ${modHtml}
                         </div>
                     </div>`;
@@ -5918,8 +5930,10 @@
                 .then(res => res.json())
                 .then(pinnedList => {
                     if (pinnedList.length === 0) {
-                        container.style.display = 'none';
-                        container.innerHTML = '';
+                        if (container.style.display !== 'none') {
+                            container.style.display = 'none';
+                            container.innerHTML = '';
+                        }
                         return;
                     }
 
@@ -5946,8 +5960,10 @@
                             </div>`;
                         }).join('');
 
-                        container.style.display = 'block';
-                        container.innerHTML = html;
+                        if (container.innerHTML !== html) {
+                            container.style.display = 'block';
+                            container.innerHTML = html;
+                        }
                     });
                 });
         };
