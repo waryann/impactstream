@@ -103,7 +103,7 @@ ALLOWED_IMAGE = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 ADMIN_CODE = 'Bungudi128'
 
 # Commissions autorisées
-COMMISSIONS_ENSEIGNEMENT = ['Intercession', 'Couples', 'HED', 'Johanna', 'Joseph', 'PDS', 'Culte', 'Nayoth', 'FGI', 'Enfants']
+COMMISSIONS_ENSEIGNEMENT = ['Intercession', 'Couples', 'HED', 'Johanna', 'Joseph', 'Nayoth', 'FGI', 'Animateur GC', 'EF', 'Protocole', 'Finance', 'Nettoyage', 'Restauration', 'Suivi', 'Évangélisation']
 COMMISSIONS_MUSIQUE = ['Adoration MP3', 'Adoration MP4', 'Nayoth', 'Chants PAB', 'Instrumentale']
 CATEGORIES = ['Enseignement', 'Musique', 'Podcast']
 
