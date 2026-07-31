@@ -5587,7 +5587,7 @@
             if (!container) return;
 
             let url = `/api/espaces/${encodeURIComponent(espaceName)}/messages`;
-            if (isSilent && lastChatMessageId > 0) {
+            if (lastChatMessageId > 0) {
                 url += `?since_id=${lastChatMessageId}`;
             }
 
@@ -5608,7 +5608,7 @@
                     }
 
                     // Clear loading/empty state on first load
-                    if (!isSilent) { container.innerHTML = ''; }
+                    if (lastChatMessageId === 0) { container.innerHTML = ''; }
                     const emptyEl = container.querySelector('.wa-empty');
                     if (emptyEl) emptyEl.remove();
 
@@ -5730,7 +5730,7 @@
                         prevDate = dateStr;
                     });
 
-                    if (!isSilent) {
+                    if (lastChatMessageId === 0 && !isSilent) {
                         container.innerHTML = html;
                     } else if (html !== '') {
                         container.insertAdjacentHTML('beforeend', html);
@@ -5934,7 +5934,8 @@
                         if (container.style.display !== 'none') {
                             container.style.display = 'none';
                             container.innerHTML = '';
-                            container.dataset.lastHtml = '';
+                            window._lastPinnedHtml = window._lastPinnedHtml || {};
+                            window._lastPinnedHtml[espaceName] = '';
                         }
                         return;
                     }
@@ -5962,10 +5963,11 @@
                             </div>`;
                         }).join('');
 
-                        if (container.dataset.lastHtml !== html) {
+                        window._lastPinnedHtml = window._lastPinnedHtml || {};
+                        if (window._lastPinnedHtml[espaceName] !== html) {
                             container.style.display = 'block';
                             container.innerHTML = html;
-                            container.dataset.lastHtml = html;
+                            window._lastPinnedHtml[espaceName] = html;
                         }
                     });
                 });
