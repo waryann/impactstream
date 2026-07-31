@@ -1502,8 +1502,8 @@
 </head>
 <body>
     <!-- ─── Splash Screen ─── -->
-    <div id="splash-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 99999; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.8s ease-in-out; overflow: hidden;">
-        <div class="splash-container" style="position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+    <div id="splash-screen" style="position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.8s ease-in-out; overflow: hidden;">
+        <div class="splash-container" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
             <!-- Animated WebP (Watermark-free, zero zoom, no browser autoplay block) -->
             <img id="splash-img" src="/static/images/intro.webp" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;">
 
