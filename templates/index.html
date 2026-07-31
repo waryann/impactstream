@@ -5353,8 +5353,24 @@
                 .wa-epbtn:hover{background:rgba(255,255,255,.08)}
 
                 @media(max-width:768px){
-                  .wa-layout{grid-template-columns:1fr!important;height:620px!important;max-height:620px!important}
-                  .wa-sb{display:none!important}
+                  .wa-layout{grid-template-columns:1fr!important;height:calc(100vh - 180px)!important;min-height:450px!important;max-height:none!important;border-radius:12px;position:relative;overflow:hidden;}
+                  .wa-sb{position:absolute;top:0;left:0;width:280px;height:100%;z-index:100;transform:translateX(-100%);transition:transform .3s cubic-bezier(0.4,0,0.2,1);box-shadow:4px 0 25px rgba(0,0,0,0.6);}
+                  .wa-sb.open{transform:translateX(0);}
+                  .wa-chat{position:relative;width:100%;}
+                  .wa-mob-overlay{display:block;position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:90;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+                  .wa-mob-overlay.open{opacity:1;pointer-events:auto;}
+                  .wa-chdr{padding:.6rem .8rem;}
+                  .wa-msgs{padding:.8rem .6rem;}
+                  .wa-bubble{max-width:88%;padding:.5rem .75rem;}
+                  .wa-ibar{padding:.5rem .6rem;}
+                  .wa-msgbox{padding:.4rem .8rem;}
+                  .wa-ibtn{width:34px;height:34px;}
+                  .wa-sendbtn{width:36px;height:36px;}
+                  .wa-vh{padding:.6rem .8rem;}
+                  .wa-vbody-inner{padding:.1rem .8rem .6rem 3.5rem;}
+                  .wa-vico{width:32px;height:32px;}
+                  .wa-vtitle-text{font-size:.85rem;}
+                  .wa-mob-membtn{display:flex!important;}
                 }
                 </style>
 
@@ -5388,6 +5404,7 @@
 
                 <!-- WhatsApp Layout -->
                 <div class="wa-layout">
+                    <div class="wa-mob-overlay" onclick="toggleWaSidebar()"></div>
 
                     <!-- Sidebar Membres -->
                     <div class="wa-sb">
@@ -5407,11 +5424,16 @@
                     <div class="wa-chat">
                         <!-- Header -->
                         <div class="wa-chdr">
-                            <div class="wa-dot"></div>
-                            <div>
-                                <div class="wa-cname">Discussion Générale</div>
-                                <div class="wa-csub">Commission ${s.name}</div>
+                            <div style="display:flex;align-items:center;gap:.85rem;flex:1;">
+                                <div class="wa-dot"></div>
+                                <div>
+                                    <div class="wa-cname">Discussion Générale</div>
+                                    <div class="wa-csub">Commission ${s.name}</div>
+                                </div>
                             </div>
+                            <button class="wa-mob-membtn" onclick="toggleWaSidebar()" style="display:none;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:50%;width:34px;height:34px;align-items:center;justify-content:center;color:#fff;cursor:pointer;flex-shrink:0;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </button>
                         </div>
 
                         <!-- Pinned Messages -->
@@ -5455,6 +5477,12 @@
             `;
 
             // === Helpers WhatsApp UI ===
+            window.toggleWaSidebar = function() {
+                const sb = document.querySelector('.wa-sb');
+                const overlay = document.querySelector('.wa-mob-overlay');
+                if (sb) sb.classList.toggle('open');
+                if (overlay) overlay.classList.toggle('open');
+            };
             window.toggleWaVision = function(hdr) {
                 const body = hdr.closest('.wa-vision').querySelector('.wa-vbody');
                 const chevron = hdr.querySelector('.wa-vchev');
