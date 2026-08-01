@@ -436,8 +436,21 @@ def get_db():
                 cur.execute("INSERT INTO settings (key, value) VALUES ('attendance_enabled', '0') ON CONFLICT (key) DO NOTHING")
                 cur.execute("INSERT INTO settings (key, value) VALUES ('attendance_target_hour', '09:00') ON CONFLICT (key) DO NOTHING")
 
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS attendance (
+                        id SERIAL PRIMARY KEY,
+                        user_email VARCHAR(255) NOT NULL,
+                        display_name VARCHAR(255) NOT NULL,
+                        login_at TIMESTAMP NOT NULL,
+                        is_late INTEGER DEFAULT 0,
+                        date_key VARCHAR(50) NOT NULL,
+                        UNIQUE(user_email, date_key)
+                    )
+                ''')
                 # Ajouter la colonne is_evicted à la table attendance si elle n'existe pas
-                cur.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS is_evicted INTEGER DEFAULT 0")
+                try:
+                    cur.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS is_evicted INTEGER DEFAULT 0")
+                except Exception: pass
                 # Auto-migration live_streams & webinaire_queue pour PostgreSQL
                 try:
                     cur.execute("ALTER TABLE live_streams ADD COLUMN IF NOT EXISTS type_diffusion VARCHAR(50) DEFAULT 'standard'")
