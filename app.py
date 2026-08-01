@@ -4304,6 +4304,11 @@ def serve_sw():
 # Lancement
 # ─────────────────────────────────────────────
 
+@app.errorhandler(500)
+def internal_server_error(e):
+    import traceback
+    return f"GLOBAL 500 ERROR CAUGHT:<br><pre>{traceback.format_exc()}</pre>", 500
+
 if __name__ == '__main__':
     init_db()
     print("\n🎬 ImpactStream — Ministère Apostolique Impact")
