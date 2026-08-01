@@ -467,11 +467,6 @@ def get_db():
                         UNIQUE(live_id, user_email)
                     )
                 ''')
-                # Index SQL haute performance (exécution sub-millisecondes)
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_status ON webinaire_queue(live_id, status)")
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_user ON webinaire_queue(live_id, user_email)")
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_cat_comm ON medias(categorie, commission)")
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_series ON medias(series_id)")
                 # Création table notes pour PostgreSQL
                 cur.execute('''
                     CREATE TABLE IF NOT EXISTS notes (
@@ -588,6 +583,17 @@ def get_db():
                     cur.execute("ALTER TABLE medias ADD COLUMN IF NOT EXISTS url_ppt VARCHAR(500)")
                 except Exception as e:
                     print(f"⚠️ Erreur auto-migration PostgreSQL colonne url_ppt: {e}")
+
+                # Index SQL haute performance (exécution sub-millisecondes)
+                try:
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_status ON webinaire_queue(live_id, status)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_webinaire_queue_live_user ON webinaire_queue(live_id, user_email)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_cat_comm ON medias(categorie, commission)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_medias_series ON medias(series_id)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date_key)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_attendance_user ON attendance(user_email)")
+                except Exception as e:
+                    print(f"⚠️ Erreur auto-migration PostgreSQL index: {e}")
 
                 # Nettoyage automatique des anciennes données de test au démarrage du serveur
                 try:
