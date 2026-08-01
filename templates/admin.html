@@ -1812,6 +1812,18 @@
                     </div>
                 </div>
 
+                <!-- File upload: Présentation PPT/PDF -->
+                <div class="form-group" id="ppt-upload-group" style="display: none;">
+                    <label class="form-label">Présentation / Diapositives (Format PDF uniquement)</label>
+                    <div class="file-upload" id="upload-ppt-zone">
+                        <input type="file" name="ppt_file" id="form-ppt-file" accept=".pdf">
+                        <div class="file-upload-icon">📄</div>
+                        <div class="file-upload-text">Glissez ou <strong>cliquez</strong> pour choisir un fichier PDF</div>
+                        <div class="file-upload-hint">⚠️ Pour la sécurité, exportez votre PowerPoint en PDF avant de l'uploader</div>
+                        <div class="file-name" id="ppt-file-name"></div>
+                    </div>
+                </div>
+
                 <!-- Banner vertical positioning slider -->
                 <div class="form-group" style="margin-top: 1.25rem; background: rgba(0,0,0,0.18); padding: 1.25rem; border-radius: 14px; border: 1px solid rgba(232, 130, 12, 0.15);">
                     <label class="form-label" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
@@ -2574,6 +2586,7 @@
             document.getElementById('btn-form-submit').textContent = 'Ajouter le média';
             document.getElementById('media-file-name').textContent = '';
             document.getElementById('thumb-file-name').textContent = '';
+            document.getElementById('ppt-file-name').textContent = '';
             
             // Prefill context hidden inputs
             document.getElementById('form-categorie').value = activeCategory;
@@ -2581,6 +2594,11 @@
 
             // Filter series dropdown options by active category
             filterSeriesDropdown(activeCategory);
+            if (activeCategory === 'Enseignement') {
+                document.getElementById('ppt-upload-group').style.display = 'block';
+            } else {
+                document.getElementById('ppt-upload-group').style.display = 'none';
+            }
             document.getElementById('form-series-id').value = '';
             toggleFormSeriesFields('');
 
@@ -2626,6 +2644,11 @@
 
                     // Filter series dropdown options by active category
                     filterSeriesDropdown(media.categorie);
+                    if (media.categorie === 'Enseignement') {
+                        document.getElementById('ppt-upload-group').style.display = 'block';
+                    } else {
+                        document.getElementById('ppt-upload-group').style.display = 'none';
+                    }
                     const sId = media.series_id || '';
                     document.getElementById('form-series-id').value = sId;
                     toggleFormSeriesFields(sId);
@@ -2655,6 +2678,8 @@
                     document.getElementById('form-paroles-keywords').value = media.paroles_keywords || '';
                     document.getElementById('thumb-file-name').textContent =
                         media.url_miniature ? '📎 Miniature actuelle : ' + media.url_miniature.split('/').pop() : '';
+                    document.getElementById('ppt-file-name').textContent =
+                        media.url_ppt ? '📎 PPT actuel : ' + media.url_ppt.split('/').pop() : '';
                     
                     const posVal = media.position_banniere !== undefined && media.position_banniere !== null ? media.position_banniere : 15;
                     document.getElementById('form-position-banniere').value = posVal;
@@ -2683,9 +2708,13 @@
             const name = this.files[0] ? this.files[0].name : '';
             document.getElementById('thumb-file-name').textContent = name ? `📎 ${name}` : '';
         });
+        document.getElementById('form-ppt-file').addEventListener('change', function() {
+            const name = this.files[0] ? this.files[0].name : '';
+            document.getElementById('ppt-file-name').textContent = name ? `📄 ${name}` : '';
+        });
 
         // ── Drag & drop ──
-        ['upload-media-zone', 'upload-thumb-zone'].forEach(id => {
+        ['upload-media-zone', 'upload-thumb-zone', 'upload-ppt-zone'].forEach(id => {
             const zone = document.getElementById(id);
             zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
             zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));

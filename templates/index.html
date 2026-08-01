@@ -8231,6 +8231,23 @@
                 </button>
             `;
 
+            let pptBtnHtml = '';
+            if (media.categorie === 'Enseignement') {
+                if (media.url_ppt) {
+                    pptBtnHtml = `
+                        <button onclick="openPPTModal('${media.url_ppt}')" class="btn-ppt-viewer" style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 0.6rem 1.1rem; border-radius: 100px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'; this.style.transform='none';">
+                            📄 Voir la présentation
+                        </button>
+                    `;
+                } else {
+                    pptBtnHtml = `
+                        <span style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.4); padding: 0.6rem 1.1rem; border-radius: 100px; font-size: 0.85rem; font-weight: 700; cursor: not-allowed;">
+                            📄 PPT indisponible
+                        </span>
+                    `;
+                }
+            }
+
             info.innerHTML = `
                 <h2>${media.titre}</h2>
                 <div class="modal-tags">
@@ -8241,6 +8258,7 @@
                 <p class="modal-description">${media.description}</p>
                 ${langSelectorHtml}
                 <div id="modal-actions-container" style="margin-top: 1.5rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                    ${pptBtnHtml}
                     ${downloadBtnHtml}
                     ${playlistBtnHtml}
                     ${shuffleBtnHtml}
@@ -11721,6 +11739,122 @@
                 }
             })
             .catch(console.error);
+        };
+    </script>
+    <!-- PPT Viewer Modal -->
+    <div id="ppt-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 100000; background: rgba(0, 0, 0, 0.95); position: fixed; inset: 0; flex-direction: column;">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #111;">
+            <h3 style="color: #fff; margin: 0; font-size: 1.2rem;">Présentation</h3>
+            <button onclick="closePPTModal()" style="background: none; border: none; color: #fff; font-size: 2rem; cursor: pointer;">&times;</button>
+        </div>
+        <div id="ppt-viewer-container" style="flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; overflow: auto; position: relative; user-select: none;">
+            <canvas id="ppt-canvas" style="max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></canvas>
+            <div id="ppt-loading" style="position: absolute; color: white; font-size: 1.5rem;">Chargement du document...</div>
+        </div>
+        <div style="width: 100%; padding: 1rem; background: #111; display: flex; justify-content: center; align-items: center; gap: 1rem;">
+            <button id="ppt-prev" class="btn" style="background: rgba(255,255,255,0.1); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">&larr; Précédent</button>
+            <span style="color: white;">Page <span id="ppt-page-num">0</span> / <span id="ppt-page-count">0</span></span>
+            <button id="ppt-next" class="btn" style="background: rgba(255,255,255,0.1); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Suivant &rarr;</button>
+        </div>
+    </div>
+
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageIsRendering = false;
+        let pageNumIsPending = null;
+        
+        const pptCanvas = document.getElementById('ppt-canvas');
+        const pptCtx = pptCanvas.getContext('2d');
+        const watermarkText = '{{ session.get("user_email", "") }}'.split('@')[0].replace(/[._]/g, ' ').replace(/\\b\\w/g, c => c.toUpperCase());
+        
+        pptCanvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        function renderPage(num) {
+            pageIsRendering = true;
+            document.getElementById('ppt-loading').style.display = 'none';
+            
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: 1.5 });
+                pptCanvas.height = viewport.height;
+                pptCanvas.width = viewport.width;
+                
+                const renderCtx = { canvasContext: pptCtx, viewport: viewport };
+                
+                page.render(renderCtx).promise.then(() => {
+                    pageIsRendering = false;
+                    
+                    if (watermarkText) {
+                        pptCtx.save();
+                        pptCtx.translate(pptCanvas.width / 2, pptCanvas.height / 2);
+                        pptCtx.rotate(-Math.PI / 4);
+                        pptCtx.font = 'bold 60px Arial';
+                        pptCtx.fillStyle = 'rgba(255, 255, 255, 0.15)'; 
+                        pptCtx.textAlign = 'center';
+                        pptCtx.textBaseline = 'middle';
+                        for(let i = -3; i <= 3; i++) {
+                            for(let j = -3; j <= 3; j++) {
+                                pptCtx.fillText(watermarkText, i * 400, j * 400);
+                            }
+                        }
+                        pptCtx.restore();
+                    }
+
+                    if (pageNumIsPending !== null) {
+                        renderPage(pageNumIsPending);
+                        pageNumIsPending = null;
+                    }
+                });
+            });
+            document.getElementById('ppt-page-num').textContent = num;
+        }
+
+        function queueRenderPage(num) {
+            if (pageIsRendering) {
+                pageNumIsPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function onPrevPage() {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        }
+
+        function onNextPage() {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        }
+
+        document.getElementById('ppt-prev').addEventListener('click', onPrevPage);
+        document.getElementById('ppt-next').addEventListener('click', onNextPage);
+
+        window.openPPTModal = function(url) {
+            document.getElementById('ppt-modal').style.display = 'flex';
+            document.getElementById('ppt-loading').style.display = 'block';
+            pptCtx.clearRect(0, 0, pptCanvas.width, pptCanvas.height);
+            
+            pdfjsLib.getDocument(url).promise.then(pdfDoc_ => {
+                pdfDoc = pdfDoc_;
+                document.getElementById('ppt-page-count').textContent = pdfDoc.numPages;
+                pageNum = 1;
+                renderPage(pageNum);
+            }).catch(err => {
+                document.getElementById('ppt-loading').textContent = 'Erreur lors du chargement de la présentation.';
+                console.error(err);
+            });
+        };
+
+        window.closePPTModal = function() {
+            document.getElementById('ppt-modal').style.display = 'none';
+            pdfDoc = null;
         };
     </script>
 <div id="wa-reaction-menu"></div></body>

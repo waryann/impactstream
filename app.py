@@ -93,11 +93,13 @@ DATABASE = os.path.join(BASE_DIR, 'eglise_media.db')
 # Dossiers d'upload
 UPLOAD_VIDEOS = os.path.join(BASE_DIR, 'static', 'videos')
 UPLOAD_IMAGES = os.path.join(BASE_DIR, 'static', 'images')
+UPLOAD_PPT = os.path.join(BASE_DIR, 'static', 'ppt')
 
 # Extensions autorisées
 ALLOWED_VIDEO = {'.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'}
 ALLOWED_AUDIO = {'.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac'}
 ALLOWED_IMAGE = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+ALLOWED_PPT = {'.pdf'}
 
 # Code d'accès adminn
 ADMIN_CODE = 'Bungudi128'
@@ -115,6 +117,7 @@ ATTENDANCE_TZ = ZoneInfo('Europe/Brussels')
 # Créer les dossiers s'ils n'existent pas
 os.makedirs(UPLOAD_VIDEOS, exist_ok=True)
 os.makedirs(UPLOAD_IMAGES, exist_ok=True)
+os.makedirs(UPLOAD_PPT, exist_ok=True)
 
 
 # ─────────────────────────────────────────────
@@ -324,6 +327,7 @@ def get_db():
                         url_video_es VARCHAR(500),
                         url_video_nl VARCHAR(500),
                         url_video_ln VARCHAR(500),
+                        url_ppt VARCHAR(500),
                         paroles_keywords TEXT,
                         position_banniere INTEGER DEFAULT 15,
                         series_id INTEGER,
@@ -573,6 +577,7 @@ def get_db():
             url_video_es TEXT,
             url_video_nl TEXT,
             url_video_ln TEXT,
+            url_ppt TEXT,
             paroles_keywords TEXT,
             position_banniere INTEGER DEFAULT 15,
             series_id INTEGER,
@@ -3137,12 +3142,18 @@ def admin_add_media():
     if thumbnail_file and thumbnail_file.filename:
         url_miniature = save_upload(thumbnail_file, UPLOAD_IMAGES, ALLOWED_IMAGE)
 
+    # Upload du PPT (optionnel)
+    ppt_file = request.files.get('ppt_file')
+    url_ppt = None
+    if ppt_file and ppt_file.filename:
+        url_ppt = save_upload(ppt_file, UPLOAD_PPT, ALLOWED_PPT)
+
     # Insérer en base
     conn = get_db()
     conn.execute('''
-        INSERT INTO medias (titre, description, categorie, commission, langue, url_miniature, url_video, url_video_en, url_video_es, url_video_nl, url_video_ln, paroles_keywords, position_banniere, series_id, chapitre, ordre_episode)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (titre, description, categorie, commission, langue, url_miniature, url_video, media_url_en, media_url_es, media_url_nl, media_url_ln, paroles_keywords, position_banniere, series_id, chapitre, ordre_episode))
+        INSERT INTO medias (titre, description, categorie, commission, langue, url_miniature, url_video, url_video_en, url_video_es, url_video_nl, url_video_ln, url_ppt, paroles_keywords, position_banniere, series_id, chapitre, ordre_episode)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (titre, description, categorie, commission, langue, url_miniature, url_video, media_url_en, media_url_es, media_url_nl, media_url_ln, url_ppt, paroles_keywords, position_banniere, series_id, chapitre, ordre_episode))
     conn.commit()
     conn.close()
 
@@ -3235,14 +3246,29 @@ def admin_edit_media(media_id):
                     os.remove(old_path)
             url_miniature = new_thumb
 
+    # Upload d'un nouveau PPT (optionnel)
+    ppt_file = request.files.get('ppt_file')
+    url_ppt = media.get('url_ppt') if 'url_ppt' in media.keys() else None
+    if ppt_file and ppt_file.filename:
+        new_ppt = save_upload(ppt_file, UPLOAD_PPT, ALLOWED_PPT)
+        if new_ppt:
+            if url_ppt:
+                old_path = os.path.join(BASE_DIR, url_ppt.lstrip('/'))
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except Exception:
+                        pass
+            url_ppt = new_ppt
+
     conn.execute('''
         UPDATE medias 
         SET titre=?, description=?, categorie=?, commission=?, langue=?, url_miniature=?, url_video=?,
-            url_video_en=?, url_video_es=?, url_video_nl=?, url_video_ln=?, paroles_keywords=?, position_banniere=?,
+            url_video_en=?, url_video_es=?, url_video_nl=?, url_video_ln=?, url_ppt=?, paroles_keywords=?, position_banniere=?,
             series_id=?, chapitre=?, ordre_episode=?
         WHERE id=?
     ''', (titre, description, categorie, commission, langue, url_miniature, url_video,
-          media_url_en, media_url_es, media_url_nl, media_url_ln, paroles_keywords, position_banniere,
+          media_url_en, media_url_es, media_url_nl, media_url_ln, url_ppt, paroles_keywords, position_banniere,
           series_id, chapitre, ordre_episode, media_id))
     conn.commit()
     conn.close()
@@ -3263,12 +3289,20 @@ def admin_delete_media(media_id):
         if media['url_video']:
             filepath = os.path.join(BASE_DIR, media['url_video'].lstrip('/'))
             if os.path.exists(filepath):
-                os.remove(filepath)
+                try: os.remove(filepath)
+                except Exception: pass
 
         if media['url_miniature']:
             filepath = os.path.join(BASE_DIR, media['url_miniature'].lstrip('/'))
             if os.path.exists(filepath):
-                os.remove(filepath)
+                try: os.remove(filepath)
+                except Exception: pass
+                
+        if 'url_ppt' in media.keys() and media['url_ppt']:
+            filepath = os.path.join(BASE_DIR, media['url_ppt'].lstrip('/'))
+            if os.path.exists(filepath):
+                try: os.remove(filepath)
+                except Exception: pass
 
         conn.execute('DELETE FROM medias WHERE id = ?', (media_id,))
         conn.commit()
