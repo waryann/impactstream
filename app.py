@@ -3158,87 +3158,92 @@ def debug_schema():
 @login_required
 def admin_add_media():
     """Ajouter un nouveau média."""
-    titre = request.form.get('titre', '').strip()
-    description = request.form.get('description', '').strip()
-    categorie = request.form.get('categorie', '').strip()
-    commission = request.form.get('commission', '').strip()
-    langue = request.form.get('langue', '').strip()
-
-    if not titre or not categorie or (categorie in ('Enseignement', 'Musique') and not commission):
-        flash('Le titre, la catégorie et la sous-section sont obligatoires.', 'error')
-        return redirect(url_for('admin_dashboard'))
-
-    if categorie not in ('Enseignement', 'Musique'):
-        commission = ''
-
-    # Vérifier s'il s'agit d'un lien externe ou d'un fichier local
-    media_url = request.form.get('media_url', '').strip()
-    media_url_en = request.form.get('media_url_en', '').strip()
-    media_url_es = request.form.get('media_url_es', '').strip()
-    media_url_nl = request.form.get('media_url_nl', '').strip()
-    media_url_ln = request.form.get('media_url_ln', '').strip()
-    paroles_keywords = request.form.get('paroles_keywords', '').strip()
-    position_banniere = request.form.get('position_banniere', '15').strip()
     try:
-        position_banniere = int(position_banniere)
-    except ValueError:
-        position_banniere = 15
+        titre = request.form.get('titre', '').strip()
+        description = request.form.get('description', '').strip()
+        categorie = request.form.get('categorie', '').strip()
+        commission = request.form.get('commission', '').strip()
+        langue = request.form.get('langue', '').strip()
 
-    series_id = request.form.get('series_id', '').strip() or None
-    if series_id:
+        if not titre or not categorie or (categorie in ('Enseignement', 'Musique') and not commission):
+            flash('Le titre, la catégorie et la sous-section sont obligatoires.', 'error')
+            return redirect(url_for('admin_dashboard'))
+
+        if categorie not in ('Enseignement', 'Musique'):
+            commission = ''
+
+        # Vérifier s'il s'agit d'un lien externe ou d'un fichier local
+        media_url = request.form.get('media_url', '').strip()
+        media_url_en = request.form.get('media_url_en', '').strip()
+        media_url_es = request.form.get('media_url_es', '').strip()
+        media_url_nl = request.form.get('media_url_nl', '').strip()
+        media_url_ln = request.form.get('media_url_ln', '').strip()
+        paroles_keywords = request.form.get('paroles_keywords', '').strip()
+        position_banniere = request.form.get('position_banniere', '15').strip()
         try:
-            series_id = int(series_id)
+            position_banniere = int(position_banniere)
         except ValueError:
-            series_id = None
+            position_banniere = 15
 
-    chapitre = request.form.get('chapitre', '').strip() or None
-    ordre_episode = request.form.get('ordre_episode', '').strip() or None
-    if ordre_episode:
-        try:
-            ordre_episode = int(ordre_episode)
-        except ValueError:
-            ordre_episode = None
+        series_id = request.form.get('series_id', '').strip() or None
+        if series_id:
+            try:
+                series_id = int(series_id)
+            except ValueError:
+                series_id = None
 
-    url_video = None
+        chapitre = request.form.get('chapitre', '').strip() or None
+        ordre_episode = request.form.get('ordre_episode', '').strip() or None
+        if ordre_episode:
+            try:
+                ordre_episode = int(ordre_episode)
+            except ValueError:
+                ordre_episode = None
 
-    if media_url:
-        url_video = media_url
-    else:
-        media_file = request.files.get('media_file')
-        if media_file and media_file.filename:
-            allowed = ALLOWED_VIDEO | ALLOWED_AUDIO
-            url_video = save_upload(media_file, UPLOAD_VIDEOS, allowed)
-            if not url_video:
-                flash('Format de fichier média non supporté.', 'error')
-                return redirect(url_for('admin_dashboard'))
+        url_video = None
 
-    if not url_video:
-        flash('Veuillez fournir un fichier média ou un lien externe pour le français (par défaut).', 'error')
+        if media_url:
+            url_video = media_url
+        else:
+            media_file = request.files.get('media_file')
+            if media_file and media_file.filename:
+                allowed = ALLOWED_VIDEO | ALLOWED_AUDIO
+                url_video = save_upload(media_file, UPLOAD_VIDEOS, allowed)
+                if not url_video:
+                    flash('Format de fichier média non supporté.', 'error')
+                    return redirect(url_for('admin_dashboard'))
+
+        if not url_video:
+            flash('Veuillez fournir un fichier média ou un lien externe pour le français (par défaut).', 'error')
+            return redirect(url_for('admin_dashboard'))
+
+        # Upload de la miniature
+        thumbnail_file = request.files.get('thumbnail_file')
+        url_miniature = None
+        if thumbnail_file and thumbnail_file.filename:
+            url_miniature = save_upload(thumbnail_file, UPLOAD_IMAGES, ALLOWED_IMAGE)
+
+        # Upload du PPT (optionnel)
+        ppt_file = request.files.get('ppt_file')
+        url_ppt = None
+        if ppt_file and ppt_file.filename:
+            url_ppt = save_upload(ppt_file, UPLOAD_PPT, ALLOWED_PPT)
+
+        # Insérer en base
+        conn = get_db()
+        conn.execute('''
+            INSERT INTO medias (titre, description, categorie, commission, langue, url_miniature, url_video, url_video_en, url_video_es, url_video_nl, url_video_ln, url_ppt, paroles_keywords, position_banniere, series_id, chapitre, ordre_episode)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (titre, description, categorie, commission, langue, url_miniature, url_video, media_url_en, media_url_es, media_url_nl, media_url_ln, url_ppt, paroles_keywords, position_banniere, series_id, chapitre, ordre_episode))
+        conn.commit()
+        conn.close()
+
+        flash(f'✅ « {titre} » a été ajouté avec succès !', 'success')
         return redirect(url_for('admin_dashboard'))
-
-    # Upload de la miniature
-    thumbnail_file = request.files.get('thumbnail_file')
-    url_miniature = None
-    if thumbnail_file and thumbnail_file.filename:
-        url_miniature = save_upload(thumbnail_file, UPLOAD_IMAGES, ALLOWED_IMAGE)
-
-    # Upload du PPT (optionnel)
-    ppt_file = request.files.get('ppt_file')
-    url_ppt = None
-    if ppt_file and ppt_file.filename:
-        url_ppt = save_upload(ppt_file, UPLOAD_PPT, ALLOWED_PPT)
-
-    # Insérer en base
-    conn = get_db()
-    conn.execute('''
-        INSERT INTO medias (titre, description, categorie, commission, langue, url_miniature, url_video, url_video_en, url_video_es, url_video_nl, url_video_ln, url_ppt, paroles_keywords, position_banniere, series_id, chapitre, ordre_episode)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (titre, description, categorie, commission, langue, url_miniature, url_video, media_url_en, media_url_es, media_url_nl, media_url_ln, url_ppt, paroles_keywords, position_banniere, series_id, chapitre, ordre_episode))
-    conn.commit()
-    conn.close()
-
-    flash(f'✅ « {titre} » a été ajouté avec succès !', 'success')
-    return redirect(url_for('admin_dashboard'))
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        return f"CRITICAL ERROR IN admin_add_media: {str(e)}<br><pre>{error_trace}</pre>", 500
 
 
 @app.route('/admin/modifier/<int:media_id>', methods=['POST'])
