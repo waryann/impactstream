@@ -11770,7 +11770,8 @@
         
         const pptCanvas = document.getElementById('ppt-canvas');
         const pptCtx = pptCanvas.getContext('2d');
-        const watermarkText = '{{ session.get("user_email", "") }}'.split('@')[0].replace(/[._]/g, ' ').replace(/\\b\\w/g, c => c.toUpperCase());
+        const watermarkLine1 = 'Ministère Apostolique Impact';
+        const watermarkLine2 = 'Patriarche Anaclet Bugudi';
         
         pptCanvas.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -11788,21 +11789,21 @@
                 page.render(renderCtx).promise.then(() => {
                     pageIsRendering = false;
                     
-                    if (watermarkText) {
-                        pptCtx.save();
-                        pptCtx.translate(pptCanvas.width / 2, pptCanvas.height / 2);
-                        pptCtx.rotate(-Math.PI / 4);
-                        pptCtx.font = 'bold 60px Arial';
-                        pptCtx.fillStyle = 'rgba(255, 255, 255, 0.15)'; 
-                        pptCtx.textAlign = 'center';
-                        pptCtx.textBaseline = 'middle';
-                        for(let i = -3; i <= 3; i++) {
-                            for(let j = -3; j <= 3; j++) {
-                                pptCtx.fillText(watermarkText, i * 400, j * 400);
-                            }
+                    pptCtx.save();
+                    pptCtx.translate(pptCanvas.width / 2, pptCanvas.height / 2);
+                    pptCtx.rotate(-Math.PI / 4);
+                    pptCtx.font = 'bold 40px Arial';
+                    pptCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                    pptCtx.textAlign = 'center';
+                    pptCtx.textBaseline = 'middle';
+                    const lineH = 50;
+                    for(let i = -3; i <= 3; i++) {
+                        for(let j = -3; j <= 3; j++) {
+                            pptCtx.fillText(watermarkLine1, i * 420, j * 420 - lineH / 2);
+                            pptCtx.fillText(watermarkLine2, i * 420, j * 420 + lineH / 2);
                         }
-                        pptCtx.restore();
                     }
+                    pptCtx.restore();
 
                     if (pageNumIsPending !== null) {
                         renderPage(pageNumIsPending);
