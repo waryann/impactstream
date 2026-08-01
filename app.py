@@ -598,6 +598,11 @@ def get_db():
                 except Exception as e:
                     print(f"⚠️ Erreur auto-migration PostgreSQL index: {e}")
 
+                try:
+                    cur.execute("UPDATE medias SET url_ppt = REPLACE(url_ppt, '/static/images/', '/static/ppt/') WHERE url_ppt LIKE '/static/images/%.pdf'")
+                except Exception as e:
+                    print(f"⚠️ Erreur auto-migration PostgreSQL url_ppt replace: {e}")
+
                 # Nettoyage automatique des anciennes données de test au démarrage du serveur
                 try:
                     cur.execute("DELETE FROM webinaire_queue")
@@ -1055,7 +1060,12 @@ def save_upload(file, folder, allowed_extensions):
     file.save(filepath)
 
     # Retourner le chemin relatif pour la BDD
-    rel_folder = 'videos' if 'videos' in folder else 'images'
+    if 'videos' in folder:
+        rel_folder = 'videos'
+    elif 'ppt' in folder:
+        rel_folder = 'ppt'
+    else:
+        rel_folder = 'images'
     return f'/static/{rel_folder}/{unique_name}'
 
 
