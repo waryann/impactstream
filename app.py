@@ -540,6 +540,21 @@ def get_db():
                     print(f"⚠️ Erreur auto-migration PostgreSQL colonne is_evicted: {e}")
                     
                 try:
+                    cur.execute("ALTER TABLE medias ADD COLUMN IF NOT EXISTS series_id INTEGER")
+                except Exception as e:
+                    print(f"⚠️ Erreur auto-migration PostgreSQL colonne series_id: {e}")
+                    
+                try:
+                    cur.execute("ALTER TABLE medias ADD COLUMN IF NOT EXISTS chapitre VARCHAR(100)")
+                except Exception as e:
+                    print(f"⚠️ Erreur auto-migration PostgreSQL colonne chapitre: {e}")
+                    
+                try:
+                    cur.execute("ALTER TABLE medias ADD COLUMN IF NOT EXISTS ordre_episode INTEGER")
+                except Exception as e:
+                    print(f"⚠️ Erreur auto-migration PostgreSQL colonne ordre_episode: {e}")
+                    
+                try:
                     cur.execute("ALTER TABLE medias ADD COLUMN IF NOT EXISTS url_ppt VARCHAR(500)")
                 except Exception as e:
                     print(f"⚠️ Erreur auto-migration PostgreSQL colonne url_ppt: {e}")
