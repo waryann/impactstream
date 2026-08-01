@@ -3133,6 +3133,27 @@ def admin_delete_user(user_id):
     return redirect(url_for('admin_dashboard', tab='comptes'))
 
 
+@app.route('/debug/schema')
+def debug_schema():
+    """Temporary route to debug database schema"""
+    try:
+        conn = get_db()
+        if DATABASE_URL:
+            # PostgreSQL
+            cur = conn.cursor()
+            cur.execute("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'medias'")
+            columns = cur.fetchall()
+            conn.close()
+            return {'database': 'PostgreSQL', 'columns': [dict(row) for row in columns]}
+        else:
+            # SQLite
+            cur = conn.execute("PRAGMA table_info(medias)")
+            columns = cur.fetchall()
+            conn.close()
+            return {'database': 'SQLite', 'columns': [dict(row) for row in columns]}
+    except Exception as e:
+        return {'error': str(e)}
+
 @app.route('/admin/ajouter', methods=['POST'])
 @login_required
 def admin_add_media():
