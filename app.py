@@ -105,7 +105,7 @@ ALLOWED_PPT = {'.pdf'}
 ADMIN_CODE = 'Bungudi128'
 
 # Commissions autorisées
-COMMISSIONS_ENSEIGNEMENT = ['Intercession', 'Couples', 'HED', 'Johanna', 'Joseph', 'Nayoth', 'FGI', 'Animateur GC', 'EF', 'Protocole', 'Finance', 'Nettoyage', 'Restauration', 'Suivi', 'Évangélisation']
+COMMISSIONS_ENSEIGNEMENT = ['Intercession', 'Couples', 'HED', 'Johanna', 'Joseph', 'PDS', 'Culte', 'Nayoth', 'FGI', 'Animateur GC', 'EF', 'Protocole', 'Finance', 'Nettoyage', 'Restauration', 'Suivi', 'Évangélisation']
 COMMISSIONS_MUSIQUE = ['Adoration MP3', 'Adoration MP4', 'Nayoth', 'Chants PAB', 'Instrumentale']
 CATEGORIES = ['Enseignement', 'Musique', 'Podcast']
 
@@ -538,6 +538,11 @@ def get_db():
                     cur.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS is_evicted INTEGER DEFAULT 0")
                 except Exception as e:
                     print(f"⚠️ Erreur auto-migration PostgreSQL colonne is_evicted: {e}")
+                    
+                try:
+                    cur.execute("ALTER TABLE medias ADD COLUMN IF NOT EXISTS url_ppt VARCHAR(500)")
+                except Exception as e:
+                    print(f"⚠️ Erreur auto-migration PostgreSQL colonne url_ppt: {e}")
 
                 # Nettoyage automatique des anciennes données de test au démarrage du serveur
                 try:
@@ -848,6 +853,9 @@ def get_db():
         migrated = True
     if 'ordre_episode' not in columns:
         cursor.execute('ALTER TABLE medias ADD COLUMN ordre_episode INTEGER')
+        migrated = True
+    if 'url_ppt' not in columns:
+        cursor.execute('ALTER TABLE medias ADD COLUMN url_ppt TEXT')
         migrated = True
         
     if migrated:
