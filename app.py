@@ -164,6 +164,9 @@ class PostgresRowWrapper:
     def items(self):
         return [(k, self[k]) for k in self.keys()]
 
+    def get(self, key, default=None):
+        return self[key] if key in self.keys() else default
+
 class PostgresCursorWrapper:
     def __init__(self, pg_cursor):
         self.cursor = pg_cursor
@@ -4303,11 +4306,6 @@ def serve_sw():
 # ─────────────────────────────────────────────
 # Lancement
 # ─────────────────────────────────────────────
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    import traceback
-    return f"GLOBAL 500 ERROR CAUGHT:<br><pre>{traceback.format_exc()}</pre>", 500
 
 if __name__ == '__main__':
     init_db()
